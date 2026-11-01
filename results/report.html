@@ -12,7 +12,11 @@ th{font-weight:400;color:var(--mut);text-transform:uppercase;font-size:11px;lett
 .num{text-align:right;font-variant-numeric:tabular-nums} .mono{font-family:ui-monospace,Menlo,monospace} .small{font-size:11px}
 .tag{display:inline-block;border:1px solid var(--line);padding:1px 6px;margin:1px 2px 1px 0;font-size:11px}
 .CANDIDATE-NEW{border-color:var(--acc);color:var(--acc)} .exh{color:var(--mut)}
-.ok{color:var(--mut)} .bad{color:#c0392b} footer{color:var(--mut);font-size:12px;margin-top:24px}
+.ok{color:var(--mut)}
+@media (max-width:700px){thead{display:none} table,tbody,tr,td{display:block;width:auto}
+tr{border:1px solid var(--line);padding:10px 12px;margin:0 0 12px} td{border:0;padding:3px 0;text-align:left!important}
+td:empty{display:none} td::before{content:attr(data-label);display:block;color:var(--mut);font:400 10px -apple-system,sans-serif;text-transform:uppercase;letter-spacing:.06em}
+td:first-child{font-size:15px} td:first-child::before{display:none}} .bad{color:#c0392b} footer{color:var(--mut);font-size:12px;margin-top:24px}
 </style></head><body><main>
 <h1>PROBATIO</h1>
 <p class="sub">Verified discovery engine — every result below is re-checkable from its certificate.</p>
@@ -20,221 +24,221 @@ th{font-weight:400;color:var(--mut);text-transform:uppercase;font-size:11px;lett
 <div class="wrap"><table><thead><tr><th>Problem</th><th>Domain</th><th>Certified</th><th>Known best</th>
 <th>Upper bound</th><th>Status</th><th>Witness</th><th>Checked</th><th>Cost</th><th>Verify</th></tr></thead>
 <tbody><tr>
-<td class="mono">golomb.m6</td>
-<td>combinatorics</td>
-<td class="num">17</td>
-<td class="num">17</td>
-<td class="num"></td>
-<td><span class="tag matches-known">matches-known</span>
+<td data-label="Problem" class="mono">golomb.m6</td>
+<td data-label="Domain">combinatorics</td>
+<td data-label="Certified" class="num">17</td>
+<td data-label="Known best" class="num">17</td>
+<td data-label="Upper bound" class="num"></td>
+<td data-label="Status"><span class="tag matches-known">matches-known</span>
 <span class="tag exh">optimal in family (exhaustive)</span></td>
-<td class="mono small">[0, 1, 4, 10, 12, 17]</td>
-<td class="num">1</td>
-<td class="num">$0.00</td>
-<td class="mono small">probatio verify 922e612a0103f7a2…</td>
+<td data-label="Witness" class="mono small">[0, 1, 4, 10, 12, 17]</td>
+<td data-label="Checked" class="num">1</td>
+<td data-label="Cost" class="num">$0.00</td>
+<td data-label="Verify" class="mono small">probatio verify 922e612a0103f7a2…</td>
 </tr><tr>
-<td class="mono">golomb.m7</td>
-<td>combinatorics</td>
-<td class="num">25</td>
-<td class="num">25</td>
-<td class="num"></td>
-<td><span class="tag matches-known">matches-known</span>
+<td data-label="Problem" class="mono">golomb.m7</td>
+<td data-label="Domain">combinatorics</td>
+<td data-label="Certified" class="num">25</td>
+<td data-label="Known best" class="num">25</td>
+<td data-label="Upper bound" class="num"></td>
+<td data-label="Status"><span class="tag matches-known">matches-known</span>
 <span class="tag exh">optimal in family (exhaustive)</span></td>
-<td class="mono small">[0, 1, 4, 10, 18, 23, 25]</td>
-<td class="num">1</td>
-<td class="num">$0.00</td>
-<td class="mono small">probatio verify 109bd02ea108952b…</td>
+<td data-label="Witness" class="mono small">[0, 1, 4, 10, 18, 23, 25]</td>
+<td data-label="Checked" class="num">1</td>
+<td data-label="Cost" class="num">$0.00</td>
+<td data-label="Verify" class="mono small">probatio verify 109bd02ea108952b…</td>
 </tr><tr>
-<td class="mono">golomb.m8</td>
-<td>combinatorics</td>
-<td class="num">34</td>
-<td class="num">34</td>
-<td class="num"></td>
-<td><span class="tag matches-known">matches-known</span>
+<td data-label="Problem" class="mono">golomb.m8</td>
+<td data-label="Domain">combinatorics</td>
+<td data-label="Certified" class="num">34</td>
+<td data-label="Known best" class="num">34</td>
+<td data-label="Upper bound" class="num"></td>
+<td data-label="Status"><span class="tag matches-known">matches-known</span>
 <span class="tag exh">optimal in family (exhaustive)</span></td>
-<td class="mono small">[0, 1, 4, 9, 15, 22, 32, 34]</td>
-<td class="num">1</td>
-<td class="num">$0.00</td>
-<td class="mono small">probatio verify a8f22243f4269f82…</td>
+<td data-label="Witness" class="mono small">[0, 1, 4, 9, 15, 22, 32, 34]</td>
+<td data-label="Checked" class="num">1</td>
+<td data-label="Cost" class="num">$0.00</td>
+<td data-label="Verify" class="mono small">probatio verify a8f22243f4269f82…</td>
 </tr><tr>
-<td class="mono">golomb.m9</td>
-<td>combinatorics</td>
-<td class="num">44</td>
-<td class="num">44</td>
-<td class="num"></td>
-<td><span class="tag matches-known">matches-known</span>
+<td data-label="Problem" class="mono">golomb.m9</td>
+<td data-label="Domain">combinatorics</td>
+<td data-label="Certified" class="num">44</td>
+<td data-label="Known best" class="num">44</td>
+<td data-label="Upper bound" class="num"></td>
+<td data-label="Status"><span class="tag matches-known">matches-known</span>
 <span class="tag exh">optimal in family (exhaustive)</span></td>
-<td class="mono small">[0, 1, 5, 12, 25, 27, 35, 41, 44]</td>
-<td class="num">1</td>
-<td class="num">$0.00</td>
-<td class="mono small">probatio verify 5a2c6d9066b3f377…</td>
+<td data-label="Witness" class="mono small">[0, 1, 5, 12, 25, 27, 35, 41, 44]</td>
+<td data-label="Checked" class="num">1</td>
+<td data-label="Cost" class="num">$0.00</td>
+<td data-label="Verify" class="mono small">probatio verify 5a2c6d9066b3f377…</td>
 </tr><tr>
-<td class="mono">golomb.m10</td>
-<td>combinatorics</td>
-<td class="num">55</td>
-<td class="num">55</td>
-<td class="num"></td>
-<td><span class="tag matches-known">matches-known</span>
+<td data-label="Problem" class="mono">golomb.m10</td>
+<td data-label="Domain">combinatorics</td>
+<td data-label="Certified" class="num">55</td>
+<td data-label="Known best" class="num">55</td>
+<td data-label="Upper bound" class="num"></td>
+<td data-label="Status"><span class="tag matches-known">matches-known</span>
 <span class="tag exh">optimal in family (exhaustive)</span></td>
-<td class="mono small">[0, 1, 6, 10, 23, 26, 34, 41, 53, 55]</td>
-<td class="num">1</td>
-<td class="num">$0.00</td>
-<td class="mono small">probatio verify 4898f9ace22cfa93…</td>
+<td data-label="Witness" class="mono small">[0, 1, 6, 10, 23, 26, 34, 41, 53, 55]</td>
+<td data-label="Checked" class="num">1</td>
+<td data-label="Cost" class="num">$0.00</td>
+<td data-label="Verify" class="mono small">probatio verify 4898f9ace22cfa93…</td>
 </tr><tr>
-<td class="mono">golomb.m11</td>
-<td>combinatorics</td>
-<td class="num">72</td>
-<td class="num">72</td>
-<td class="num"></td>
-<td><span class="tag matches-known">matches-known</span>
+<td data-label="Problem" class="mono">golomb.m11</td>
+<td data-label="Domain">combinatorics</td>
+<td data-label="Certified" class="num">72</td>
+<td data-label="Known best" class="num">72</td>
+<td data-label="Upper bound" class="num"></td>
+<td data-label="Status"><span class="tag matches-known">matches-known</span>
 <span class="tag exh">optimal in family (exhaustive)</span></td>
-<td class="mono small">[0, 1, 4, 13, 28, 33, 47, 54, 64, 70, 72]</td>
-<td class="num">300,001</td>
-<td class="num">$0.00</td>
-<td class="mono small">probatio verify bddef698682756cc…</td>
+<td data-label="Witness" class="mono small">[0, 1, 4, 13, 28, 33, 47, 54, 64, 70, 72]</td>
+<td data-label="Checked" class="num">300,001</td>
+<td data-label="Cost" class="num">$0.00</td>
+<td data-label="Verify" class="mono small">probatio verify bddef698682756cc…</td>
 </tr><tr>
-<td class="mono">golomb.m12</td>
-<td>combinatorics</td>
-<td class="num"></td>
-<td class="num">85</td>
-<td class="num"></td>
-<td><span class="tag none">no result</span>
+<td data-label="Problem" class="mono">golomb.m12</td>
+<td data-label="Domain">combinatorics</td>
+<td data-label="Certified" class="num"></td>
+<td data-label="Known best" class="num">85</td>
+<td data-label="Upper bound" class="num"></td>
+<td data-label="Status"><span class="tag none">no result</span>
 </td>
-<td class="mono small"></td>
-<td class="num">300,000</td>
-<td class="num">$0.00</td>
-<td class="mono small"></td>
+<td data-label="Witness" class="mono small"></td>
+<td data-label="Checked" class="num">300,000</td>
+<td data-label="Cost" class="num">$0.00</td>
+<td data-label="Verify" class="mono small"></td>
 </tr><tr>
-<td class="mono">qec.cyclic.n5.k1</td>
-<td>quantum-codes</td>
-<td class="num">3</td>
-<td class="num">3</td>
-<td class="num">3</td>
-<td><span class="tag matches-known">matches-known</span>
+<td data-label="Problem" class="mono">qec.cyclic.n5.k1</td>
+<td data-label="Domain">quantum-codes</td>
+<td data-label="Certified" class="num">3</td>
+<td data-label="Known best" class="num">3</td>
+<td data-label="Upper bound" class="num">3</td>
+<td data-label="Status"><span class="tag matches-known">matches-known</span>
 <span class="tag exh">optimal in family (exhaustive)</span></td>
-<td class="mono small">XIXYY</td>
-<td class="num">14</td>
-<td class="num">$0.00</td>
-<td class="mono small">probatio verify 06126ae370982fc3…</td>
+<td data-label="Witness" class="mono small">XIXYY</td>
+<td data-label="Checked" class="num">14</td>
+<td data-label="Cost" class="num">$0.00</td>
+<td data-label="Verify" class="mono small">probatio verify 06126ae370982fc3…</td>
 </tr><tr>
-<td class="mono">qec.cyclic.n6.k1</td>
-<td>quantum-codes</td>
-<td class="num">2</td>
-<td class="num"></td>
-<td class="num">3</td>
-<td><span class="tag no-recorded-bound">no-recorded-bound</span>
+<td data-label="Problem" class="mono">qec.cyclic.n6.k1</td>
+<td data-label="Domain">quantum-codes</td>
+<td data-label="Certified" class="num">2</td>
+<td data-label="Known best" class="num"></td>
+<td data-label="Upper bound" class="num">3</td>
+<td data-label="Status"><span class="tag no-recorded-bound">no-recorded-bound</span>
 <span class="tag exh">optimal in family (exhaustive)</span></td>
-<td class="mono small">XIIXYY</td>
-<td class="num">48</td>
-<td class="num">$0.00</td>
-<td class="mono small">probatio verify 86fe5439ba76b665…</td>
+<td data-label="Witness" class="mono small">XIIXYY</td>
+<td data-label="Checked" class="num">48</td>
+<td data-label="Cost" class="num">$0.00</td>
+<td data-label="Verify" class="mono small">probatio verify 86fe5439ba76b665…</td>
 </tr><tr>
-<td class="mono">qec.cyclic.n7.k1</td>
-<td>quantum-codes</td>
-<td class="num">3</td>
-<td class="num"></td>
-<td class="num">4</td>
-<td><span class="tag no-recorded-bound">no-recorded-bound</span>
+<td data-label="Problem" class="mono">qec.cyclic.n7.k1</td>
+<td data-label="Domain">quantum-codes</td>
+<td data-label="Certified" class="num">3</td>
+<td data-label="Known best" class="num"></td>
+<td data-label="Upper bound" class="num">4</td>
+<td data-label="Status"><span class="tag no-recorded-bound">no-recorded-bound</span>
 <span class="tag exh">optimal in family (exhaustive)</span></td>
-<td class="mono small">XIIIXYY</td>
-<td class="num">57</td>
-<td class="num">$0.00</td>
-<td class="mono small">probatio verify c10ed9d7ef4f6893…</td>
+<td data-label="Witness" class="mono small">XIIIXYY</td>
+<td data-label="Checked" class="num">57</td>
+<td data-label="Cost" class="num">$0.00</td>
+<td data-label="Verify" class="mono small">probatio verify c10ed9d7ef4f6893…</td>
 </tr><tr>
-<td class="mono">qec.cyclic.n8.k1</td>
-<td>quantum-codes</td>
-<td class="num">3</td>
-<td class="num"></td>
-<td class="num">4</td>
-<td><span class="tag no-recorded-bound">no-recorded-bound</span>
+<td data-label="Problem" class="mono">qec.cyclic.n8.k1</td>
+<td data-label="Domain">quantum-codes</td>
+<td data-label="Certified" class="num">3</td>
+<td data-label="Known best" class="num"></td>
+<td data-label="Upper bound" class="num">4</td>
+<td data-label="Status"><span class="tag no-recorded-bound">no-recorded-bound</span>
 <span class="tag exh">optimal in family (exhaustive)</span></td>
-<td class="mono small">XIIIIXYY</td>
-<td class="num">220</td>
-<td class="num">$0.00</td>
-<td class="mono small">probatio verify 048c89cdfdfff0d3…</td>
+<td data-label="Witness" class="mono small">XIIIIXYY</td>
+<td data-label="Checked" class="num">220</td>
+<td data-label="Cost" class="num">$0.00</td>
+<td data-label="Verify" class="mono small">probatio verify 048c89cdfdfff0d3…</td>
 </tr><tr>
-<td class="mono">qec.cyclic.n9.k1</td>
-<td>quantum-codes</td>
-<td class="num">3</td>
-<td class="num"></td>
-<td class="num">5</td>
-<td><span class="tag no-recorded-bound">no-recorded-bound</span>
+<td data-label="Problem" class="mono">qec.cyclic.n9.k1</td>
+<td data-label="Domain">quantum-codes</td>
+<td data-label="Certified" class="num">3</td>
+<td data-label="Known best" class="num"></td>
+<td data-label="Upper bound" class="num">5</td>
+<td data-label="Status"><span class="tag no-recorded-bound">no-recorded-bound</span>
 <span class="tag exh">optimal in family (exhaustive)</span></td>
-<td class="mono small">XIIIIIXYY</td>
-<td class="num">319</td>
-<td class="num">$0.00</td>
-<td class="mono small">probatio verify dc20f5228471a064…</td>
+<td data-label="Witness" class="mono small">XIIIIIXYY</td>
+<td data-label="Checked" class="num">319</td>
+<td data-label="Cost" class="num">$0.00</td>
+<td data-label="Verify" class="mono small">probatio verify dc20f5228471a064…</td>
 </tr><tr>
-<td class="mono">qec.cyclic.n10.k1</td>
-<td>quantum-codes</td>
-<td class="num">4</td>
-<td class="num"></td>
-<td class="num">5</td>
-<td><span class="tag no-recorded-bound">no-recorded-bound</span>
+<td data-label="Problem" class="mono">qec.cyclic.n10.k1</td>
+<td data-label="Domain">quantum-codes</td>
+<td data-label="Certified" class="num">4</td>
+<td data-label="Known best" class="num"></td>
+<td data-label="Upper bound" class="num">5</td>
+<td data-label="Status"><span class="tag no-recorded-bound">no-recorded-bound</span>
 <span class="tag exh">optimal in family (exhaustive)</span></td>
-<td class="mono small">XIIIYXZIZY</td>
-<td class="num">1,012</td>
-<td class="num">$0.00</td>
-<td class="mono small">probatio verify 5a46951c3f62c6d5…</td>
+<td data-label="Witness" class="mono small">XIIIYXZIZY</td>
+<td data-label="Checked" class="num">1,012</td>
+<td data-label="Cost" class="num">$0.00</td>
+<td data-label="Verify" class="mono small">probatio verify 5a46951c3f62c6d5…</td>
 </tr><tr>
-<td class="mono">qec.cyclic.n11.k1</td>
-<td>quantum-codes</td>
-<td class="num">3</td>
-<td class="num"></td>
-<td class="num">6</td>
-<td><span class="tag no-recorded-bound">no-recorded-bound</span>
+<td data-label="Problem" class="mono">qec.cyclic.n11.k1</td>
+<td data-label="Domain">quantum-codes</td>
+<td data-label="Certified" class="num">3</td>
+<td data-label="Known best" class="num"></td>
+<td data-label="Upper bound" class="num">6</td>
+<td data-label="Status"><span class="tag no-recorded-bound">no-recorded-bound</span>
 <span class="tag exh">optimal in family (exhaustive)</span></td>
-<td class="mono small">XIIIIIIIXYY</td>
-<td class="num">1,427</td>
-<td class="num">$0.00</td>
-<td class="mono small">probatio verify 868648f6edc47889…</td>
+<td data-label="Witness" class="mono small">XIIIIIIIXYY</td>
+<td data-label="Checked" class="num">1,427</td>
+<td data-label="Cost" class="num">$0.00</td>
+<td data-label="Verify" class="mono small">probatio verify 868648f6edc47889…</td>
 </tr><tr>
-<td class="mono">qec.cyclic.n12.k1</td>
-<td>quantum-codes</td>
-<td class="num">4</td>
-<td class="num"></td>
-<td class="num">6</td>
-<td><span class="tag no-recorded-bound">no-recorded-bound</span>
+<td data-label="Problem" class="mono">qec.cyclic.n12.k1</td>
+<td data-label="Domain">quantum-codes</td>
+<td data-label="Certified" class="num">4</td>
+<td data-label="Known best" class="num"></td>
+<td data-label="Upper bound" class="num">6</td>
+<td data-label="Status"><span class="tag no-recorded-bound">no-recorded-bound</span>
 <span class="tag exh">optimal in family (exhaustive)</span></td>
-<td class="mono small">XIIIIIIXIYYI</td>
-<td class="num">7,937</td>
-<td class="num">$0.00</td>
-<td class="mono small">probatio verify d3a4c528b9641294…</td>
+<td data-label="Witness" class="mono small">XIIIIIIXIYYI</td>
+<td data-label="Checked" class="num">7,937</td>
+<td data-label="Cost" class="num">$0.00</td>
+<td data-label="Verify" class="mono small">probatio verify d3a4c528b9641294…</td>
 </tr><tr>
-<td class="mono">qec.cyclic.n13.k1</td>
-<td>quantum-codes</td>
-<td class="num">5</td>
-<td class="num"></td>
-<td class="num">7</td>
-<td><span class="tag no-recorded-bound">no-recorded-bound</span>
+<td data-label="Problem" class="mono">qec.cyclic.n13.k1</td>
+<td data-label="Domain">quantum-codes</td>
+<td data-label="Certified" class="num">5</td>
+<td data-label="Known best" class="num"></td>
+<td data-label="Upper bound" class="num">7</td>
+<td data-label="Status"><span class="tag no-recorded-bound">no-recorded-bound</span>
 <span class="tag exh">optimal in family (exhaustive)</span></td>
-<td class="mono small">XIIIIIIIXIYYI</td>
-<td class="num">8,380</td>
-<td class="num">$0.00</td>
-<td class="mono small">probatio verify 4bf3aa0c2e407331…</td>
+<td data-label="Witness" class="mono small">XIIIIIIIXIYYI</td>
+<td data-label="Checked" class="num">8,380</td>
+<td data-label="Cost" class="num">$0.00</td>
+<td data-label="Verify" class="mono small">probatio verify 4bf3aa0c2e407331…</td>
 </tr><tr>
-<td class="mono">qec.cyclic.n14.k1</td>
-<td>quantum-codes</td>
-<td class="num">5</td>
-<td class="num"></td>
-<td class="num">7</td>
-<td><span class="tag no-recorded-bound">no-recorded-bound</span>
+<td data-label="Problem" class="mono">qec.cyclic.n14.k1</td>
+<td data-label="Domain">quantum-codes</td>
+<td data-label="Certified" class="num">5</td>
+<td data-label="Known best" class="num"></td>
+<td data-label="Upper bound" class="num">7</td>
+<td data-label="Status"><span class="tag no-recorded-bound">no-recorded-bound</span>
 </td>
-<td class="mono small">YIXZXXYXZZZXXI</td>
-<td class="num">200,000</td>
-<td class="num">$0.00</td>
-<td class="mono small">probatio verify 2b1e221e0906f11b…</td>
+<td data-label="Witness" class="mono small">YIXZXXYXZZZXXI</td>
+<td data-label="Checked" class="num">200,000</td>
+<td data-label="Cost" class="num">$0.00</td>
+<td data-label="Verify" class="mono small">probatio verify 2b1e221e0906f11b…</td>
 </tr><tr>
-<td class="mono">qec.cyclic.n15.k1</td>
-<td>quantum-codes</td>
-<td class="num">5</td>
-<td class="num"></td>
-<td class="num">8</td>
-<td><span class="tag no-recorded-bound">no-recorded-bound</span>
+<td data-label="Problem" class="mono">qec.cyclic.n15.k1</td>
+<td data-label="Domain">quantum-codes</td>
+<td data-label="Certified" class="num">5</td>
+<td data-label="Known best" class="num"></td>
+<td data-label="Upper bound" class="num">8</td>
+<td data-label="Status"><span class="tag no-recorded-bound">no-recorded-bound</span>
 </td>
-<td class="mono small">IYIYZIIZZIZXXXX</td>
-<td class="num">200,000</td>
-<td class="num">$0.00</td>
-<td class="mono small">probatio verify ab93c4a28fb10056…</td>
+<td data-label="Witness" class="mono small">IYIYZIIZZIZXXXX</td>
+<td data-label="Checked" class="num">200,000</td>
+<td data-label="Cost" class="num">$0.00</td>
+<td data-label="Verify" class="mono small">probatio verify ab93c4a28fb10056…</td>
 </tr></tbody></table></div>
 <footer>Experimental, unaudited. Verification proves correctness, not novelty: any CANDIDATE-NEW
 result requires a human literature review before it is claimed. "Optimal in family" is evidence from

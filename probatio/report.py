@@ -37,17 +37,17 @@ def build(results_dir: Path, out: Path | None = None) -> Path:
             c = cert_obj["candidate"]
             witness = c.get("seed") or c.get("marks") or "Lean proof"
         rows.append(f"""<tr>
-<td class="mono">{html.escape(pid)}</td>
-<td>{html.escape(p['domain'])}</td>
-<td class="num">{'' if not best else f"{best['best_value']:g}"}</td>
-<td class="num">{'' if kb is None else kb}</td>
-<td class="num">{'' if ub is None else ub}</td>
-<td><span class="tag {html.escape(best['status'] if best else 'none')}">{html.escape(best['status'] if best else 'no result')}</span>
+<td data-label="Problem" class="mono">{html.escape(pid)}</td>
+<td data-label="Domain">{html.escape(p['domain'])}</td>
+<td data-label="Certified" class="num">{'' if not best else f"{best['best_value']:g}"}</td>
+<td data-label="Known best" class="num">{'' if kb is None else kb}</td>
+<td data-label="Upper bound" class="num">{'' if ub is None else ub}</td>
+<td data-label="Status"><span class="tag {html.escape(best['status'] if best else 'none')}">{html.escape(best['status'] if best else 'no result')}</span>
 {'<span class="tag exh">optimal in family (exhaustive)</span>' if complete else ''}</td>
-<td class="mono small">{html.escape(str(witness))}</td>
-<td class="num">{attempts:,}</td>
-<td class="num">${cost:.2f}</td>
-<td class="mono small">{'' if not cert else f'probatio verify {cert[:16]}…'}</td>
+<td data-label="Witness" class="mono small">{html.escape(str(witness))}</td>
+<td data-label="Checked" class="num">{attempts:,}</td>
+<td data-label="Cost" class="num">${cost:.2f}</td>
+<td data-label="Verify" class="mono small">{'' if not cert else f'probatio verify {cert[:16]}…'}</td>
 </tr>""")
 
     audit_html = ("<p class='ok'>Ledger audit: intact — "
@@ -67,7 +67,11 @@ th{{font-weight:400;color:var(--mut);text-transform:uppercase;font-size:11px;let
 .num{{text-align:right;font-variant-numeric:tabular-nums}} .mono{{font-family:ui-monospace,Menlo,monospace}} .small{{font-size:11px}}
 .tag{{display:inline-block;border:1px solid var(--line);padding:1px 6px;margin:1px 2px 1px 0;font-size:11px}}
 .CANDIDATE-NEW{{border-color:var(--acc);color:var(--acc)}} .exh{{color:var(--mut)}}
-.ok{{color:var(--mut)}} .bad{{color:#c0392b}} footer{{color:var(--mut);font-size:12px;margin-top:24px}}
+.ok{{color:var(--mut)}}
+@media (max-width:700px){{thead{{display:none}} table,tbody,tr,td{{display:block;width:auto}}
+tr{{border:1px solid var(--line);padding:10px 12px;margin:0 0 12px}} td{{border:0;padding:3px 0;text-align:left!important}}
+td:empty{{display:none}} td::before{{content:attr(data-label);display:block;color:var(--mut);font:400 10px -apple-system,sans-serif;text-transform:uppercase;letter-spacing:.06em}}
+td:first-child{{font-size:15px}} td:first-child::before{{display:none}}}} .bad{{color:#c0392b}} footer{{color:var(--mut);font-size:12px;margin-top:24px}}
 </style></head><body><main>
 <h1>PROBATIO</h1>
 <p class="sub">Verified discovery engine — every result below is re-checkable from its certificate.</p>
