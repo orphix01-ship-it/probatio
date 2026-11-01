@@ -6,7 +6,7 @@ import json
 import sys
 from pathlib import Path
 
-from . import orchestrator, registry, report
+from . import orchestrator, registry, report, site
 from .ledger import Ledger
 
 
@@ -32,6 +32,7 @@ def main(argv: list[str] | None = None) -> int:
 
     sub.add_parser("audit", help="check ledger hash chain and certificate integrity")
     sub.add_parser("report", help="build static HTML report")
+    sub.add_parser("site", help="build the public results site (results/site/index.html)")
 
     a = ap.parse_args(argv)
 
@@ -70,6 +71,10 @@ def main(argv: list[str] | None = None) -> int:
 
     if a.cmd == "report":
         print(report.build(a.results))
+        return 0
+    if a.cmd == "site":
+        page, _ = site.build(a.results)
+        print(page)
         return 0
     return 2
 

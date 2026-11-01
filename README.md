@@ -84,6 +84,7 @@ python3 -m probatio.cli verify --all       # re-certify every stored result from
 python3 -m probatio.cli audit              # verify the ledger hash chain
 python3 -m probatio.cli run qec.cyclic.n9.k1 --proposer exhaustive
 python3 -m probatio.cli report             # results/report.html
+python3 -m probatio.cli site               # results/site/index.html: public page with in-browser verification
 ```
 
 AI proposers:

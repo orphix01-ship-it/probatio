@@ -1,0 +1,488 @@
+<title>PROBATIO</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Verified discovery engine. Every result is re-checkable in your browser from its certificate.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap">
+<style>
+/* Layout: a register of results beside a certificate sheet; ledger and method as sibling views. */
+:root{
+  --paper:#fafafb; --sheet:#ffffff; --ink:#15171b; --mute:#686c76; --rule:#e3e4e8; --soft:#f2f2f4;
+  --gold:#8a6a1c; --pass:#2e7a4c; --fail:#b0392d;
+  --px:#2a5a96; --pz:#94304f; --py:#6b5596;
+  --display:"Cormorant Garamond","Iowan Old Style",Georgia,serif;
+  --sans:"IBM Plex Sans",-apple-system,"Helvetica Neue",Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0c0d0f; --sheet:#121316; --ink:#ebebee; --mute:#8f939c; --rule:#25272c; --soft:#1a1b1f;
+  --gold:#c9a052; --pass:#6dbb8a; --fail:#e0766a; --px:#7fa6dd; --pz:#dc7f9c; --py:#ad9ad8; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0c0d0f; --sheet:#121316; --ink:#ebebee; --mute:#8f939c; --rule:#25272c; --soft:#1a1b1f;
+  --gold:#c9a052; --pass:#6dbb8a; --fail:#e0766a; --px:#7fa6dd; --pz:#dc7f9c; --py:#ad9ad8; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font:300 15px/1.6 var(--sans);-webkit-font-smoothing:antialiased}
+.wrap{max-width:1240px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+a{color:inherit}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.mono{font-family:var(--mono);font-weight:400}
+.label{font:500 10.5px/1.4 var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
+h1,h2,h3{font-weight:300;margin:0;text-wrap:balance}
+
+/* masthead */
+header.mast{border-bottom:1px solid var(--rule);background:var(--paper)}
+.mast .wrap{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px 32px;padding-block:28px 0}
+.brand h1{font:300 clamp(34px,5vw,48px)/1 var(--display);letter-spacing:.14em}
+.brand p{margin:8px 0 0;color:var(--mute);max-width:60ch}
+nav.tabs{display:flex;gap:4px;margin-top:18px}
+nav.tabs a{padding:10px 14px;text-decoration:none;color:var(--mute);border-bottom:2px solid transparent;font-weight:400}
+nav.tabs a[aria-current="page"]{color:var(--ink);border-color:var(--gold)}
+.stats{display:flex;flex-wrap:wrap;gap:6px 28px;padding-block:18px;width:100%;border-top:1px solid var(--rule);margin-top:20px}
+.stat b{font:400 15px var(--mono);display:block;font-variant-numeric:tabular-nums}
+.stat span{color:var(--mute);font-size:12px}
+
+main{padding-block:28px 64px}
+.view[hidden]{display:none!important}
+
+/* results view */
+.results{display:grid;grid-template-columns:minmax(260px,320px) minmax(0,1fr);gap:28px;align-items:start}
+.register{position:sticky;top:calc(16px + env(safe-area-inset-top,0px));max-height:calc(100vh - 32px - env(safe-area-inset-top,0px));overflow-y:auto;border:1px solid var(--rule);background:var(--sheet)}
+.register .head{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--rule)}
+.reg-group{padding:6px 0;border-bottom:1px solid var(--rule)}
+.reg-group:last-child{border-bottom:0}
+.reg-group .label{padding:8px 14px 4px;display:block}
+.reg-item{display:grid;grid-template-columns:1fr auto;gap:2px 10px;width:100%;text-align:left;background:none;border:0;border-left:2px solid transparent;padding:7px 14px 7px 12px;cursor:pointer}
+.reg-item:hover{background:var(--soft)}
+.reg-item[aria-current="true"]{border-left-color:var(--gold);background:var(--soft)}
+.reg-item .t{font-weight:400}
+.reg-item .v{font:400 13px var(--mono);font-variant-numeric:tabular-nums;color:var(--ink)}
+.reg-item .s{grid-column:1/-1;font-size:11.5px;color:var(--mute)}
+.reg-item .dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:6px;vertical-align:1px;background:var(--rule)}
+.reg-item .dot.ok{background:var(--pass)} .reg-item .dot.bad{background:var(--fail)}
+.btn{border:1px solid var(--ink);background:var(--ink);color:var(--paper);padding:9px 16px;cursor:pointer;font-weight:400;letter-spacing:.02em}
+.btn:hover{opacity:.88}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--rule)}
+.btn.small{padding:5px 10px;font-size:12.5px}
+.btn:disabled{opacity:.5;cursor:default}
+
+/* certificate sheet */
+.sheet{background:var(--sheet);border:1px solid var(--rule);min-width:0}
+.sheet > section{padding:24px clamp(18px,3vw,36px);border-bottom:1px solid var(--rule)}
+.sheet > section:last-child{border-bottom:0}
+.eyebrow{display:flex;flex-wrap:wrap;gap:6px 16px}
+.sheet h2{font:300 clamp(28px,3.4vw,40px)/1.1 var(--display);margin-top:10px}
+.statement{color:var(--mute);max-width:68ch;margin:12px 0 0}
+.figures{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:18px;margin-top:22px}
+.fig .n{font:300 44px/1 var(--display);font-variant-numeric:lining-nums tabular-nums;margin-top:6px}
+.fig .n.dim{color:var(--mute)}
+.fig small{display:block;color:var(--mute);font-size:12px;margin-top:4px;max-width:28ch}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:18px}
+.chip{border:1px solid var(--rule);padding:2px 9px;font-size:12px;color:var(--mute)}
+.chip.gold{border-color:var(--gold);color:var(--gold)}
+.chip.pass{border-color:var(--pass);color:var(--pass)}
+
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px}
+.diagram{width:100%;max-width:340px;height:auto;display:block;margin:6px auto 0}
+.diagram text{font-family:var(--mono);font-size:13px}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--mute);margin-top:8px;justify-content:center}
+.sw{display:inline-block;width:9px;height:9px;margin-right:5px;vertical-align:0}
+
+.matrix{overflow-x:auto;margin-top:10px}
+.matrix table{border-collapse:collapse;font:400 13px/1 var(--mono)}
+.matrix td{width:22px;height:22px;text-align:center;border:1px solid var(--rule)}
+.matrix td.rowlab{border:0;color:var(--mute);font-size:11px;padding-right:8px;width:auto;text-align:right}
+.pX{color:var(--px)} .pZ{color:var(--pz)} .pY{color:var(--py)} .pI{color:var(--rule)}
+.bX{background:var(--px)} .bZ{background:var(--pz)} .bY{background:var(--py)}
+
+ol.steps{margin:12px 0 0;padding:0;list-style:none;counter-reset:s}
+ol.steps li{counter-increment:s;display:grid;grid-template-columns:28px minmax(0,1fr);gap:8px;padding:7px 0;border-top:1px solid var(--rule)}
+ol.steps li:first-child{border-top:0}
+ol.steps li::before{content:counter(s);font:400 12px/1.9 var(--mono);color:var(--mute)}
+ol.steps li code{font-family:var(--mono);font-size:13px;word-break:break-all}
+
+.verify-out{margin-top:16px}
+.verdict{display:flex;align-items:baseline;flex-wrap:wrap;gap:6px 14px;padding:12px 0 4px}
+.verdict b{font:500 13px var(--mono);letter-spacing:.08em}
+.verdict.pass b{color:var(--pass)} .verdict.fail b{color:var(--fail)}
+.hashrow{display:grid;grid-template-columns:110px minmax(0,1fr);gap:4px 12px;font-size:12.5px;margin-top:8px}
+.hashrow code{font-family:var(--mono);word-break:break-all}
+.try{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.try input{flex:1 1 260px;min-width:0;border:1px solid var(--rule);background:var(--paper);padding:9px 12px;font-family:var(--mono);font-size:13.5px}
+details{margin-top:6px}
+summary{cursor:pointer;color:var(--mute)}
+pre.json{overflow:auto;max-height:420px;background:var(--soft);padding:14px;font:400 12px/1.5 var(--mono);margin:10px 0 0}
+table.data{border-collapse:collapse;width:100%;font-size:13px}
+table.data th{font:500 10.5px var(--sans);letter-spacing:.1em;text-transform:uppercase;color:var(--mute);text-align:left;padding:8px 10px;border-bottom:1px solid var(--rule)}
+table.data td{padding:8px 10px;border-bottom:1px solid var(--rule);vertical-align:top}
+table.data td.num{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--mono)}
+.scroll{overflow-x:auto}
+.refs{margin:8px 0 0;padding-left:18px;color:var(--mute)}
+
+/* ledger + method */
+.panel{background:var(--sheet);border:1px solid var(--rule);padding:24px clamp(18px,3vw,36px)}
+.panel + .panel{margin-top:20px}
+.panel h2{font:300 32px/1.15 var(--display)}
+.prose{max-width:68ch}
+.prose p{margin:12px 0}
+.flow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;margin-top:20px;border:1px solid var(--rule)}
+.flow div{padding:16px;border-left:1px solid var(--rule)}
+.flow div:first-child{border-left:0}
+.flow b{display:block;font:400 22px var(--display);margin:4px 0}
+.flow p{margin:0;color:var(--mute);font-size:13.5px}
+.chain-ok{color:var(--pass)} .chain-bad{color:var(--fail)}
+footer{color:var(--mute);font-size:12.5px;border-top:1px solid var(--rule)}
+footer .wrap{padding-block:20px 32px}
+
+@media (max-width:860px){
+  .results{grid-template-columns:minmax(0,1fr)}
+  .register{position:static;max-height:none;overflow:visible}
+  .two{grid-template-columns:minmax(0,1fr)}
+  .flow{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .flow div:nth-child(3){border-left:0}
+  .flow div:nth-child(n+3){border-top:1px solid var(--rule)}
+}
+@media (max-width:480px){.flow{grid-template-columns:minmax(0,1fr)} .flow div{border-left:0;border-top:1px solid var(--rule)} .flow div:first-child{border-top:0}}
+@media (prefers-reduced-motion:no-preference){.reg-item,.btn{transition:background .15s,opacity .15s}}
+</style>
+
+<header class="mast">
+  <div class="wrap">
+    <div class="brand">
+      <h1>PROBATIO</h1>
+      <p>A verified discovery engine. Search and AI propose answers to open problems in mathematics and physics; exact checkers certify them. Every result here can be re-checked in your browser.</p>
+    </div>
+    <nav class="tabs" aria-label="Views">
+      <a href="#results" data-view="results">Results</a>
+      <a href="#ledger" data-view="ledger">Ledger</a>
+      <a href="#method" data-view="method">Method</a>
+    </nav>
+    <div class="stats" id="stats"></div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="view" id="view-results">
+    <div class="results">
+      <aside class="register" aria-label="Results">
+        <div class="head">
+          <span class="label">Register</span>
+          <button class="btn small ghost" id="verify-all" type="button">Verify all here</button>
+        </div>
+        <div id="register"></div>
+      </aside>
+      <article class="sheet" id="sheet" aria-live="polite"></article>
+    </div>
+  </div>
+
+  <div class="view" id="view-ledger" hidden>
+    <div class="panel">
+      <span class="label">Append-only record</span>
+      <h2>Ledger</h2>
+      <div class="prose"><p>Every certificate and every run, successful or not, is appended here. Each entry stores the SHA-256 hash of the entry before it, so changing, deleting or reordering any past entry breaks the chain from that point on.</p></div>
+      <div class="try"><button class="btn" id="audit" type="button">Audit the chain in this browser</button><span id="audit-out" style="align-self:center"></span></div>
+    </div>
+    <div class="panel"><div class="scroll"><table class="data" id="ledger-table"></table></div></div>
+  </div>
+
+  <div class="view" id="view-method" hidden>
+    <div class="panel">
+      <span class="label">How it works</span>
+      <h2>Propose, certify, record</h2>
+      <div class="flow">
+        <div><span class="label">Untrusted</span><b>Propose</b><p>Exhaustive search, annealing, or an AI model suggests candidates. Nothing it says is believed.</p></div>
+        <div><span class="label">Contained</span><b>Sandbox</b><p>AI-written programs run without network, process spawning or file access outside a scratch folder.</p></div>
+        <div><span class="label">Trusted</span><b>Certify</b><p>A small exact checker recomputes every claim from the raw candidate.</p></div>
+        <div><span class="label">Tamper-evident</span><b>Record</b><p>Certificates are stored by content hash in a hash-chained ledger.</p></div>
+      </div>
+      <div class="prose">
+        <p><strong>Why.</strong> AI systems can now generate mathematical candidates far faster than people can. The results that hold up, such as AI agents settling open Erdős problems in Lean, all rest on a checker that confirms each one independently. PROBATIO is an open implementation of that loop.</p>
+        <p><strong>Trust levels.</strong> T1 means a proof assistant kernel decided (Lean). T2 means exact integer or GF(2) computation by open, tested code. Floating-point simulation is never enough on its own.</p>
+        <p><strong>Two implementations.</strong> The Python checkers produce certificates. This page re-checks them with a separate JavaScript implementation of the same method. The two are tested against each other on every stored certificate.</p>
+        <p><strong>Optimal in family.</strong> When an exhaustive search covers a whole symmetry-reduced family, the best result is optimal within that family. That claim comes from open search code, is labelled separately from the certificate, and its symmetry reduction is tested against brute force.</p>
+        <p><strong>Limits.</strong> Experimental and unaudited. Verification proves correctness, not novelty. The current results are calibration: known optima rediscovered from scratch. A result that beats the recorded best is marked CANDIDATE-NEW and is claimed only after a human literature review.</p>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer><div class="wrap" id="foot"></div></footer>
+
+<script>
+/*__VERIFY_JS__*/
+</script>
+<script>
+(() => {
+"use strict";
+const DATA = /*__DATA__*/null;
+const V = ProbatioVerify;
+const $ = (s, el = document) => el.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmt = (n) => Number(n).toLocaleString("en-US");
+const byId = Object.fromEntries(DATA.results.map(r => [r.id, r]));
+const slug = (id) => "r-" + id.replace(/[^a-z0-9]+/gi, "-");
+const fromSlug = Object.fromEntries(DATA.results.map(r => [slug(r.id), r.id]));
+const verified = {};   // id -> true/false after in-browser check
+
+function title(r) {
+  if (r.checker === "stabilizer_code") return `Cyclic quantum code on ${r.params.n} qubits`;
+  if (r.checker === "golomb_ruler") return `Golomb ruler with ${r.params.marks} marks`;
+  return r.id;
+}
+function short(r) {
+  if (r.checker === "stabilizer_code") return `n = ${r.params.n}, k = ${r.params.k}`;
+  if (r.checker === "golomb_ruler") return `${r.params.marks} marks`;
+  return r.id;
+}
+function metric(r) { return r.objective.field === "d" ? "d" : r.objective.field; }
+function valueText(r) { return r.best_value == null ? "—" : `${metric(r)} = ${fmt(r.best_value)}`; }
+function statusText(r) {
+  return { "matches-known": "matches known best", "below-known": "below known best", "CANDIDATE-NEW": "CANDIDATE-NEW",
+           "no-recorded-bound": "no recorded best", "no-valid-result": "no result yet" }[r.status] || r.status;
+}
+function cert(r) { return r.best_cert ? JSON.parse(DATA.certs[r.best_cert]) : null; }
+
+/* ---------- stats & footer ---------- */
+function renderStats() {
+  const certified = DATA.results.filter(r => r.best_cert).length;
+  const attempts = DATA.results.reduce((a, r) => a + r.attempts, 0);
+  const optimal = DATA.results.filter(r => r.exhaustive).length;
+  $("#stats").innerHTML = [
+    [certified, "certified results"], [optimal, "proved optimal in family"],
+    [fmt(attempts), "candidates checked"], [DATA.ledger.length, "ledger entries"], ["$0.00", "model spend"]
+  ].map(([b, s]) => `<div class="stat"><b>${b}</b><span>${s}</span></div>`).join("");
+  $("#foot").innerHTML = `PROBATIO v0.1 · experimental, unaudited · data as of ${esc((DATA.generated || "").replace("T", " ").replace("+00:00", " UTC"))} · verification proves correctness, not novelty`;
+}
+
+/* ---------- register ---------- */
+function renderRegister(current) {
+  const groups = [["quantum-codes", "Quantum error correction"], ["combinatorics", "Combinatorics"], ["formal-proof", "Formal proof"]];
+  $("#register").innerHTML = groups.map(([d, name]) => {
+    const items = DATA.results.filter(r => r.domain === d);
+    if (!items.length) return "";
+    return `<div class="reg-group"><span class="label">${name}</span>${items.map(r => {
+      const dot = verified[r.id] === true ? "ok" : verified[r.id] === false ? "bad" : "";
+      const sub = r.best_cert ? (r.exhaustive ? "optimal in family" : statusText(r)) : "open target";
+      return `<button type="button" class="reg-item" data-id="${esc(r.id)}" aria-current="${r.id === current}">
+        <span class="t">${esc(short(r))}</span><span class="v">${esc(valueText(r))}</span>
+        <span class="s"><i class="dot ${dot}"></i>${esc(sub)}</span></button>`;
+    }).join("")}</div>`;
+  }).join("");
+  $("#register").querySelectorAll(".reg-item").forEach(b => b.addEventListener("click", () => {
+    location.hash = slug(b.dataset.id);
+    if (window.matchMedia("(max-width:860px)").matches) $("#sheet").scrollIntoView({ behavior: "smooth", block: "start" });
+  }));
+}
+
+/* ---------- diagrams ---------- */
+function ringSVG(seed, support) {
+  const n = seed.length, R = 120, cx = 170, cy = 160, sel = new Set(support || []);
+  let s = `<svg class="diagram" viewBox="0 0 340 330" role="img" aria-label="Seed ${esc(seed)} placed on a ring of ${n} qubits">`;
+  s += `<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="var(--rule)" stroke-width="1"/>`;
+  for (let i = 0; i < n; i++) {
+    const a = -Math.PI / 2 + (2 * Math.PI * i) / n, x = cx + R * Math.cos(a), y = cy + R * Math.sin(a);
+    const p = seed[i], hit = sel.has(i);
+    const fill = p === "I" ? "var(--sheet)" : `var(--p${p.toLowerCase()})`;
+    s += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="15" fill="${fill}" stroke="${hit ? "var(--gold)" : p === "I" ? "var(--rule)" : fill}" stroke-width="${hit ? 3 : 1}"/>`;
+    s += `<text x="${x.toFixed(1)}" y="${(y + 4.5).toFixed(1)}" text-anchor="middle" fill="${p === "I" ? "var(--mute)" : "var(--sheet)"}">${p}</text>`;
+    const lx = cx + (R + 30) * Math.cos(a), ly = cy + (R + 30) * Math.sin(a);
+    s += `<text x="${lx.toFixed(1)}" y="${(ly + 4).toFixed(1)}" text-anchor="middle" fill="var(--mute)" style="font-size:10px">${i}</text>`;
+  }
+  s += `<text x="${cx}" y="${cy - 4}" text-anchor="middle" fill="var(--ink)" style="font-size:12px">seed</text>`;
+  s += `<text x="${cx}" y="${cy + 14}" text-anchor="middle" fill="var(--mute)" style="font-size:11px">rotated ${n} times</text>`;
+  return s + "</svg>";
+}
+function rulerSVG(marks) {
+  const L = marks[marks.length - 1], W = 320, x0 = 10, sc = (W - 2 * x0) / L;
+  let s = `<svg class="diagram" viewBox="0 0 ${W} 90" role="img" aria-label="Ruler with marks ${marks.join(", ")}">`;
+  s += `<line x1="${x0}" y1="40" x2="${W - x0}" y2="40" stroke="var(--ink)" stroke-width="1"/>`;
+  for (let i = 0; i <= L; i++) {
+    const x = x0 + i * sc;
+    s += `<line x1="${x.toFixed(1)}" y1="40" x2="${x.toFixed(1)}" y2="${i % 5 ? 44 : 47}" stroke="var(--rule)" stroke-width="1"/>`;
+  }
+  marks.forEach((m, i) => {
+    const x = x0 + m * sc;
+    s += `<line x1="${x.toFixed(1)}" y1="22" x2="${x.toFixed(1)}" y2="40" stroke="var(--gold)" stroke-width="2"/>`;
+    s += `<text x="${x.toFixed(1)}" y="${i % 2 ? 66 : 16}" text-anchor="middle" fill="var(--ink)" style="font-size:10px">${m}</text>`;
+  });
+  return s + "</svg>";
+}
+function matrixHTML(gens) {
+  return `<div class="matrix"><table aria-label="Stabilizer generators">${gens.map((g, i) =>
+    `<tr><td class="rowlab">g${i}</td>${[...g].map(c => `<td class="p${c}">${c === "I" ? "·" : c}</td>`).join("")}</tr>`).join("")}</table></div>`;
+}
+
+/* ---------- certificate sheet ---------- */
+function renderSheet(id) {
+  const r = byId[id], c = cert(r), isCode = r.checker === "stabilizer_code";
+  const ub = r.upper_bound && r.upper_bound.value, kb = r.known_best && r.known_best.value;
+  const chips = [];
+  if (r.exhaustive) chips.push(`<span class="chip gold">optimal in family (exhaustive)</span>`);
+  if (r.best_cert) chips.push(`<span class="chip">${esc(statusText(r))}</span>`);
+  if (verified[r.id] === true) chips.push(`<span class="chip pass">verified in this browser</span>`);
+
+  let html = `<section>
+    <div class="eyebrow"><span class="label">${esc(r.domain.replace("-", " "))}</span><span class="label">${esc(c ? c.checker : r.checker)}</span><span class="label">${c ? (c.trust === "T1" ? "T1 kernel" : "T2 exact") : "no certificate"}</span></div>
+    <h2>${esc(title(r))}</h2>
+    <p class="statement">${esc(r.statement)}</p>
+    <div class="figures">
+      <div class="fig"><span class="label">Certified</span><div class="n">${r.best_value == null ? "—" : `${isCode ? "d = " : ""}${fmt(r.best_value)}`}</div><small>${isCode ? "code distance: corrects any error on up to " + (r.best_value ? Math.floor((r.best_value - 1) / 2) : 0) + " qubit(s)" : "ruler length"}</small></div>
+      <div class="fig"><span class="label">${isCode ? "Upper bound" : "Proven optimum"}</span><div class="n dim">${isCode ? (ub ?? "—") : (kb ?? "—")}</div><small>${esc(isCode ? (r.upper_bound ? "quantum Singleton bound, all stabilizer codes" : "") : (r.known_best ? "OEIS A003022" : ""))}</small></div>
+      <div class="fig"><span class="label">Search</span><div class="n dim">${fmt(r.attempts)}</div><small>candidates checked in ${r.seconds}s across ${r.runs.length} run${r.runs.length === 1 ? "" : "s"}, $${r.cost_usd.toFixed(2)} model spend</small></div>
+    </div>
+    <div class="chips">${chips.join("")}</div>
+  </section>`;
+
+  if (!c) {
+    html += `<section><span class="label">Open target</span><p class="statement">No certified result yet. The annealing baseline found no valid ruler. Exhaustive search at this size is the next calibration step, and it is a natural first target for the AI proposers.</p>
+      ${tryHTML(r)}</section>`;
+    $("#sheet").innerHTML = html;
+    wireTry(r);
+    return;
+  }
+
+  const cand = c.candidate;
+  html += `<section><div class="two">
+    <div><span class="label">${isCode ? "The code" : "The ruler"}</span>
+      <div id="viz">${isCode ? ringSVG(cand.seed) : rulerSVG([...cand.marks].sort((a, b) => a - b))}</div>
+      ${isCode ? `<div class="legend"><span><i class="sw bX"></i>X</span><span><i class="sw bZ"></i>Z</span><span><i class="sw bY"></i>Y</span><span>· identity</span><span id="viz-note"></span></div>` : `<div class="legend" id="viz-note">marks: ${esc(cand.marks.join(", "))}</div>`}
+    </div>
+    <div><span class="label">${isCode ? `Stabilizer generators (${cand.generators.length})` : "Pairwise differences"}</span>
+      ${isCode ? matrixHTML(cand.generators) : `<p class="mono" style="font-size:13px;line-height:1.9;margin:10px 0 0;word-spacing:4px">${esc(V.checkGolomb({ params: r.params }, cand).differences.join(" "))}</p>`}
+    </div>
+  </div></section>`;
+
+  html += `<section><span class="label">Checker transcript, from the certificate</span>
+    <ol class="steps">${c.verdict.transcript.map(t => `<li><span>${esc(t)}</span></li>`).join("")}</ol></section>`;
+
+  html += `<section><span class="label">Verify independently</span>
+    <p class="statement">Recompute the certificate's content hash, then re-run the check with this page's own JavaScript implementation. Nothing is sent anywhere.</p>
+    <div class="try"><button class="btn" type="button" id="verify-one">Verify in this browser</button></div>
+    <div class="verify-out" id="verify-out"></div>
+    ${tryHTML(r, cand)}
+  </section>`;
+
+  html += `<section><span class="label">Provenance</span>
+    <div class="scroll"><table class="data" style="margin-top:10px"><thead><tr><th>Proposer</th><th>Checked</th><th>Best</th><th>Exhaustive</th><th>Seconds</th></tr></thead>
+    <tbody>${r.runs.map(u => `<tr><td>${esc(u.proposer)}</td><td class="num">${fmt(u.candidates_checked)}</td><td class="num">${u.best_value == null ? "—" : fmt(u.best_value)}</td><td>${u.exhaustive_complete ? "complete" : "—"}</td><td class="num">${u.seconds}</td></tr>`).join("")}</tbody></table></div>
+    <details><summary>Full certificate (content address ${esc(r.best_cert.slice(0, 16))}…)</summary>
+      <div class="try"><button class="btn small ghost" type="button" id="copy-cert">Copy JSON</button><span id="copy-out" style="align-self:center;color:var(--mute);font-size:12.5px"></span></div>
+      <pre class="json" id="cert-json">${esc(JSON.stringify(c, null, 2))}</pre></details>
+    ${r.references.length ? `<p class="label" style="margin-top:18px">References</p><ul class="refs">${r.references.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}
+  </section>`;
+
+  $("#sheet").innerHTML = html;
+  $("#verify-one").addEventListener("click", () => verifyOne(r));
+  $("#copy-cert").addEventListener("click", async () => {
+    const text = DATA.certs[r.best_cert];
+    try { await navigator.clipboard.writeText(text); $("#copy-out").textContent = "Copied"; }
+    catch (_) { const sel = getSelection(), rg = document.createRange(); rg.selectNodeContents($("#cert-json")); sel.removeAllRanges(); sel.addRange(rg); $("#copy-out").textContent = "Selected; press Copy"; }
+  });
+  wireTry(r);
+}
+
+function tryHTML(r, cand) {
+  const isCode = r.checker === "stabilizer_code";
+  const val = cand ? (isCode ? cand.seed : cand.marks.join(", ")) : "";
+  return `<p class="label" style="margin-top:22px">Try your own candidate</p>
+    <p class="statement" style="margin-top:6px">${isCode ? `Edit the seed (letters I, X, Y, Z, length ${r.params.n}) and run the checker. Change one letter and the claim usually fails.` : `Enter ${r.params.marks} comma-separated marks starting at 0.`}</p>
+    <form class="try" id="try-form"><label class="label" for="try-input" style="position:absolute;left:-9999px">Candidate</label>
+      <input id="try-input" value="${esc(val)}" autocomplete="off" spellcheck="false">
+      <button class="btn ghost" type="submit">Check</button></form>
+    <div class="verify-out" id="try-out"></div>`;
+}
+function wireTry(r) {
+  const f = $("#try-form"); if (!f) return;
+  f.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const raw = $("#try-input").value.trim();
+    let cand;
+    if (r.checker === "stabilizer_code") { const seed = raw.toUpperCase().replace(/\s+/g, ""); cand = { seed, generators: V.cyclicShifts(seed) }; }
+    else cand = { marks: raw.split(/[\s,]+/).filter(Boolean).map(Number) };
+    const t0 = performance.now(), res = V.check(r, cand), ms = (performance.now() - t0).toFixed(0);
+    const out = $("#try-out");
+    if (!res.valid) { out.innerHTML = `<div class="verdict fail"><b>REJECTED</b><span>${esc(res.reason)}</span></div>`; return; }
+    const v = r.objective.field === "d" ? res.score.d : res.score.length;
+    const cmp = r.best_value == null ? "" : (v === r.best_value ? "equals the certified result" : ((r.objective.sense === "maximize" ? v > r.best_value : v < r.best_value) ? "beats the certified result: re-check it with the Python checker before believing it" : "is worse than the certified result"));
+    out.innerHTML = `<div class="verdict pass"><b>VALID</b><span>${esc(metric(r))} = ${v}, ${esc(cmp)} · ${ms} ms</span></div><ol class="steps">${res.steps.map(s => `<li><span>${esc(s)}</span></li>`).join("")}</ol>`;
+  });
+}
+
+async function verifyCert(r) {
+  const text = DATA.certs[r.best_cert], c = JSON.parse(text);
+  const h = await V.sha256Hex(text);
+  const hashOk = h === r.best_cert;
+  const t0 = performance.now();
+  const res = V.check(r, c.candidate);
+  const ms = performance.now() - t0;
+  const keys = r.checker === "golomb_ruler" ? ["marks", "length"] : ["n", "k", "d", "d_lower"];
+  const claimOk = res.valid && keys.every(k => res.score[k] === c.verdict.score[k]);
+  return { ok: hashOk && claimOk, hashOk, claimOk, h, res, ms, c };
+}
+
+async function verifyOne(r) {
+  const btn = $("#verify-one"); btn.disabled = true; btn.textContent = "Verifying…";
+  const v = await verifyCert(r);
+  verified[r.id] = v.ok;
+  const isCode = r.checker === "stabilizer_code";
+  $("#verify-out").innerHTML = `
+    <div class="verdict ${v.ok ? "pass" : "fail"}"><b>${v.ok ? "PASS" : "FAIL"}</b>
+      <span>${v.ok ? `The certificate is intact and its claim holds: ${esc(metric(r))} = ${r.best_value}.` : esc(!v.hashOk ? "The certificate does not match its content address." : (v.res.reason || "The recomputed result differs from the certified claim."))}</span></div>
+    <div class="hashrow"><span class="label">Address</span><code>${esc(r.best_cert)}</code><span class="label">Recomputed</span><code>${esc(v.h)}</code></div>
+    <ol class="steps">${(v.res.steps || []).map(s => `<li><span>${esc(s)}</span></li>`).join("")}<li><span>Checked ${fmt(v.res.score ? v.res.score.operators_examined ?? 0 : 0)} operators in ${v.ms.toFixed(0)} ms</span></li></ol>`;
+  if (isCode && v.res.score && v.res.score.min_weight_witness) {
+    const w = v.res.score.min_weight_witness, sup = [...w].map((ch, i) => ch !== "I" ? i : -1).filter(i => i >= 0);
+    $("#viz").innerHTML = ringSVG(v.c.candidate.seed, sup);
+    $("#viz-note").textContent = `gold rings: a weight-${sup.length} logical operator`;
+  }
+  btn.disabled = false; btn.textContent = "Verify again";
+  renderRegister(r.id);
+}
+
+/* ---------- verify all ---------- */
+$("#verify-all").addEventListener("click", async (e) => {
+  const b = e.currentTarget; b.disabled = true;
+  const list = DATA.results.filter(r => r.best_cert);
+  let pass = 0;
+  for (const [i, r] of list.entries()) {
+    b.textContent = `Verifying ${i + 1}/${list.length}…`;
+    await new Promise(res => setTimeout(res, 0));
+    const v = await verifyCert(r); verified[r.id] = v.ok; pass += v.ok;
+  }
+  b.textContent = `${pass}/${list.length} verified`; b.disabled = false;
+  const cur = fromSlug[location.hash.slice(1)] || defaultId();
+  renderRegister(cur); renderSheet(cur);
+});
+
+/* ---------- ledger ---------- */
+function renderLedger() {
+  const rows = DATA.ledger.map(e => {
+    const c = JSON.parse(e.core), b = c.body;
+    const what = c.type === "certificate" ? `certificate for ${b.problem_id}: ${b.value}` :
+      `run on ${b.problem_id}: ${b.proposer}, ${fmt(b.candidates_checked)} checked${b.exhaustive_complete ? ", exhaustive" : ""}`;
+    return `<tr><td class="num">${c.seq}</td><td>${esc(c.type)}</td><td>${esc(what)}</td><td class="mono" style="font-size:12px">${esc(e.hash.slice(0, 12))}</td><td class="mono" style="font-size:12px;color:var(--mute)">${esc(c.prev.slice(0, 12))}</td></tr>`;
+  }).join("");
+  $("#ledger-table").innerHTML = `<thead><tr><th>#</th><th>Type</th><th>Entry</th><th>Hash</th><th>Previous</th></tr></thead><tbody>${rows}</tbody>`;
+}
+$("#audit").addEventListener("click", async () => {
+  $("#audit-out").textContent = "Recomputing…";
+  const problems = await V.auditChain(DATA.ledger);
+  $("#audit-out").innerHTML = problems.length ? `<span class="chain-bad">${esc(problems.join("; "))}</span>`
+    : `<span class="chain-ok">Intact: all ${DATA.ledger.length} hashes recomputed and linked.</span>`;
+});
+
+/* ---------- routing ---------- */
+function defaultId() { return byId["qec.cyclic.n13.k1"] ? "qec.cyclic.n13.k1" : DATA.results[0].id; }
+function route() {
+  const h = location.hash.slice(1);
+  const view = h === "ledger" || h === "method" ? h : "results";
+  for (const v of ["results", "ledger", "method"]) $("#view-" + v).hidden = v !== view;
+  document.querySelectorAll("nav.tabs a").forEach(a => a.setAttribute("aria-current", a.dataset.view === view ? "page" : "false"));
+  if (view === "results") { const id = fromSlug[h] || defaultId(); renderRegister(id); renderSheet(id); }
+}
+renderStats(); renderLedger();
+window.addEventListener("hashchange", route);
+route();
+})();
+</script>
