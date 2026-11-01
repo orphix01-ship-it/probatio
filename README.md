@@ -1,0 +1,122 @@
+# PROBATIO
+
+**A verified discovery engine for mathematics and physics.**
+AI models and search algorithms propose. Small, exact checkers certify.
+Only certified results count, and anyone can re-check every one of them.
+
+> *probatio* (Latin): proof, test, demonstration.
+
+---
+
+## Why this exists
+
+AI can now generate mathematical ideas — proofs, constructions, counterexamples —
+faster than any person. In 2025–26, AI systems working this way solved open Erdős
+problems and found new constructions across dozens of problems. What made those
+results credible was never the AI. It was the **checker**: a proof assistant or an
+exact computation that confirms a result independently.
+
+PROBATIO is an open implementation of that loop:
+
+```
+propose at scale  →  certify exactly  →  keep only what is certified  →  learn from feedback
+```
+
+Design rule zero: **the proposer is untrusted.** An AI model, a genetic algorithm and
+a random number generator are treated identically. Trust lives only in checkers.
+
+## What it does today (v0.1)
+
+| Domain | Problem | Checker | Trust |
+|---|---|---|---|
+| Quantum physics | Find quantum error-correcting codes with maximal distance | Exact GF(2) symplectic algebra — commutation, rank, exhaustive minimum-weight logical operator search | T2 exact |
+| Combinatorics | Optimal Golomb rulers | Exact pairwise-difference check | T2 exact |
+| Pure mathematics | Theorems stated in Lean 4 | The Lean kernel, with `sorry`/axiom/tampering guards | T1 kernel |
+
+Proposers: exhaustive search, simulated annealing, direct LLM proposals, and
+FunSearch/AlphaEvolve-style **program evolution** where a model writes generator
+programs that run in a hardened sandbox.
+
+Every result becomes a content-addressed **certificate** recorded in a
+hash-chained, optionally Ed25519-signed **ledger**.
+
+## Calibration results
+
+All results below come from the non-AI baselines and are re-verified from their
+certificates by `probatio verify --all` (31/31 pass). Ledger: 50 entries, chain intact.
+
+**Quantum error-correcting codes — cyclic stabilizer codes encoding one logical qubit**
+
+| n | Certified distance d | Singleton upper bound | Evidence |
+|---|---|---|---|
+| 5 | 3 | 3 | Optimal in family (exhaustive); matches the perfect [[5,1,3]] code |
+| 6 | 2 | 3 | Optimal in family (exhaustive) |
+| 7 | 3 | 4 | Optimal in family (exhaustive) |
+| 8 | 3 | 4 | Optimal in family (exhaustive) |
+| 9 | 3 | 5 | Optimal in family (exhaustive) |
+| 10 | 4 | 5 | Optimal in family (exhaustive) |
+| 11 | 3 | 6 | Optimal in family (exhaustive) |
+| 12 | 4 | 6 | Optimal in family (exhaustive) |
+| 13 | 5 | 7 | Optimal in family (exhaustive); rediscovers the [[13,1,5]] cyclic code |
+| 14 | 5 | 7 | Simulated annealing, 200k candidates |
+| 15 | 5 | 8 | Simulated annealing, 200k candidates |
+
+Note: n = 11 shows the cyclic restriction costs distance. Codes with [[11,1,5]] exist,
+but none of them is cyclic in this sense. That kind of gap is where wider families and
+AI proposers are aimed next.
+
+**Golomb rulers**
+
+| Marks | Certified length | Proven optimum (OEIS A003022) | Evidence |
+|---|---|---|---|
+| 6–10 | 17, 25, 34, 44, 55 | 17, 25, 34, 44, 55 | Exhaustive branch-and-bound |
+| 11 | 72 | 72 | Exhaustive branch-and-bound (877 s) |
+| 12 | — | 85 | Annealing baseline failed: an open target for AI proposers |
+
+## Quick start
+
+```bash
+git clone https://github.com/orphix01-ship-it/probatio && cd probatio
+python3 -m pip install -e '.[dev,sign]'
+python3 -m pytest -q                       # trusted-core tests + independent cross-checks
+python3 -m probatio.cli problems           # list problems
+python3 -m probatio.cli verify --all       # re-certify every stored result from scratch
+python3 -m probatio.cli audit              # verify the ledger hash chain
+python3 -m probatio.cli run qec.cyclic.n9.k1 --proposer exhaustive
+python3 -m probatio.cli report             # results/report.html
+```
+
+AI proposers:
+
+```bash
+export ANTHROPIC_API_KEY=...                       # read from env only; never logged
+export PROBATIO_SANDBOX=docker                     # strongest isolation for generated code
+python3 -m probatio.cli run qec.cyclic.n15.k1 --proposer program_evolution --budget 500 --max-usd 5
+```
+
+## How to read a result
+
+- **Certified** — the checker recomputed the value from the raw candidate.
+  `probatio verify` repeats that on any machine.
+- **Optimal in family (exhaustive)** — an open exhaustive search covered the whole
+  symmetry-reduced family. This is search evidence, labelled separately from the
+  certificate, and its symmetry reduction is tested against brute force.
+- **CANDIDATE-NEW** — beats the recorded best known value. The software never says
+  "new": novelty requires a human literature review, recorded as a signed ledger entry.
+
+## Architecture and security
+
+- [`ARCHITECTURE.md`](ARCHITECTURE.md) — full system design and roadmap
+- [`SECURITY.md`](SECURITY.md) — threat model, mitigations, honest limits
+- [`BUILD_PROMPT.md`](BUILD_PROMPT.md) — the specification used to build it
+
+## Limits
+
+Experimental and unaudited. Verification proves correctness, not novelty. The
+v0.1 results are calibration: they show the engine rediscovers known optima from
+scratch and proves optimality within restricted families. New results are the
+goal of the roadmap, not a claim of this release.
+
+## License
+
+Apache-2.0

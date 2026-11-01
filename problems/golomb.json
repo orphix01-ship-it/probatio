@@ -1,0 +1,184 @@
+[
+  {
+    "id": "golomb.m6",
+    "domain": "combinatorics",
+    "space": "golomb",
+    "statement": "Find a Golomb ruler with 6 marks (integers starting at 0, all pairwise differences distinct) of minimum length.",
+    "candidate_format": {
+      "marks": "list of 6 distinct non-negative integers including 0"
+    },
+    "checker": "golomb_ruler",
+    "params": {
+      "marks": 6,
+      "search_max_length": 27
+    },
+    "objective": {
+      "sense": "minimize",
+      "field": "length"
+    },
+    "known_best": {
+      "value": 17,
+      "source": "Optimal Golomb rulers, OEIS A003022 (proven optimal; distributed.net OGR project for larger m)"
+    },
+    "references": [
+      "OEIS A003022",
+      "distributed.net OGR project"
+    ]
+  },
+  {
+    "id": "golomb.m7",
+    "domain": "combinatorics",
+    "space": "golomb",
+    "statement": "Find a Golomb ruler with 7 marks (integers starting at 0, all pairwise differences distinct) of minimum length.",
+    "candidate_format": {
+      "marks": "list of 7 distinct non-negative integers including 0"
+    },
+    "checker": "golomb_ruler",
+    "params": {
+      "marks": 7,
+      "search_max_length": 35
+    },
+    "objective": {
+      "sense": "minimize",
+      "field": "length"
+    },
+    "known_best": {
+      "value": 25,
+      "source": "Optimal Golomb rulers, OEIS A003022 (proven optimal; distributed.net OGR project for larger m)"
+    },
+    "references": [
+      "OEIS A003022",
+      "distributed.net OGR project"
+    ]
+  },
+  {
+    "id": "golomb.m8",
+    "domain": "combinatorics",
+    "space": "golomb",
+    "statement": "Find a Golomb ruler with 8 marks (integers starting at 0, all pairwise differences distinct) of minimum length.",
+    "candidate_format": {
+      "marks": "list of 8 distinct non-negative integers including 0"
+    },
+    "checker": "golomb_ruler",
+    "params": {
+      "marks": 8,
+      "search_max_length": 44
+    },
+    "objective": {
+      "sense": "minimize",
+      "field": "length"
+    },
+    "known_best": {
+      "value": 34,
+      "source": "Optimal Golomb rulers, OEIS A003022 (proven optimal; distributed.net OGR project for larger m)"
+    },
+    "references": [
+      "OEIS A003022",
+      "distributed.net OGR project"
+    ]
+  },
+  {
+    "id": "golomb.m9",
+    "domain": "combinatorics",
+    "space": "golomb",
+    "statement": "Find a Golomb ruler with 9 marks (integers starting at 0, all pairwise differences distinct) of minimum length.",
+    "candidate_format": {
+      "marks": "list of 9 distinct non-negative integers including 0"
+    },
+    "checker": "golomb_ruler",
+    "params": {
+      "marks": 9,
+      "search_max_length": 54
+    },
+    "objective": {
+      "sense": "minimize",
+      "field": "length"
+    },
+    "known_best": {
+      "value": 44,
+      "source": "Optimal Golomb rulers, OEIS A003022 (proven optimal; distributed.net OGR project for larger m)"
+    },
+    "references": [
+      "OEIS A003022",
+      "distributed.net OGR project"
+    ]
+  },
+  {
+    "id": "golomb.m10",
+    "domain": "combinatorics",
+    "space": "golomb",
+    "statement": "Find a Golomb ruler with 10 marks (integers starting at 0, all pairwise differences distinct) of minimum length.",
+    "candidate_format": {
+      "marks": "list of 10 distinct non-negative integers including 0"
+    },
+    "checker": "golomb_ruler",
+    "params": {
+      "marks": 10,
+      "search_max_length": 65
+    },
+    "objective": {
+      "sense": "minimize",
+      "field": "length"
+    },
+    "known_best": {
+      "value": 55,
+      "source": "Optimal Golomb rulers, OEIS A003022 (proven optimal; distributed.net OGR project for larger m)"
+    },
+    "references": [
+      "OEIS A003022",
+      "distributed.net OGR project"
+    ]
+  },
+  {
+    "id": "golomb.m11",
+    "domain": "combinatorics",
+    "space": "golomb",
+    "statement": "Find a Golomb ruler with 11 marks (integers starting at 0, all pairwise differences distinct) of minimum length.",
+    "candidate_format": {
+      "marks": "list of 11 distinct non-negative integers including 0"
+    },
+    "checker": "golomb_ruler",
+    "params": {
+      "marks": 11,
+      "search_max_length": 82
+    },
+    "objective": {
+      "sense": "minimize",
+      "field": "length"
+    },
+    "known_best": {
+      "value": 72,
+      "source": "Optimal Golomb rulers, OEIS A003022 (proven optimal; distributed.net OGR project for larger m)"
+    },
+    "references": [
+      "OEIS A003022",
+      "distributed.net OGR project"
+    ]
+  },
+  {
+    "id": "golomb.m12",
+    "domain": "combinatorics",
+    "space": "golomb",
+    "statement": "Find a Golomb ruler with 12 marks (integers starting at 0, all pairwise differences distinct) of minimum length.",
+    "candidate_format": {
+      "marks": "list of 12 distinct non-negative integers including 0"
+    },
+    "checker": "golomb_ruler",
+    "params": {
+      "marks": 12,
+      "search_max_length": 95
+    },
+    "objective": {
+      "sense": "minimize",
+      "field": "length"
+    },
+    "known_best": {
+      "value": 85,
+      "source": "Optimal Golomb rulers, OEIS A003022 (proven optimal; distributed.net OGR project for larger m)"
+    },
+    "references": [
+      "OEIS A003022",
+      "distributed.net OGR project"
+    ]
+  }
+]

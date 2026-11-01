@@ -1,0 +1,23 @@
+[
+  {
+    "id": "lean.nat.add_comm",
+    "domain": "formal-proof",
+    "space": "lean",
+    "statement": "Prove in Lean 4 (core library only) that addition of natural numbers is commutative.",
+    "candidate_format": {
+      "lean_source": "complete Lean 4 file containing the exact theorem statement"
+    },
+    "checker": "lean_proof",
+    "params": {
+      "statement": "theorem probatio_add_comm (a b : Nat) : a + b = b + a",
+      "theorem_name": "probatio_add_comm"
+    },
+    "objective": {
+      "sense": "prove"
+    },
+    "known_best": null,
+    "references": [
+      "Lean 4 core: Nat.add_comm"
+    ]
+  }
+]
