@@ -311,6 +311,43 @@ const ProbatioVerify = (() => {
     yield { type: "done", count: seen.size };
   }
 
+
+  // Binary symplectic matrix [X | Z] and a step-by-step GF(2) row reduction.
+  function symplecticMatrix(gens) {
+    const n = gens[0].length;
+    return gens.map(g => {
+      const row = new Array(2 * n).fill(0);
+      for (let i = 0; i < n; i++) { const [bx, bz] = BITS[g[i]]; row[i] = bx; row[n + i] = bz; }
+      return row;
+    });
+  }
+  function* traceRank(gens) {
+    const M = symplecticMatrix(gens), rows = M.length, cols = M[0].length;
+    yield { type: "matrix", M: M.map(r => r.slice()) };
+    let r = 0;
+    for (let c = 0; c < cols && r < rows; c++) {
+      let piv = -1;
+      for (let i = r; i < rows; i++) if (M[i][c]) { piv = i; break; }
+      if (piv < 0) continue;
+      if (piv !== r) { [M[piv], M[r]] = [M[r], M[piv]]; yield { type: "swap", a: r, b: piv, col: c }; }
+      yield { type: "pivot", row: r, col: c };
+      for (let i = 0; i < rows; i++) if (i !== r && M[i][c]) {
+        for (let j = 0; j < cols; j++) M[i][j] ^= M[r][j];
+        yield { type: "xor", target: i, source: r, col: c, rowData: M[i].slice() };
+      }
+      r++;
+    }
+    yield { type: "done", rank: r, zeroRows: rows - r };
+  }
+  function commutationMatrix(gens) {
+    const xz = gens.map(toXZ);
+    return xz.map(a => xz.map(b => {
+      let v = (a[0] & b[1]) ^ (a[1] & b[0]), p = 0;
+      while (v) { v &= v - 1n; p ^= 1; }
+      return p;
+    }));
+  }
+
   // ---------- Ledger ----------
   async function auditChain(entries) {
     const problems = [];
@@ -325,6 +362,6 @@ const ProbatioVerify = (() => {
     return problems;
   }
 
-  return { sha256Hex, sha256Fallback, cyclicShifts, analyseCode, check, checkStabilizer, checkGolomb, auditChain, traceCode, traceGolomb, binom };
+  return { sha256Hex, sha256Fallback, cyclicShifts, analyseCode, check, checkStabilizer, checkGolomb, auditChain, traceCode, traceGolomb, binom, traceRank, symplecticMatrix, commutationMatrix };
 })();
 if (typeof module !== "undefined") module.exports = ProbatioVerify;

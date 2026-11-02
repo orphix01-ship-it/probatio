@@ -25,6 +25,15 @@ for (const f of fs.readdirSync(ROOT + '/problems')) for (const p of JSON.parse(f
       if (last.type !== 'done') { bad++; console.log('GOLOMB TRACE MISMATCH', f); }
     }
   }
+  // GF(2) rank trace must give rank = n - k for every code certificate
+  for (const f of fs.readdirSync(dir)) {
+    const cert = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8'));
+    if (!cert.candidate.generators) continue;
+    let last; for (const ev of V.traceRank(cert.candidate.generators)) last = ev;
+    const sc = cert.verdict.score;
+    if (last.rank !== sc.n - sc.k) { bad++; console.log('RANK MISMATCH', f, last.rank, sc.n - sc.k); }
+    if (V.commutationMatrix(cert.candidate.generators).flat().some(x => x)) { bad++; console.log('COMMUTATION MISMATCH', f); }
+  }
   // a broken ruler must end in a clash
   { let last; for (const ev of V.traceGolomb([0, 1, 3, 4])) last = ev; if (last.type !== 'fail') { bad++; console.log('trace missed clash'); } }
   // SHA-256 fallback vs node crypto
