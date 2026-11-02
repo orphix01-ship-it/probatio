@@ -1,0 +1,51 @@
+{
+  "candidate": {
+    "generators": [
+      "IIYZXXXZZXZZYIZ",
+      "ZIIYZXXXZZXZZYI",
+      "IZIIYZXXXZZXZZY",
+      "YIZIIYZXXXZZXZZ",
+      "ZYIZIIYZXXXZZXZ",
+      "ZZYIZIIYZXXXZZX",
+      "XZZYIZIIYZXXXZZ",
+      "ZXZZYIZIIYZXXXZ",
+      "ZZXZZYIZIIYZXXX",
+      "XZZXZZYIZIIYZXX",
+      "XXZZXZZYIZIIYZX",
+      "XXXZZXZZYIZIIYZ",
+      "ZXXXZZXZZYIZIIY",
+      "YZXXXZZXZZYIZII",
+      "IYZXXXZZXZZYIZI"
+    ],
+    "seed": "IIYZXXXZZXZZYIZ"
+  },
+  "candidate_hash": "c74a589ffbeb25113ce08948012c71c6ef4a5b7a1b020d634e88e6f68a7139bd",
+  "checker": "stabilizer_code@0.1.0",
+  "created_at": "2026-11-02T14:44:29+00:00",
+  "problem_hash": "a279ac5c0f3f1f9f622301471b397eab063027139a140f66b59e271dd444816f",
+  "problem_id": "qec.cyclic.n15.k1",
+  "provenance": {
+    "attempt": 1241,
+    "proposer": "random",
+    "search_space": "cyclic_stabilizer",
+    "seed": 2
+  },
+  "trust": "T2",
+  "verdict": {
+    "score": {
+      "d": 5,
+      "d_lower": null,
+      "k": 1,
+      "min_weight_witness": "XYZIYIIIZIIIIII",
+      "n": 15,
+      "operators_examined": 127313
+    },
+    "transcript": [
+      "family: generators are exactly the n cyclic shifts of the seed",
+      "all 15 generators pairwise commute",
+      "GF(2) rank = 14, so k = 1",
+      "exhaustive search: no logical operator of weight < 5; witness of weight 5: XYZIYIIIZIIIIII"
+    ],
+    "valid": true
+  }
+}

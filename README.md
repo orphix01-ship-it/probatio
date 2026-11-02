@@ -64,7 +64,12 @@ to execute if it changes.
   [[n,1]] optimum at n = 6, 11 and 12.
 
 The preprint is in [`paper/study/`](paper/study/) and the full tables are in
-[`results/study-v1/analysis/`](results/study-v1/analysis/). The AI arms come next.
+[`results/study-v1/analysis/`](results/study-v1/analysis/).
+
+**Version 2** ([`experiments/PROTOCOL-v2.md`](experiments/PROTOCOL-v2.md)) adds structured
+search spaces (quasi-cyclic codes, constructive Golomb rulers), checker-call budgets that make
+results hardware-independent, and a free local-model AI arm. Its classical arms are in progress:
+`scripts/finish_v2.sh` resumes the run from the ledger, then verifies, audits and analyses it.
 
 ```bash
 probatio --results results/study-v1 study plan        # what the protocol will run

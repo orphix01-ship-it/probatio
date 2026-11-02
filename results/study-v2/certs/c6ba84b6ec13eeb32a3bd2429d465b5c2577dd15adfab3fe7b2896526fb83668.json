@@ -1,0 +1,42 @@
+{
+  "candidate": {
+    "generators": [
+      "IZIYZY",
+      "YIZIYZ",
+      "ZYIZIY",
+      "YZYIZI",
+      "IYZYIZ",
+      "ZIYZYI"
+    ],
+    "seed": "IZIYZY"
+  },
+  "candidate_hash": "1ec937c33795baf6154e079fb602dc4d70f6e2f6410a9d7b3c5dc5705fc1c8ed",
+  "checker": "stabilizer_code@0.1.0",
+  "created_at": "2026-11-02T15:29:40+00:00",
+  "problem_hash": "867d58bd4a8a700ffe359119f4941db0669a933b392116574874944cd15d26f1",
+  "problem_id": "qec.cyclic.n6.k1",
+  "provenance": {
+    "attempt": 35,
+    "proposer": "random",
+    "search_space": "cyclic_stabilizer",
+    "seed": 3
+  },
+  "trust": "T2",
+  "verdict": {
+    "score": {
+      "d": 2,
+      "d_lower": null,
+      "k": 1,
+      "min_weight_witness": "YIIYII",
+      "n": 6,
+      "operators_examined": 45
+    },
+    "transcript": [
+      "family: generators are exactly the n cyclic shifts of the seed",
+      "all 6 generators pairwise commute",
+      "GF(2) rank = 5, so k = 1",
+      "exhaustive search: no logical operator of weight < 2; witness of weight 2: YIIYII"
+    ],
+    "valid": true
+  }
+}
