@@ -14,6 +14,19 @@ for (const f of fs.readdirSync(ROOT + '/problems')) for (const p of JSON.parse(f
     const same = r.valid && keys.every(k => r.score[k] === cert.verdict.score[k]);
     same ? ok++ : (bad++, console.log('MISMATCH', f, r.reason, JSON.stringify(r.score), JSON.stringify(cert.verdict.score)));
   }
+  // live-proof traces must end at the same distance / length as the checker
+  for (const f of fs.readdirSync(dir)) {
+    const cert = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8'));
+    if (cert.candidate.generators) {
+      let last; for (const ev of V.traceCode(cert.candidate.generators)) last = ev;
+      if (last.type !== 'found' || last.w !== cert.verdict.score.d) { bad++; console.log('TRACE MISMATCH', f, last); }
+    } else {
+      let last; for (const ev of V.traceGolomb(cert.candidate.marks)) last = ev;
+      if (last.type !== 'done') { bad++; console.log('GOLOMB TRACE MISMATCH', f); }
+    }
+  }
+  // a broken ruler must end in a clash
+  { let last; for (const ev of V.traceGolomb([0, 1, 3, 4])) last = ev; if (last.type !== 'fail') { bad++; console.log('trace missed clash'); } }
   // SHA-256 fallback vs node crypto
   const c = require('crypto');
   for (const s of ['', 'abc', 'x'.repeat(1000), 'Ωmega ✓']) {

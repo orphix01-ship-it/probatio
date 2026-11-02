@@ -135,6 +135,28 @@ table.data td.num{text-align:right;font-variant-numeric:tabular-nums;font-family
 footer{color:var(--mute);font-size:12.5px;border-top:1px solid var(--rule)}
 footer .wrap{padding-block:20px 32px}
 
+
+/* live proof */
+.proof-ctl{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;align-items:center}
+.proof-ctl .status{color:var(--mute);font-size:13px;margin-left:4px}
+.proof-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px;margin-top:16px;align-items:start}
+.alarms{display:grid;grid-template-columns:repeat(auto-fill,minmax(38px,1fr));gap:4px;margin-top:10px}
+.alarm{border:1px solid var(--rule);padding:6px 0 5px;text-align:center;font:400 11px var(--mono);color:var(--mute)}
+.alarm.on{background:var(--gold);border-color:var(--gold);color:var(--sheet)}
+.opline{font:400 15px var(--mono);letter-spacing:.12em;margin-top:14px;word-break:break-all}
+.opline .pI{color:var(--mute)}
+.says{margin-top:10px;min-height:3.2em;font-size:14px}
+.says b{font-weight:500}
+.says.found b{color:var(--pass)}
+.wtable td .bar{height:4px;background:var(--soft);margin-top:6px;position:relative;min-width:60px}
+.wtable td .bar i{position:absolute;inset:0 auto 0 0;background:var(--gold)}
+.wtable tr.cur td{background:var(--soft)}
+.wtable .ok{color:var(--pass)} .wtable .hit{color:var(--gold);font-weight:500}
+.strip{display:flex;flex-wrap:wrap;gap:3px;margin-top:10px}
+.strip span{width:26px;height:26px;display:grid;place-items:center;border:1px solid var(--rule);font:400 10.5px var(--mono);color:var(--mute)}
+.strip span.on{background:var(--gold);border-color:var(--gold);color:var(--sheet)}
+.strip span.clash{background:var(--fail);border-color:var(--fail);color:var(--sheet)}
+@media (max-width:860px){.proof-grid{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:860px){
   .results{grid-template-columns:minmax(0,1fr)}
   .register{position:static;max-height:none;overflow:visible}
@@ -315,6 +337,7 @@ function matrixHTML(gens) {
 
 /* ---------- certificate sheet ---------- */
 function renderSheet(id) {
+  if (proofTimer) { cancelAnimationFrame(proofTimer); clearTimeout(proofTimer); proofTimer = null; }
   const r = byId[id], c = cert(r), isCode = r.checker === "stabilizer_code";
   const ub = r.upper_bound && r.upper_bound.value, kb = r.known_best && r.known_best.value;
   const chips = [];
@@ -356,6 +379,8 @@ function renderSheet(id) {
   html += `<section><span class="label">Checker transcript, from the certificate</span>
     <ol class="steps">${c.verdict.transcript.map(t => `<li><span>${esc(t)}</span></li>`).join("")}</ol></section>`;
 
+  html += proofSectionHTML(r, cand);
+
   html += `<section><span class="label">Verify independently</span>
     <p class="statement">Recompute the certificate's content hash, then re-run the check with this page's own JavaScript implementation. Nothing is sent anywhere.</p>
     <div class="try"><button class="btn" type="button" id="verify-one">Verify in this browser</button></div>
@@ -374,6 +399,7 @@ function renderSheet(id) {
 
   $("#sheet").innerHTML = html;
   $("#verify-one").addEventListener("click", () => verifyOne(r));
+  wireProof(r, cand);
   $("#copy-cert").addEventListener("click", async () => {
     const text = DATA.certs[r.best_cert];
     try { await navigator.clipboard.writeText(text); $("#copy-out").textContent = "Copied"; }
@@ -438,6 +464,217 @@ async function verifyOne(r) {
   }
   btn.disabled = false; btn.textContent = "Verify again";
   renderRegister(r.id);
+}
+
+
+/* ---------- live proof ---------- */
+let proofTimer = null;
+const TYPES = "XZY";
+
+function opRingSVG(n, op, found) {
+  const R = 120, cx = 170, cy = 160;
+  let s = `<svg class="diagram" viewBox="0 0 340 330" role="img" aria-label="Error being tested on ${n} qubits">`;
+  s += `<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="var(--rule)" stroke-width="1"/>`;
+  for (let i = 0; i < n; i++) {
+    const a = -Math.PI / 2 + (2 * Math.PI * i) / n, x = cx + R * Math.cos(a), y = cy + R * Math.sin(a);
+    const p = op && op[i] && op[i] !== "I" ? op[i] : null;
+    const fill = p ? `var(--p${p.toLowerCase()})` : "var(--sheet)";
+    const stroke = p ? (found ? "var(--gold)" : fill) : "var(--rule)";
+    s += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="15" fill="${fill}" stroke="${stroke}" stroke-width="${p && found ? 3 : 1}"/>`;
+    s += `<text x="${x.toFixed(1)}" y="${(y + 4.5).toFixed(1)}" text-anchor="middle" fill="${p ? "var(--sheet)" : "var(--mute)"}">${p || i}</text>`;
+  }
+  const w = op ? [...op].filter(c => c !== "I").length : 0;
+  s += `<text x="${cx}" y="${cy - 4}" text-anchor="middle" fill="var(--ink)" style="font-size:12px">${op ? `error on ${w} qubit${w === 1 ? "" : "s"}` : "no error yet"}</text>`;
+  s += `<text x="${cx}" y="${cy + 14}" text-anchor="middle" fill="var(--mute)" style="font-size:11px">${found ? "logical operator" : "being tested"}</text>`;
+  return s + "</svg>";
+}
+
+function proofSectionHTML(r, cand) {
+  if (r.checker === "stabilizer_code") {
+    const n = r.params.n, d = r.best_value, m = cand.generators.length;
+    const rows = [];
+    for (let w = 1; w <= d; w++) rows.push(`<tr data-w="${w}"><td class="num">${w}</td><td class="num">${fmt(V.binom(n, w) * 3 ** w)}</td><td class="num c">0</td><td class="num h">0</td><td class="res">pending<div class="bar"><i style="width:0%"></i></div></td></tr>`);
+    return `<section><span class="label">Watch the proof</span>
+      <p class="statement">A code with distance ${d} spots every error that touches fewer than ${d} qubits: at least one of its ${m} generators, the alarms, goes off. To prove it, the checker tries every possible error on 1 to ${d - 1} qubits, then finds an error on ${d} qubits that sets off no alarm and still changes the stored qubit. This runs the real check, live in your browser.</p>
+      <div class="proof-ctl">
+        <button class="btn" type="button" data-act="play">Play</button>
+        <button class="btn ghost" type="button" data-act="step">Step</button>
+        <button class="btn ghost" type="button" data-act="quiet">Next silent error</button>
+        <button class="btn ghost" type="button" data-act="finish">Finish</button>
+        <button class="btn ghost" type="button" data-act="reset">Reset</button>
+        <span class="status" id="proof-status">Ready: ${fmt(rows.length ? [...Array(d).keys()].reduce((a, i) => a + V.binom(n, i + 1) * 3 ** (i + 1), 0) : 0)} errors to try at most</span>
+      </div>
+      <div class="proof-grid">
+        <div id="proof-ring">${opRingSVG(n, null, false)}</div>
+        <div>
+          <span class="label">Alarms (generators)</span>
+          <div class="alarms" id="proof-alarms">${cand.generators.map((_, j) => `<span class="alarm">g${j}</span>`).join("")}</div>
+          <div class="opline" id="proof-op">${"·".repeat(n)}</div>
+          <div class="says" id="proof-says">Press Play to start with every single-qubit error.</div>
+        </div>
+      </div>
+      <div class="scroll"><table class="data wtable" style="margin-top:16px"><thead><tr><th>Qubits hit</th><th>Possible errors</th><th>Tried</th><th>Silent but harmless</th><th>Result</th></tr></thead><tbody id="proof-table">${rows.join("")}</tbody></table></div>
+    </section>`;
+  }
+  if (r.checker === "golomb_ruler") {
+    const L = r.best_value;
+    return `<section><span class="label">Watch the proof</span>
+      <p class="statement">A Golomb ruler never measures the same distance twice. The checker measures the gap between every pair of marks and drops it into its slot on the strip below. If a slot is already full, the ruler fails.</p>
+      <div class="proof-ctl">
+        <button class="btn" type="button" data-act="play">Play</button>
+        <button class="btn ghost" type="button" data-act="step">Step</button>
+        <button class="btn ghost" type="button" data-act="finish">Finish</button>
+        <button class="btn ghost" type="button" data-act="reset">Reset</button>
+        <span class="status" id="proof-status">Ready: ${fmt(V.binom(r.params.marks, 2))} pairs to measure</span>
+      </div>
+      <div id="proof-ruler">${pairRulerSVG([...cand.marks].sort((a, b) => a - b), null)}</div>
+      <span class="label">Distances 1 to ${L}</span>
+      <div class="strip" id="proof-strip">${Array.from({ length: L }, (_, i) => `<span data-d="${i + 1}">${i + 1}</span>`).join("")}</div>
+      <div class="says" id="proof-says">Press Play to measure the first pair.</div>
+    </section>`;
+  }
+  return "";
+}
+
+function pairRulerSVG(marks, pair) {
+  const L = marks[marks.length - 1], W = 640, x0 = 14, sc = (W - 2 * x0) / L, base = 120;
+  let s = `<svg class="diagram" style="max-width:640px" viewBox="0 0 ${W} 160" role="img" aria-label="Ruler">`;
+  s += `<line x1="${x0}" y1="${base}" x2="${W - x0}" y2="${base}" stroke="var(--ink)" stroke-width="1"/>`;
+  if (pair) {
+    const xa = x0 + pair.a * sc, xb = x0 + pair.b * sc, h = Math.min(100, 12 + (xb - xa) * 0.45);
+    s += `<path d="M${xa.toFixed(1)} ${base} C ${xa.toFixed(1)} ${base - h} ${xb.toFixed(1)} ${base - h} ${xb.toFixed(1)} ${base}" fill="none" stroke="${pair.clash ? "var(--fail)" : "var(--gold)"}" stroke-width="2"/>`;
+    s += `<text x="${((xa + xb) / 2).toFixed(1)}" y="${(base - h * 0.75 - 6).toFixed(1)}" text-anchor="middle" fill="var(--ink)" style="font-size:12px">${pair.d}</text>`;
+  }
+  marks.forEach(m => {
+    const x = x0 + m * sc, on = pair && (m === pair.a || m === pair.b);
+    s += `<line x1="${x.toFixed(1)}" y1="${base - 14}" x2="${x.toFixed(1)}" y2="${base}" stroke="${on ? "var(--gold)" : "var(--ink)"}" stroke-width="${on ? 3 : 1.5}"/>`;
+    s += `<text x="${x.toFixed(1)}" y="${base + 18}" text-anchor="middle" fill="${on ? "var(--ink)" : "var(--mute)"}" style="font-size:11px">${m}</text>`;
+  });
+  return s + "</svg>";
+}
+
+function wireProof(r, cand) {
+  const sec = document.querySelector(".proof-ctl");
+  if (!sec) return;
+  const isCode = r.checker === "stabilizer_code";
+  let it, done, mode = "idle", stats, lastOp = null;
+
+  function reset() {
+    stop();
+    it = isCode ? V.traceCode(cand.generators) : V.traceGolomb(cand.marks);
+    done = false; lastOp = null; stats = {};
+    if (isCode) {
+      $("#proof-ring").innerHTML = opRingSVG(r.params.n, null, false);
+      document.querySelectorAll("#proof-alarms .alarm").forEach(a => a.classList.remove("on"));
+      $("#proof-op").textContent = "·".repeat(r.params.n);
+      $("#proof-says").innerHTML = "Press Play to start with every single-qubit error.";
+      document.querySelectorAll("#proof-table tr").forEach(tr => {
+        tr.classList.remove("cur"); tr.querySelector(".c").textContent = "0"; tr.querySelector(".h").textContent = "0";
+        tr.querySelector(".res").innerHTML = 'pending<div class="bar"><i style="width:0%"></i></div>';
+      });
+    } else {
+      $("#proof-ruler").innerHTML = pairRulerSVG([...cand.marks].sort((a, b) => a - b), null);
+      document.querySelectorAll("#proof-strip span").forEach(x => x.className = "");
+      $("#proof-says").textContent = "Press Play to measure the first pair.";
+    }
+    $("#proof-status").textContent = "Ready";
+    sec.querySelector('[data-act="play"]').textContent = "Play";
+  }
+  function stop() { if (proofTimer) { cancelAnimationFrame(proofTimer); clearTimeout(proofTimer); proofTimer = null; } mode = "idle"; }
+
+  // consume one event; returns the event or null at the end
+  function next() {
+    const nx = it.next();
+    if (nx.done) { done = true; return null; }
+    const e = nx.value;
+    if (isCode) {
+      if (e.type === "weight-start") stats[e.w] = { total: e.total, count: 0, harmless: 0 };
+      else if (e.type === "op") { stats[e.w].count = e.count; if (e.undetected && !e.logical) stats[e.w].harmless++; lastOp = e; }
+      else if (e.type === "found") { done = true; }
+    } else {
+      if (e.type === "pair") lastOp = e;
+      if (e.type === "pair") {
+        const cell = document.querySelector(`#proof-strip span[data-d="${e.d}"]`);
+        if (cell) cell.className = e.clash ? "clash" : "on";
+      }
+      if (e.type === "done" || e.type === "fail") done = true;
+    }
+    return e;
+  }
+
+  function opString(e) {
+    const ch = Array(r.params.n).fill("I");
+    e.support.forEach((q, i) => { ch[q] = TYPES[e.types[i]]; });
+    return ch.join("");
+  }
+
+  function paint(final) {
+    if (isCode) {
+      const e = lastOp;
+      document.querySelectorAll("#proof-table tr").forEach(tr => {
+        const w = +tr.dataset.w, st = stats[w];
+        tr.classList.toggle("cur", !!(e && e.w === w && !done));
+        if (!st) return;
+        tr.querySelector(".c").textContent = fmt(st.count);
+        tr.querySelector(".h").textContent = fmt(st.harmless);
+        const pct = Math.min(100, 100 * st.count / st.total);
+        const foundHere = done && e && e.logical && e.w === w;
+        const finished = st.count === st.total;
+        tr.querySelector(".res").innerHTML = (foundHere ? `<span class="hit">logical operator found</span>` : finished ? `<span class="ok">every error caught</span>` : "checking") + `<div class="bar"><i style="width:${pct.toFixed(1)}%"></i></div>`;
+      });
+      if (!e) return;
+      const op = opString(e);
+      $("#proof-ring").innerHTML = opRingSVG(r.params.n, op, e.logical);
+      document.querySelectorAll("#proof-alarms .alarm").forEach((a, j) => a.classList.toggle("on", !!((e.syndrome >> j) & 1)));
+      $("#proof-op").innerHTML = [...op].map(c => `<span class="p${c}">${c === "I" ? "·" : c}</span>`).join("");
+      const on = popcount(e.syndrome);
+      const says = $("#proof-says");
+      says.classList.toggle("found", e.logical);
+      if (e.logical) says.innerHTML = `<b>Logical operator found.</b> This ${e.w}-qubit error sets off none of the alarms and is not one of the code's own stabilizers, so it silently changes the stored qubit. Every smaller error was caught, so d = ${e.w}.`;
+      else if (e.undetected) says.innerHTML = `<b>Silent but harmless.</b> No alarm goes off, but this operator is a product of the generators, so it leaves the stored qubit unchanged.`;
+      else says.innerHTML = `<b>Caught.</b> This ${e.w}-qubit error sets off ${on} of ${r.params.n} alarms.`;
+      $("#proof-status").textContent = done ? `Done: ${fmt(e.examined)} errors tried` : `Tried ${fmt(e.examined)} errors`;
+    } else {
+      const e = lastOp;
+      if (!e) return;
+      $("#proof-ruler").innerHTML = pairRulerSVG([...cand.marks].sort((a, b) => a - b), e);
+      const says = $("#proof-says");
+      if (e.clash) says.innerHTML = `<b style="color:var(--fail)">Repeated distance.</b> ${e.b} − ${e.a} = ${e.d}, already measured by ${e.prior[1]} − ${e.prior[0]}.`;
+      else says.innerHTML = done ? `<b style="color:var(--pass)">Every distance is different.</b> All ${e.count} gaps fill distinct slots, so this is a Golomb ruler of length ${r.best_value}.` : `${e.b} − ${e.a} = <b>${e.d}</b>: slot ${e.d} was empty.`;
+      $("#proof-status").textContent = done ? `Done: ${e.count} pairs measured` : `Measured ${e.count} of ${V.binom(r.params.marks, 2)} pairs`;
+    }
+    if (done) { stop(); sec.querySelector('[data-act="play"]').textContent = "Play"; }
+  }
+
+  function popcount(x) { let c = 0; while (x) { x &= x - 1; c++; } return c; }
+
+  function stepOne() { let e; do { e = next(); } while (e && !(e.type === "op" || e.type === "pair" || e.type === "found" || e.type === "done" || e.type === "fail")); }
+
+  function play() {
+    if (done) reset();
+    mode = "play";
+    sec.querySelector('[data-act="play"]').textContent = "Pause";
+    const slow = () => {
+      // per tick: one error for the first few, then accelerate within large layers
+      const w = lastOp ? lastOp.w : 1, st = isCode && stats[w];
+      const batch = !isCode ? 1 : (!st || st.count < 12 ? 1 : Math.max(1, Math.ceil(st.total / 160)));
+      for (let i = 0; i < batch && !done; i++) stepOne();
+      paint();
+      if (!done && mode === "play") proofTimer = setTimeout(slow, isCode && batch > 1 ? 16 : (isCode ? 260 : 320));
+    };
+    slow();
+  }
+
+  sec.addEventListener("click", (ev) => {
+    const act = ev.target.closest("button")?.dataset.act;
+    if (!act) return;
+    if (act === "play") { if (mode === "play") { stop(); ev.target.textContent = "Play"; } else play(); }
+    if (act === "step") { stop(); if (done) reset(); stepOne(); paint(); }
+    if (act === "quiet") { stop(); if (done) reset(); let e; do { e = next(); } while (e && !(e.type === "op" && e.undetected) && !done); paint(); }
+    if (act === "finish") { stop(); if (done) reset(); while (!done) next(); paint(); }
+    if (act === "reset") reset();
+  });
+  reset();
 }
 
 /* ---------- verify all ---------- */

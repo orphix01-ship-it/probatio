@@ -227,6 +227,90 @@ const ProbatioVerify = (() => {
     return { valid: false, reason: `no browser checker for ${problem.checker}`, steps: [] };
   }
 
+  // ---------- Step-by-step traces for the live proof view ----------
+  // traceCode yields every step of the distance search so a page can animate it.
+  // It recomputes everything itself; the final event must agree with analyseCode.
+  function binom(n, k) { let r = 1; for (let i = 1; i <= k; i++) r = r * (n - k + i) / i; return Math.round(r); }
+
+  function* traceCode(gens) {
+    const n = gens[0].length, m = gens.length, N = BigInt(n);
+    const xz = gens.map(toXZ);
+    const basis = new Map();
+    for (const [x, z] of xz) {
+      let v = reduce((x << N) | z, basis);
+      if (v) {
+        const piv = bitLength(v) - 1;
+        for (const [p, b] of basis) if ((b >> BigInt(piv)) & 1n) basis.set(p, b ^ v);
+        basis.set(piv, v);
+      }
+    }
+    const k = n - basis.size;
+    yield { type: "setup", n, m, k, rank: basis.size };
+    // syndrome bits against the ORIGINAL generators g0..g(m-1), as drawn on the page
+    const singles = [[1, 0], [0, 1], [1, 1]];
+    const syn = [];
+    for (let q = 0; q < n; q++) syn.push(singles.map(([bx, bz]) => {
+      let s = 0;
+      gens.forEach((g, j) => { const [gx, gz] = BITS[g[q]]; if ((bx & gz) ^ (bz & gx)) s |= 1 << j; });
+      return s;
+    }));
+    let examined = 0;
+    for (let w = 1; w <= n; w++) {
+      const total = binom(n, w) * 3 ** w;
+      yield { type: "weight-start", w, total };
+      let count = 0;
+      const support = [], types = [];
+      const stack = [];
+      // iterative enumeration (generators cannot yield from nested closures)
+      function* rec(start, s) {
+        if (support.length === w) {
+          count++; examined++;
+          let undetected = s === 0, logical = false;
+          if (undetected) {
+            if (k === 0) logical = true;
+            else {
+              let x = 0n, z = 0n;
+              support.forEach((q, i) => { const [bx, bz] = singles[types[i]]; if (bx) x |= 1n << BigInt(q); if (bz) z |= 1n << BigInt(q); });
+              logical = reduce((x << N) | z, basis) !== 0n;
+            }
+          }
+          yield { type: "op", w, support: support.slice(), types: types.slice(), syndrome: s, undetected, logical, count, total, examined };
+          return logical;
+        }
+        for (let q = start; q <= n - (w - support.length); q++) {
+          support.push(q);
+          for (let t = 0; t < 3; t++) {
+            types.push(t);
+            if (yield* rec(q + 1, s ^ syn[q][t])) return true;
+            types.pop();
+          }
+          support.pop();
+        }
+        return false;
+      }
+      const hit = yield* rec(0, 0);
+      if (hit) {
+        const ch = Array(n).fill("I");
+        support.forEach((q, i) => { ch[q] = "XZY"[types[i]]; });
+        yield { type: "found", w, witness: ch.join(""), examined };
+        return;
+      }
+      yield { type: "weight-done", w, count };
+    }
+  }
+
+  function* traceGolomb(marks) {
+    const m = [...marks].sort((a, b) => a - b), seen = new Map();
+    yield { type: "setup", marks: m, length: m[m.length - 1] };
+    for (let i = 0; i < m.length; i++) for (let j = i + 1; j < m.length; j++) {
+      const d = m[j] - m[i], clash = seen.has(d);
+      yield { type: "pair", a: m[i], b: m[j], d, clash, prior: seen.get(d) || null, count: seen.size + 1 };
+      if (clash) { yield { type: "fail", d }; return; }
+      seen.set(d, [m[i], m[j]]);
+    }
+    yield { type: "done", count: seen.size };
+  }
+
   // ---------- Ledger ----------
   async function auditChain(entries) {
     const problems = [];
@@ -241,6 +325,6 @@ const ProbatioVerify = (() => {
     return problems;
   }
 
-  return { sha256Hex, sha256Fallback, cyclicShifts, analyseCode, check, checkStabilizer, checkGolomb, auditChain };
+  return { sha256Hex, sha256Fallback, cyclicShifts, analyseCode, check, checkStabilizer, checkGolomb, auditChain, traceCode, traceGolomb, binom };
 })();
 if (typeof module !== "undefined") module.exports = ProbatioVerify;
