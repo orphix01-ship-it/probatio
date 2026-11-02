@@ -1,0 +1,43 @@
+{
+  "candidate": {
+    "generator": [
+      "10000000000000110000111",
+      "01000000000011011011001",
+      "00100000000001000011010",
+      "00010000000011111101011",
+      "00001000000001110111010",
+      "00000100000001010110011",
+      "00000010000000011110000",
+      "00000001000010100110000",
+      "00000000100000000111100",
+      "00000000010010110100001",
+      "00000000001001100001100",
+      "00000000000110011000101"
+    ]
+  },
+  "candidate_hash": "9df204a8698e5a9b7dec9ebec54ca5ed1ae91ab9dfd71b750357c1be527daf85",
+  "checker": "linear_code@0.1.0",
+  "created_at": "2026-11-02T02:24:32+00:00",
+  "problem_hash": "5f91d5329d28ddbf7779a60e750d603f8b6f034a77063c8e84f9738215234b32",
+  "problem_id": "lincode.n23.k12",
+  "provenance": {
+    "attempt": 2831,
+    "proposer": "mutation",
+    "seed": 2
+  },
+  "trust": "T2",
+  "verdict": {
+    "score": {
+      "A_d": 20,
+      "d": 5,
+      "k": 12,
+      "n": 23
+    },
+    "transcript": [
+      "generator matrix 12 x 23; GF(2) rank = 12, so dimension is exactly 12",
+      "enumerated all 4095 nonzero codewords",
+      "minimum weight 5, attained by 20 codewords; this is a [23,12,5] code"
+    ],
+    "valid": true
+  }
+}

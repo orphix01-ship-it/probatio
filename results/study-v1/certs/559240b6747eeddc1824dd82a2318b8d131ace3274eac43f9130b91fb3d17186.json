@@ -1,0 +1,47 @@
+{
+  "candidate": {
+    "points": [
+      "0010",
+      "0011",
+      "0102",
+      "0120",
+      "0121",
+      "0210",
+      "0211",
+      "0222",
+      "1110",
+      "1111",
+      "1122",
+      "1200",
+      "1201",
+      "1220",
+      "1221",
+      "2002",
+      "2110",
+      "2111"
+    ]
+  },
+  "candidate_hash": "99442f3891dd6c6004f66b3923f0650448b1c1e1c661847a9ba44bc591082e28",
+  "checker": "cap_set@0.1.0",
+  "created_at": "2026-11-02T02:13:28+00:00",
+  "problem_hash": "958413ee826e50bee4695d63b7d3f1700b749147f11a51fd06490a0e2b63f089",
+  "problem_id": "capset.n4",
+  "provenance": {
+    "attempt": 2,
+    "proposer": "mutation",
+    "seed": 3
+  },
+  "trust": "T2",
+  "verdict": {
+    "score": {
+      "n": 4,
+      "size": 18
+    },
+    "transcript": [
+      "18 distinct points in F_3^4",
+      "checked all 153 pairs: the third point on each line is never in the set",
+      "cap set of size 18"
+    ],
+    "valid": true
+  }
+}

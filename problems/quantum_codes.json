@@ -58,7 +58,13 @@
     "references": [
       "M. Grassl, Bounds on the minimum distance of quantum codes, codetables.de",
       "Calderbank, Rains, Shor, Sloane, Quantum error correction via codes over GF(4), IEEE Trans. Inf. Theory 44 (1998)"
-    ]
+    ],
+    "post_hoc_reference": {
+      "value": 3,
+      "source": "codetables.de, qubit stabilizer codes [[n,1,d]] (lower = upper bound), retrieved 2026-11-01",
+      "url": "http://www.codetables.de/QECC.php?q=4&n=6&k=1",
+      "note": "Optimum over ALL stabilizer codes, not only cyclic ones. Added after the study ran; used only in the exploratory analysis, never in the pre-registered success rate."
+    }
   },
   {
     "id": "qec.cyclic.n7.k1",
@@ -87,7 +93,13 @@
     "references": [
       "M. Grassl, Bounds on the minimum distance of quantum codes, codetables.de",
       "Calderbank, Rains, Shor, Sloane, Quantum error correction via codes over GF(4), IEEE Trans. Inf. Theory 44 (1998)"
-    ]
+    ],
+    "post_hoc_reference": {
+      "value": 3,
+      "source": "codetables.de, qubit stabilizer codes [[n,1,d]] (lower = upper bound), retrieved 2026-11-01",
+      "url": "http://www.codetables.de/QECC.php?q=4&n=7&k=1",
+      "note": "Optimum over ALL stabilizer codes, not only cyclic ones. Added after the study ran; used only in the exploratory analysis, never in the pre-registered success rate."
+    }
   },
   {
     "id": "qec.cyclic.n8.k1",
@@ -116,7 +128,13 @@
     "references": [
       "M. Grassl, Bounds on the minimum distance of quantum codes, codetables.de",
       "Calderbank, Rains, Shor, Sloane, Quantum error correction via codes over GF(4), IEEE Trans. Inf. Theory 44 (1998)"
-    ]
+    ],
+    "post_hoc_reference": {
+      "value": 3,
+      "source": "codetables.de, qubit stabilizer codes [[n,1,d]] (lower = upper bound), retrieved 2026-11-01",
+      "url": "http://www.codetables.de/QECC.php?q=4&n=8&k=1",
+      "note": "Optimum over ALL stabilizer codes, not only cyclic ones. Added after the study ran; used only in the exploratory analysis, never in the pre-registered success rate."
+    }
   },
   {
     "id": "qec.cyclic.n9.k1",
@@ -145,7 +163,13 @@
     "references": [
       "M. Grassl, Bounds on the minimum distance of quantum codes, codetables.de",
       "Calderbank, Rains, Shor, Sloane, Quantum error correction via codes over GF(4), IEEE Trans. Inf. Theory 44 (1998)"
-    ]
+    ],
+    "post_hoc_reference": {
+      "value": 3,
+      "source": "codetables.de, qubit stabilizer codes [[n,1,d]] (lower = upper bound), retrieved 2026-11-01",
+      "url": "http://www.codetables.de/QECC.php?q=4&n=9&k=1",
+      "note": "Optimum over ALL stabilizer codes, not only cyclic ones. Added after the study ran; used only in the exploratory analysis, never in the pre-registered success rate."
+    }
   },
   {
     "id": "qec.cyclic.n10.k1",
@@ -174,7 +198,13 @@
     "references": [
       "M. Grassl, Bounds on the minimum distance of quantum codes, codetables.de",
       "Calderbank, Rains, Shor, Sloane, Quantum error correction via codes over GF(4), IEEE Trans. Inf. Theory 44 (1998)"
-    ]
+    ],
+    "post_hoc_reference": {
+      "value": 4,
+      "source": "codetables.de, qubit stabilizer codes [[n,1,d]] (lower = upper bound), retrieved 2026-11-01",
+      "url": "http://www.codetables.de/QECC.php?q=4&n=10&k=1",
+      "note": "Optimum over ALL stabilizer codes, not only cyclic ones. Added after the study ran; used only in the exploratory analysis, never in the pre-registered success rate."
+    }
   },
   {
     "id": "qec.cyclic.n11.k1",
@@ -203,7 +233,13 @@
     "references": [
       "M. Grassl, Bounds on the minimum distance of quantum codes, codetables.de",
       "Calderbank, Rains, Shor, Sloane, Quantum error correction via codes over GF(4), IEEE Trans. Inf. Theory 44 (1998)"
-    ]
+    ],
+    "post_hoc_reference": {
+      "value": 5,
+      "source": "codetables.de, qubit stabilizer codes [[n,1,d]] (lower = upper bound), retrieved 2026-11-01",
+      "url": "http://www.codetables.de/QECC.php?q=4&n=11&k=1",
+      "note": "Optimum over ALL stabilizer codes, not only cyclic ones. Added after the study ran; used only in the exploratory analysis, never in the pre-registered success rate."
+    }
   },
   {
     "id": "qec.cyclic.n12.k1",
@@ -232,7 +268,13 @@
     "references": [
       "M. Grassl, Bounds on the minimum distance of quantum codes, codetables.de",
       "Calderbank, Rains, Shor, Sloane, Quantum error correction via codes over GF(4), IEEE Trans. Inf. Theory 44 (1998)"
-    ]
+    ],
+    "post_hoc_reference": {
+      "value": 5,
+      "source": "codetables.de, qubit stabilizer codes [[n,1,d]] (lower = upper bound), retrieved 2026-11-01",
+      "url": "http://www.codetables.de/QECC.php?q=4&n=12&k=1",
+      "note": "Optimum over ALL stabilizer codes, not only cyclic ones. Added after the study ran; used only in the exploratory analysis, never in the pre-registered success rate."
+    }
   },
   {
     "id": "qec.cyclic.n13.k1",
@@ -261,7 +303,13 @@
     "references": [
       "M. Grassl, Bounds on the minimum distance of quantum codes, codetables.de",
       "Calderbank, Rains, Shor, Sloane, Quantum error correction via codes over GF(4), IEEE Trans. Inf. Theory 44 (1998)"
-    ]
+    ],
+    "post_hoc_reference": {
+      "value": 5,
+      "source": "codetables.de, qubit stabilizer codes [[n,1,d]] (lower = upper bound), retrieved 2026-11-01",
+      "url": "http://www.codetables.de/QECC.php?q=4&n=13&k=1",
+      "note": "Optimum over ALL stabilizer codes, not only cyclic ones. Added after the study ran; used only in the exploratory analysis, never in the pre-registered success rate."
+    }
   },
   {
     "id": "qec.cyclic.n14.k1",
@@ -290,7 +338,13 @@
     "references": [
       "M. Grassl, Bounds on the minimum distance of quantum codes, codetables.de",
       "Calderbank, Rains, Shor, Sloane, Quantum error correction via codes over GF(4), IEEE Trans. Inf. Theory 44 (1998)"
-    ]
+    ],
+    "post_hoc_reference": {
+      "value": 5,
+      "source": "codetables.de, qubit stabilizer codes [[n,1,d]] (lower = upper bound), retrieved 2026-11-01",
+      "url": "http://www.codetables.de/QECC.php?q=4&n=14&k=1",
+      "note": "Optimum over ALL stabilizer codes, not only cyclic ones. Added after the study ran; used only in the exploratory analysis, never in the pre-registered success rate."
+    }
   },
   {
     "id": "qec.cyclic.n15.k1",
@@ -319,6 +373,12 @@
     "references": [
       "M. Grassl, Bounds on the minimum distance of quantum codes, codetables.de",
       "Calderbank, Rains, Shor, Sloane, Quantum error correction via codes over GF(4), IEEE Trans. Inf. Theory 44 (1998)"
-    ]
+    ],
+    "post_hoc_reference": {
+      "value": 5,
+      "source": "codetables.de, qubit stabilizer codes [[n,1,d]] (lower = upper bound), retrieved 2026-11-01",
+      "url": "http://www.codetables.de/QECC.php?q=4&n=15&k=1",
+      "note": "Optimum over ALL stabilizer codes, not only cyclic ones. Added after the study ran; used only in the exploratory analysis, never in the pre-registered success rate."
+    }
   }
 ]

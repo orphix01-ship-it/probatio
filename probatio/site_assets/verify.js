@@ -221,9 +221,113 @@ const ProbatioVerify = (() => {
     return { valid: true, score: { marks: m.length, length: m[m.length - 1] }, steps, differences: [...seen.keys()].sort((a, b) => a - b) };
   }
 
+  // ---------- Cap sets in F_3^n ----------
+  function checkCapSet(problem, cand) {
+    const n = (problem.params || {}).n, pts = cand.points, steps = [];
+    if (!Array.isArray(pts) || !pts.length) return { valid: false, reason: "no points", steps };
+    for (const p of pts) if (typeof p !== "string" || p.length !== n || /[^012]/.test(p))
+      return { valid: false, reason: `point ${p} is not a length-${n} string over 0,1,2`, steps };
+    const set = new Set(pts);
+    if (set.size !== pts.length) return { valid: false, reason: "duplicate points", steps };
+    for (let i = 0; i < pts.length; i++) for (let j = i + 1; j < pts.length; j++) {
+      let c = "";
+      for (let t = 0; t < n; t++) c += String((6 - (+pts[i][t]) - (+pts[j][t])) % 3);
+      if (set.has(c)) return { valid: false, reason: `${pts[i]}, ${pts[j]} and ${c} lie on a line`, steps };
+    }
+    const pairs = pts.length * (pts.length - 1) / 2;
+    steps.push(`${pts.length} distinct points in F₃^${n}`);
+    steps.push(`For all ${pairs.toLocaleString("en-US")} pairs, the third point on their line is not in the set`);
+    steps.push(`Cap set of size ${pts.length}`);
+    return { valid: true, score: { n, size: pts.length }, steps };
+  }
+
+  // ---------- Binary linear codes ----------
+  function checkLinearCode(problem, cand) {
+    const params = problem.params || {}, rows = cand.generator, steps = [];
+    if (!Array.isArray(rows) || !rows.length) return { valid: false, reason: "no generator rows", steps };
+    const n = rows[0].length, k = rows.length;
+    if (rows.some(r => r.length !== n || /[^01]/.test(r))) return { valid: false, reason: "rows must be equal-length bit strings", steps };
+    if (k > 20 || n > 128) return { valid: false, reason: "browser verifier supports k ≤ 20, n ≤ 128", steps };
+    if ((params.n !== undefined && params.n !== n) || (params.k !== undefined && params.k !== k))
+      return { valid: false, reason: `code is [${n},${k}], problem requires [${params.n},${params.k}]`, steps };
+    const W = Math.ceil(n / 32);
+    const vec = rows.map(r => { const v = new Uint32Array(W); for (let j = 0; j < n; j++) if (r[j] === "1") v[j >>> 5] |= (1 << (j & 31)) >>> 0; return v; });
+    // rank over GF(2)
+    const m = vec.map(v => Uint32Array.from(v));
+    let rank = 0;
+    for (let c = 0; c < n && rank < k; c++) {
+      const w = c >>> 5, b = (1 << (c & 31)) >>> 0;
+      let p = -1; for (let i = rank; i < k; i++) if (m[i][w] & b) { p = i; break; }
+      if (p < 0) continue;
+      [m[p], m[rank]] = [m[rank], m[p]];
+      for (let i = 0; i < k; i++) if (i !== rank && (m[i][w] & b)) for (let t = 0; t < W; t++) m[i][t] ^= m[rank][t];
+      rank++;
+    }
+    if (rank !== k) return { valid: false, reason: `rows are dependent: rank ${rank} < k = ${k}`, steps };
+    const pc = (x) => { x = x - ((x >>> 1) & 0x55555555); x = (x & 0x33333333) + ((x >>> 2) & 0x33333333); return (((x + (x >>> 4)) & 0x0f0f0f0f) * 0x01010101) >>> 24; };
+    const cur = new Uint32Array(W), dist = new Array(n + 1).fill(0);
+    const total = 2 ** k;
+    for (let g = 1; g < total; g++) {
+      let bit = 0; while (!((g >>> bit) & 1)) bit++;      // Gray code: flip one row
+      const row = vec[bit];
+      let w = 0;
+      for (let t = 0; t < W; t++) { cur[t] ^= row[t]; w += pc(cur[t]); }
+      dist[w]++;
+    }
+    let d = 1; while (d <= n && dist[d] === 0) d++;
+    steps.push(`Generator matrix ${k} × ${n} has rank ${k} over GF(2), so the code has exactly 2^${k} codewords`);
+    steps.push(`Enumerated all ${(total - 1).toLocaleString("en-US")} nonzero codewords (Gray code order)`);
+    steps.push(`Minimum weight ${d}, attained by ${dist[d]} codewords: a [${n},${k},${d}] code`);
+    return { valid: true, score: { n, k, d, A_d: dist[d] }, steps, distribution: dist };
+  }
+
+  // ---------- Point spreading (exact rationals) ----------
+  const bgcd = (a, b) => { a = a < 0n ? -a : a; b = b < 0n ? -b : b; while (b) [a, b] = [b, a % b]; return a; };
+  function parseRational(s) {
+    if (typeof s !== "string") throw new Error("coordinate must be a string");
+    s = s.trim();
+    let num, den;
+    if (s.includes("/")) { const [a, b] = s.split("/"); num = BigInt(a.trim()); den = BigInt(b.trim()); }
+    else {
+      const m = /^([+-]?)(\d*)(?:\.(\d*))?$/.exec(s);
+      if (!m || (m[2] === "" && (m[3] || "") === "")) throw new Error(`bad number ${s}`);
+      const frac = m[3] || "";
+      num = BigInt((m[1] || "") + (m[2] || "0") + frac); den = 10n ** BigInt(frac.length);
+    }
+    if (den === 0n) throw new Error("zero denominator");
+    if (den < 0n) { num = -num; den = -den; }
+    const g = bgcd(num, den) || 1n;
+    return [num / g, den / g];
+  }
+  function checkPointSpread(problem, cand) {
+    const want = (problem.params || {}).n, pts = cand.points, steps = [];
+    if (!Array.isArray(pts) || pts.some(p => !Array.isArray(p) || p.length !== 2)) return { valid: false, reason: "points must be [x, y] pairs", steps };
+    if (want !== undefined && pts.length !== want) return { valid: false, reason: `${pts.length} points given, problem requires ${want}`, steps };
+    let P;
+    try { P = pts.map(([x, y]) => [parseRational(x), parseRational(y)]); } catch (e) { return { valid: false, reason: e.message, steps }; }
+    for (let i = 0; i < P.length; i++) for (const [a, b] of P[i]) if (a < 0n || a > b) return { valid: false, reason: `point ${i} lies outside the unit square`, steps };
+    let best = null, pair = [0, 0];
+    for (let i = 0; i < P.length; i++) for (let j = i + 1; j < P.length; j++) {
+      const [[xa, xb], [ya, yb]] = P[i], [[xc, xd], [yc, yd]] = P[j];
+      const dxn = xa * xd - xc * xb, dxd = xb * xd, dyn = ya * yd - yc * yb, dyd = yb * yd;
+      const num = dxn * dxn * dyd * dyd + dyn * dyn * dxd * dxd, den = dxd * dxd * dyd * dyd;
+      if (best === null || num * best[1] < best[0] * den) { best = [num, den]; pair = [i, j]; }
+    }
+    if (!best || best[0] === 0n) return { valid: false, reason: "two points coincide", steps };
+    const g = bgcd(best[0], best[1]); const sq = [best[0] / g, best[1] / g];
+    const md = Math.sqrt(Number(sq[0]) / Number(sq[1]));
+    steps.push(`${P.length} points, all inside [0,1]² (exact rational check)`);
+    steps.push(`Smallest distance is between points ${pair[0]} and ${pair[1]}; its square is ${sq[1] === 1n ? sq[0] : sq[0] + "/" + sq[1]} exactly`);
+    steps.push(`Minimum distance ${md.toFixed(9)}: equal circles of radius ${(md / (2 * (1 + md))).toFixed(9)} fit in a unit square`);
+    return { valid: true, score: { n: P.length, min_distance: Math.round(md * 1e12) / 1e12, min_dist_sq: sq[1] === 1n ? String(sq[0]) : `${sq[0]}/${sq[1]}` }, steps, pair };
+  }
+
   function check(problem, cand) {
     if (problem.checker === "stabilizer_code") return checkStabilizer(problem, cand);
     if (problem.checker === "golomb_ruler") return checkGolomb(problem, cand);
+    if (problem.checker === "cap_set") return checkCapSet(problem, cand);
+    if (problem.checker === "linear_code") return checkLinearCode(problem, cand);
+    if (problem.checker === "point_spread") return checkPointSpread(problem, cand);
     return { valid: false, reason: `no browser checker for ${problem.checker}`, steps: [] };
   }
 
@@ -362,6 +466,6 @@ const ProbatioVerify = (() => {
     return problems;
   }
 
-  return { sha256Hex, sha256Fallback, cyclicShifts, analyseCode, check, checkStabilizer, checkGolomb, auditChain, traceCode, traceGolomb, binom, traceRank, symplecticMatrix, commutationMatrix };
+  return { sha256Hex, sha256Fallback, cyclicShifts, analyseCode, check, checkStabilizer, checkGolomb, auditChain, traceCode, traceGolomb, binom, traceRank, symplecticMatrix, commutationMatrix, checkCapSet, checkLinearCode, checkPointSpread };
 })();
 if (typeof module !== "undefined") module.exports = ProbatioVerify;

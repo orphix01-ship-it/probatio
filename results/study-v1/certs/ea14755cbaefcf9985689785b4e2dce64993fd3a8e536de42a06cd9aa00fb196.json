@@ -1,0 +1,65 @@
+{
+  "candidate": {
+    "points": [
+      "00122",
+      "00200",
+      "00221",
+      "01010",
+      "01100",
+      "01101",
+      "02022",
+      "02200",
+      "02221",
+      "10001",
+      "10200",
+      "10202",
+      "10211",
+      "11111",
+      "11120",
+      "11221",
+      "12012",
+      "12100",
+      "12102",
+      "12112",
+      "12202",
+      "12220",
+      "20002",
+      "20020",
+      "20021",
+      "20112",
+      "20122",
+      "21002",
+      "21020",
+      "21022",
+      "21120",
+      "22102",
+      "22110",
+      "22111",
+      "22122",
+      "22200"
+    ]
+  },
+  "candidate_hash": "f542425e6e0e83c74b8dbd526a403917bd4363ea5defb496384afa357cae3402",
+  "checker": "cap_set@0.1.0",
+  "created_at": "2026-11-02T02:13:58+00:00",
+  "problem_hash": "415cf4959dc9fbbda6f431c52472fb2fef4e2440be03e9c15eb699b1e588dbbb",
+  "problem_id": "capset.n5",
+  "provenance": {
+    "attempt": 1,
+    "proposer": "mutation",
+    "seed": 2
+  },
+  "trust": "T2",
+  "verdict": {
+    "score": {
+      "n": 5,
+      "size": 36
+    },
+    "transcript": [
+      "36 distinct points in F_3^5",
+      "checked all 630 pairs: the third point on each line is never in the set",
+      "cap set of size 36"
+    ],
+    "valid": true
+  }
+}

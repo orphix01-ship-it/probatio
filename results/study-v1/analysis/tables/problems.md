@@ -1,0 +1,45 @@
+| Problem | Role | Reference | Upper bound | Best certified | Arm | Status |
+|---|---|---|---|---|---|---|
+| capset.n3 | calibration | 9 | — | 9 | random | matches-known |
+| capset.n4 | calibration | 20 | — | 20 | random | matches-known |
+| capset.n5 | calibration | 45 | — | 41 | anneal | below-known |
+| capset.n6 | calibration | 112 | — | 80 | anneal | below-known |
+| capset.n7 | open-target | 236 | — | 153 | anneal | below-known |
+| capset.n8 | open-target | 512 | — | 277 | anneal | below-known |
+| golomb.m6 | calibration | 17 | — | 17 | exhaustive | matches-known |
+| golomb.m7 | calibration | 25 | — | 25 | exhaustive | matches-known |
+| golomb.m8 | calibration | 34 | — | 34 | exhaustive | matches-known |
+| golomb.m9 | calibration | 44 | — | 44 | exhaustive | matches-known |
+| golomb.m10 | calibration | 55 | — | 55 | exhaustive | matches-known |
+| golomb.m11 | calibration | 72 | — | 72 | exhaustive | matches-known |
+| golomb.m12 | calibration | 85 | — | — | — | no result |
+| lincode.n7.k4 | calibration | 3 | 3 | 3 | random | matches-known |
+| lincode.n12.k4 | calibration | 6 | 6 | 6 | random | matches-known |
+| lincode.n15.k7 | calibration | 5 | 5 | 5 | random | matches-known |
+| lincode.n16.k5 | calibration | 8 | 8 | 8 | anneal | matches-known |
+| lincode.n23.k12 | calibration | 7 | 7 | 5 | random | below-known |
+| lincode.n24.k12 | calibration | 8 | 8 | 6 | random | below-known |
+| lincode.n32.k10 | calibration | 12 | 12 | 10 | random | below-known |
+| lincode.n48.k14 | open-target | 16 | 17 | 14 | anneal | below-known |
+| lincode.n60.k16 | open-target | 20 | 22 | 17 | anneal | below-known |
+| lincode.n70.k18 | open-target | 24 | 26 | 19 | random | below-known |
+| qec.cyclic.n5.k1 | calibration | 3 | 3 | 3 | exhaustive | matches-known |
+| qec.cyclic.n6.k1 | calibration | — | 3 | 2 | exhaustive | no-recorded-bound |
+| qec.cyclic.n7.k1 | calibration | — | 4 | 3 | exhaustive | no-recorded-bound |
+| qec.cyclic.n8.k1 | calibration | — | 4 | 3 | exhaustive | no-recorded-bound |
+| qec.cyclic.n9.k1 | calibration | — | 5 | 3 | exhaustive | no-recorded-bound |
+| qec.cyclic.n10.k1 | calibration | — | 5 | 4 | exhaustive | no-recorded-bound |
+| qec.cyclic.n11.k1 | calibration | — | 6 | 3 | exhaustive | no-recorded-bound |
+| qec.cyclic.n12.k1 | calibration | — | 6 | 4 | exhaustive | no-recorded-bound |
+| qec.cyclic.n13.k1 | calibration | — | 7 | 5 | exhaustive | no-recorded-bound |
+| qec.cyclic.n14.k1 | calibration | — | 7 | 5 | random | no-recorded-bound |
+| qec.cyclic.n15.k1 | calibration | — | 8 | 5 | random | no-recorded-bound |
+| spread.n2 | calibration | 1.4142 | — | 1.4142 | anneal | matches-known |
+| spread.n3 | calibration | 1.0353 | — | 1.0353 | anneal | matches-known |
+| spread.n4 | calibration | 1 | — | 1 | anneal | matches-known |
+| spread.n5 | calibration | 0.7071 | — | 0.7071 | anneal | matches-known |
+| spread.n6 | calibration | 0.6009 | — | 0.6009 | anneal | matches-known |
+| spread.n7 | calibration | 0.5359 | — | 0.5358 | anneal | matches-known |
+| spread.n8 | calibration | 0.5176 | — | 0.5116 | anneal | below-known |
+| spread.n9 | calibration | 0.5000 | — | 0.4418 | anneal | below-known |
+| spread.n10 | calibration | 0.4213 | — | 0.3994 | anneal | below-known |

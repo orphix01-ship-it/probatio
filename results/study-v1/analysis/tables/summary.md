@@ -1,0 +1,14 @@
+| Family | Arm | Runs | Success | 95% CI | Median gap | Median valid rate | Median checks to best |
+|---|---|---|---|---|---|---|---|
+| Binary linear codes | anneal | 21 | 12/21 | 0.37–0.76 | 0.000 | 1.00 | 2831 |
+| Binary linear codes | random | 21 | 9/21 | 0.24–0.63 | 0.125 | 1.00 | 1558 |
+| Cap sets | anneal | 12 | 6/12 | 0.25–0.75 | 0.044 | 1.00 | 350 |
+| Cap sets | random | 12 | 6/12 | 0.25–0.75 | 0.056 | 1.00 | 541 |
+| Cyclic quantum codes | anneal | 3 | 3/3 | 0.44–1.00 | 0.000 | 0.12 | 29 |
+| Cyclic quantum codes | exhaustive | 1 | 1/1 | 0.21–1.00 | 0.000 | 0.29 | 8 |
+| Cyclic quantum codes | random | 3 | 3/3 | 0.44–1.00 | 0.000 | 0.12 | 21 |
+| Golomb rulers | anneal | 21 | 6/21 | 0.14–0.50 | 0.015 | 0.00 | 149964 |
+| Golomb rulers | exhaustive | 6 | 6/6 | 0.61–1.00 | 0.000 | 1.00 | 1 |
+| Golomb rulers | random | 21 | 6/21 | 0.14–0.50 | 0.029 | 0.00 | 357507 |
+| Point spreading | anneal | 27 | 15/27 | 0.37–0.72 | 0.000 | 1.00 | 88437 |
+| Point spreading | random | 27 | 0/27 | 0.00–0.12 | 0.217 | 1.00 | 83831 |

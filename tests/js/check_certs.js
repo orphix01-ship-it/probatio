@@ -5,29 +5,32 @@ const probs = {};
 for (const f of fs.readdirSync(ROOT + '/problems')) for (const p of JSON.parse(fs.readFileSync(ROOT + '/problems/'+f))) probs[p.id]=p;
 (async () => {
   let ok = 0, bad = 0;
-  const dir = ROOT + '/results/certs';
-  for (const f of fs.readdirSync(dir)) {
-    const raw = fs.readFileSync(path.join(dir, f), 'utf8');
+  const dirs = [ROOT + '/results/certs', ROOT + '/results/study-v1/certs', process.env.EXTRA_CERTS].filter(d => d && fs.existsSync(d));
+  const dir = dirs[0];
+  const allCerts = dirs.flatMap(d => fs.readdirSync(d).map(f => path.join(d, f)));
+  for (const f of allCerts) {
+    const raw = fs.readFileSync(f, 'utf8');
     const cert = JSON.parse(raw);
     const r = V.check(probs[cert.problem_id], cert.candidate);
-    const keys = cert.verdict.score.marks !== undefined ? ['marks','length'] : ['n','k','d','d_lower'];
+    const sc = cert.verdict.score;
+    const keys = sc.marks !== undefined ? ['marks','length'] : sc.size !== undefined ? ['n','size'] : sc.min_dist_sq !== undefined ? ['n','min_dist_sq'] : sc.A_d !== undefined ? ['n','k','d','A_d'] : ['n','k','d','d_lower'];
     const same = r.valid && keys.every(k => r.score[k] === cert.verdict.score[k]);
     same ? ok++ : (bad++, console.log('MISMATCH', f, r.reason, JSON.stringify(r.score), JSON.stringify(cert.verdict.score)));
   }
   // live-proof traces must end at the same distance / length as the checker
-  for (const f of fs.readdirSync(dir)) {
-    const cert = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8'));
+  for (const f of allCerts) {
+    const cert = JSON.parse(fs.readFileSync(f, 'utf8'));
     if (cert.candidate.generators) {
       let last; for (const ev of V.traceCode(cert.candidate.generators)) last = ev;
       if (last.type !== 'found' || last.w !== cert.verdict.score.d) { bad++; console.log('TRACE MISMATCH', f, last); }
-    } else {
+    } else if (cert.candidate.marks) {
       let last; for (const ev of V.traceGolomb(cert.candidate.marks)) last = ev;
       if (last.type !== 'done') { bad++; console.log('GOLOMB TRACE MISMATCH', f); }
     }
   }
   // GF(2) rank trace must give rank = n - k for every code certificate
-  for (const f of fs.readdirSync(dir)) {
-    const cert = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8'));
+  for (const f of allCerts) {
+    const cert = JSON.parse(fs.readFileSync(f, 'utf8'));
     if (!cert.candidate.generators) continue;
     let last; for (const ev of V.traceRank(cert.candidate.generators)) last = ev;
     const sc = cert.verdict.score;

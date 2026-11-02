@@ -1,0 +1,47 @@
+{
+  "candidate": {
+    "generators": [
+      "XXYZIIZYIXYZ",
+      "ZXXYZIIZYIXY",
+      "YZXXYZIIZYIX",
+      "XYZXXYZIIZYI",
+      "IXYZXXYZIIZY",
+      "YIXYZXXYZIIZ",
+      "ZYIXYZXXYZII",
+      "IZYIXYZXXYZI",
+      "IIZYIXYZXXYZ",
+      "ZIIZYIXYZXXY",
+      "YZIIZYIXYZXX",
+      "XYZIIZYIXYZX"
+    ],
+    "seed": "XXYZIIZYIXYZ"
+  },
+  "candidate_hash": "3a6b10b085e698dfaaa95914023823729467e0d8603dc852d9aad1d1d84c90f6",
+  "checker": "stabilizer_code@0.1.0",
+  "created_at": "2026-11-02T02:31:32+00:00",
+  "problem_hash": "15ce1a474c4fbc9080cd89681a299968cbccb0539e4b1019f50014ff12152ba4",
+  "problem_id": "qec.cyclic.n12.k1",
+  "provenance": {
+    "attempt": 58,
+    "proposer": "mutation",
+    "seed": 3
+  },
+  "trust": "T2",
+  "verdict": {
+    "score": {
+      "d": 4,
+      "d_lower": null,
+      "k": 1,
+      "min_weight_witness": "XXXXIIIIIIII",
+      "n": 12,
+      "operators_examined": 6571
+    },
+    "transcript": [
+      "family: generators are exactly the n cyclic shifts of the seed",
+      "all 12 generators pairwise commute",
+      "GF(2) rank = 11, so k = 1",
+      "exhaustive search: no logical operator of weight < 4; witness of weight 4: XXXXIIIIIIII"
+    ],
+    "valid": true
+  }
+}

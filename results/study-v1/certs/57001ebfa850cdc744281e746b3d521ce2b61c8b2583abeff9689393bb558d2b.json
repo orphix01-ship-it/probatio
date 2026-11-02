@@ -1,0 +1,50 @@
+{
+  "candidate": {
+    "generators": [
+      "XIIZZZXXIYZYXII",
+      "IXIIZZZXXIYZYXI",
+      "IIXIIZZZXXIYZYX",
+      "XIIXIIZZZXXIYZY",
+      "YXIIXIIZZZXXIYZ",
+      "ZYXIIXIIZZZXXIY",
+      "YZYXIIXIIZZZXXI",
+      "IYZYXIIXIIZZZXX",
+      "XIYZYXIIXIIZZZX",
+      "XXIYZYXIIXIIZZZ",
+      "ZXXIYZYXIIXIIZZ",
+      "ZZXXIYZYXIIXIIZ",
+      "ZZZXXIYZYXIIXII",
+      "IZZZXXIYZYXIIXI",
+      "IIZZZXXIYZYXIIX"
+    ],
+    "seed": "XIIZZZXXIYZYXII"
+  },
+  "candidate_hash": "d87f5d8f699a74f490aea4cc73a9039d16566acd41ad8fd0e1cf24ce68bafbb5",
+  "checker": "stabilizer_code@0.1.0",
+  "created_at": "2026-11-02T02:33:33+00:00",
+  "problem_hash": "a279ac5c0f3f1f9f622301471b397eab063027139a140f66b59e271dd444816f",
+  "problem_id": "qec.cyclic.n15.k1",
+  "provenance": {
+    "attempt": 948,
+    "proposer": "mutation",
+    "seed": 2
+  },
+  "trust": "T2",
+  "verdict": {
+    "score": {
+      "d": 5,
+      "d_lower": null,
+      "k": 1,
+      "min_weight_witness": "YZXZYIIIIIIIIII",
+      "n": 15,
+      "operators_examined": 124035
+    },
+    "transcript": [
+      "family: generators are exactly the n cyclic shifts of the seed",
+      "all 15 generators pairwise commute",
+      "GF(2) rank = 14, so k = 1",
+      "exhaustive search: no logical operator of weight < 5; witness of weight 5: YZXZYIIIIIIIIII"
+    ],
+    "valid": true
+  }
+}

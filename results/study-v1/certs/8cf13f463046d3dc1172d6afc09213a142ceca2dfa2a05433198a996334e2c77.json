@@ -1,0 +1,66 @@
+{
+  "candidate": {
+    "points": [
+      [
+        "0.1117598",
+        "0.7817251"
+      ],
+      [
+        "0.7485836",
+        "0.2752883"
+      ],
+      [
+        "0.5099757",
+        "0.4088598"
+      ],
+      [
+        "0.6538291",
+        "0.7879587"
+      ],
+      [
+        "0.4069471",
+        "0.0868418"
+      ],
+      [
+        "0.8569436",
+        "0.5565515"
+      ],
+      [
+        "0.7627276",
+        "0.0047559"
+      ],
+      [
+        "0.3881312",
+        "0.7346727"
+      ],
+      [
+        "0.3073240",
+        "0.9996764"
+      ]
+    ]
+  },
+  "candidate_hash": "017756ec7b506e022b3ff53bff4260877841372fd782ee0031437b0c85e245c6",
+  "checker": "point_spread@0.1.0",
+  "created_at": "2026-11-02T02:43:48+00:00",
+  "problem_hash": "b7f3fe51f41bb57d6c2e259b2672b66185e5f7d6047263546de489dc7f8a430d",
+  "problem_id": "spread.n9",
+  "provenance": {
+    "attempt": 2053,
+    "proposer": "mutation",
+    "seed": 1
+  },
+  "trust": "T2",
+  "verdict": {
+    "score": {
+      "min_dist_sq": "458673951161/6250000000000",
+      "min_distance": 0.270901886641,
+      "n": 9
+    },
+    "transcript": [
+      "9 points, all inside [0,1]^2 (exact rational check)",
+      "minimum pairwise distance squared = 458673951161/6250000000000 exactly (points 1 and 6)",
+      "minimum distance = 0.270901887; equal circles of radius 0.106578600 fit in a unit square"
+    ],
+    "valid": true
+  }
+}

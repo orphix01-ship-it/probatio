@@ -148,6 +148,9 @@ def collect(results: Path) -> list[dict[str, Any]]:
             gap = abs(best - ref) / ref
         rows.append({
             "problem": b["problem_id"], "family": family_of(b["problem_id"]), "role": p.get("role", "calibration"),
+            # The primary outcome is defined against a recorded reference value; calibration
+            # problems with no reference cannot succeed or fail, so they are not scored.
+            "scored": p.get("role", "calibration") == "calibration" and ref is not None,
             "arm": b.get("arm"), "seed": b.get("seed"), "best": best, "reference": ref,
             "status": b.get("status", "error"), "success": int(b.get("status") == "matches-known"),
             "new": int(b.get("status") == "CANDIDATE-NEW"), "gap": gap,
@@ -171,7 +174,7 @@ def summarise(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     out = []
     keys = sorted({(r["family"], r["arm"]) for r in rows})
     for fam, arm in keys:
-        rs = [r for r in rows if r["family"] == fam and r["arm"] == arm and r["role"] == "calibration"]
+        rs = [r for r in rows if r["family"] == fam and r["arm"] == arm and r["scored"]]
         if not rs:
             continue
         k, n = sum(r["success"] for r in rs), len(rs)
@@ -208,21 +211,21 @@ def analyze(results: Path) -> Path:
     rows = collect(results)
     with (out / "runs.csv").open("w", newline="") as fh:
         cols = [c for c in rows[0].keys() if c != "trajectory"] if rows else []
-        w = csv.DictWriter(fh, fieldnames=cols, extrasaction="ignore")
+        w = csv.DictWriter(fh, fieldnames=cols, extrasaction="ignore", lineterminator="\n")
         w.writeheader()
         w.writerows(rows)
     summ = summarise(rows)
     with (out / "summary.csv").open("w", newline="") as fh:
         if summ:
-            w = csv.DictWriter(fh, fieldnames=list(summ[0].keys()))
+            w = csv.DictWriter(fh, fieldnames=list(summ[0].keys()), lineterminator="\n")
             w.writeheader()
             w.writerows(summ)
 
     # Fisher tests: anneal vs random per family, Holm-adjusted
     tests = []
     for fam in sorted({r["family"] for r in rows}):
-        a = [r for r in rows if r["family"] == fam and r["arm"] == "anneal" and r["role"] == "calibration"]
-        b = [r for r in rows if r["family"] == fam and r["arm"] == "random" and r["role"] == "calibration"]
+        a = [r for r in rows if r["family"] == fam and r["arm"] == "anneal" and r["scored"]]
+        b = [r for r in rows if r["family"] == fam and r["arm"] == "random" and r["scored"]]
         if a and b:
             sa, sb = sum(r["success"] for r in a), sum(r["success"] for r in b)
             tests.append({"family": fam, "anneal": f"{sa}/{len(a)}", "random": f"{sb}/{len(b)}",
@@ -248,10 +251,14 @@ def analyze(results: Path) -> Path:
         per_problem.append({"problem": pid, "family": family_of(pid), "role": p.get("role", "calibration"),
                             "reference": _ref(p), "upper": (p.get("upper_bound") or {}).get("value"),
                             "best": best["best"] if best else None, "arm": best["arm"] if best else None,
-                            "status": best["status"] if best else "no result"})
+                            "status": best["status"] if best else "no result",
+                            "exhaustive": any(r["exhaustive"] in (True, "True") for r in rs),
+                            "post_hoc": (p.get("post_hoc_reference") or {}).get("value"),
+                            "post_hoc_source": (p.get("post_hoc_reference") or {}).get("source")})
 
     _write_tables(out, summ, tests, per_problem)
     _figures(out, rows, per_problem, plt)
+    _numbers(out, rows, summ, per_problem)
     (out / "analysis.json").write_text(json.dumps({"summary": summ, "tests": tests, "per_problem": per_problem,
                                                     "runs": len(rows), "generated": now_iso()}, indent=2))
     return out
@@ -309,6 +316,22 @@ def _write_tables(out: Path, summ, tests, per_problem) -> None:
     (out / "tables" / "problems.md").write_text("\n".join(md) + "\n")
     (out / "tables" / "problems.tex").write_text("\n".join(tex) + "\n")
 
+    # Exploratory: references added after the study ran (never used in the primary outcome)
+    ph = [p for p in per_problem if p.get("post_hoc") is not None]
+    md = ["| Problem | Best certified (this class) | Search complete | Post-hoc reference (all codes) | Reached |",
+          "|---|---|---|---|---|"]
+    tex = [r"\begin{tabular}{lrcrc}", r"\toprule",
+           r"Problem & Best certified & Exhaustive & Post-hoc ref. & Reached\\", r"\midrule"]
+    for p in ph:
+        best = int(p["best"]) if p["best"] is not None else None
+        reached = "yes" if best is not None and best >= p["post_hoc"] else "no"
+        ex = "yes" if p["exhaustive"] else "no"
+        md.append(f"| {p['problem']} | {_fmt(best)} | {ex} | {int(p['post_hoc'])} | {reached} |")
+        tex.append(f"\\texttt{{{p['problem']}}} & {_fmt(best)} & {ex} & {int(p['post_hoc'])} & {reached}\\\\")
+    tex += [r"\bottomrule", r"\end{tabular}"]
+    (out / "tables" / "posthoc.md").write_text("\n".join(md) + "\n")
+    (out / "tables" / "posthoc.tex").write_text("\n".join(tex) + "\n")
+
 
 def _figures(out: Path, rows, per_problem, plt) -> None:
     plt.rcParams.update({"font.size": 9, "font.family": "serif", "axes.spines.top": False,
@@ -322,11 +345,12 @@ def _figures(out: Path, rows, per_problem, plt) -> None:
     for i, arm in enumerate(arms):
         ys, lo, hi = [], [], []
         for f in fams:
-            rs = [r for r in rows if r["family"] == f and r["arm"] == arm and r["role"] == "calibration"]
+            rs = [r for r in rows if r["family"] == f and r["arm"] == arm and r["scored"]]
             if rs:
                 k, n = sum(r["success"] for r in rs), len(rs)
                 l, h = wilson(k, n)
-                ys.append(k / n); lo.append(k / n - l); hi.append(h - k / n)
+                # clamp: floating-point rounding can make k/n fall a hair outside [l, h]
+                ys.append(k / n); lo.append(max(0.0, k / n - l)); hi.append(max(0.0, h - k / n))
             else:
                 ys.append(0); lo.append(0); hi.append(0)
         xs = [j + (i - (len(arms) - 1) / 2) * width for j in range(len(fams))]
@@ -349,7 +373,7 @@ def _figures(out: Path, rows, per_problem, plt) -> None:
     fig.tight_layout(); fig.savefig(out / "figures" / "gap_by_problem.pdf"); fig.savefig(out / "figures" / "gap_by_problem.svg"); plt.close(fig)
 
     # Figure 3: anytime curves for selected problems
-    sel = [p for p in ("lincode.n24.k12", "capset.n6", "spread.n10", "golomb.m10") if any(r["problem"] == p for r in rows)]
+    sel = [p for p in ("lincode.n24.k12", "capset.n6", "spread.n10", "golomb.m8") if any(r["problem"] == p for r in rows)]
     if sel:
         fig, axes = plt.subplots(1, len(sel), figsize=(6.4, 2.2))
         axes = axes if len(sel) > 1 else [axes]
@@ -366,6 +390,60 @@ def _figures(out: Path, rows, per_problem, plt) -> None:
             ax.set_xscale("log"); ax.set_title(pid, fontsize=8); ax.set_xlabel("checks", fontsize=7)
             ax.tick_params(labelsize=6)
         fig.tight_layout(); fig.savefig(out / "figures" / "anytime.pdf"); fig.savefig(out / "figures" / "anytime.svg"); plt.close(fig)
+
+
+def _numbers(out: Path, rows, summ, per_problem) -> None:
+    """LaTeX macros so the paper text quotes numbers straight from the data."""
+    def rate(arm, fam=None):
+        rs = [r for r in rows if r["arm"] == arm and r["scored"] and (fam is None or r["family"] == fam)]
+        return (sum(r["success"] for r in rs), len(rs))
+    calib = [p for p in per_problem if p["role"] == "calibration" and p["reference"] is not None]
+    unscored = [p for p in per_problem if p["role"] == "calibration" and p["reference"] is None]
+    ph = [p for p in per_problem if p.get("post_hoc") is not None]
+    opens = [p for p in per_problem if p["role"] == "open-target"]
+    sa, na = rate("anneal")
+    sr, nr = rate("random")
+    m = {
+        "NumRuns": len(rows),
+        "NumRunErrors": sum(1 for r in rows if r["error"]),
+        "NumProblems": len(per_problem),
+        "NumCalibration": len(calib),
+        "NumUnscored": len(unscored),
+        "NumPostHoc": len(ph),
+        "PostHocReached": sum(1 for p in ph if p["best"] is not None and p["best"] >= p["post_hoc"]),
+        "PostHocExhaustiveShort": sum(1 for p in ph if p["exhaustive"] and p["best"] < p["post_hoc"]),
+        "NumOpenTargets": len(opens),
+        "NumCandidatesChecked": f"{sum(r['checked'] or 0 for r in rows):,}".replace(",", "{,}"),
+        "CalibReached": sum(1 for p in calib if p["status"] == "matches-known"),
+        "AnnealSuccess": sa, "AnnealRuns": na, "RandomSuccess": sr, "RandomRuns": nr,
+        "NumCandidateNew": sum(1 for p in per_problem if p["status"] == "CANDIDATE-NEW"),
+        "OpenBelow": sum(1 for p in opens if p["status"] == "below-known"),
+    }
+    # Per-family success counts by arm, e.g. \SpreadAnnealSuccess / \SpreadAnnealRuns
+    tag = {"Binary linear codes": "Lincode", "Cap sets": "Capset", "Cyclic quantum codes": "Qec",
+           "Golomb rulers": "Golomb", "Point spreading": "Spread"}
+    for fam, t in tag.items():
+        for arm in ("random", "anneal", "exhaustive"):
+            k, n = rate(arm, fam)
+            if n:
+                m[f"{t}{arm.capitalize()}Success"], m[f"{t}{arm.capitalize()}Runs"] = k, n
+    # RQ1: median validity of random Golomb proposals by number of marks, as a percentage
+    words = {6: "Six", 7: "Seven", 8: "Eight", 9: "Nine", 10: "Ten", 11: "Eleven", 12: "Twelve"}
+    for mk, w in words.items():
+        vr = _median([r["valid_rate"] for r in rows if r["problem"] == f"golomb.m{mk}" and r["arm"] == "random"])
+        if vr is not None:
+            m[f"GolombValid{w}"] = f"{100 * vr:.3g}\\%"
+    # Golomb: random/anneal runs that never found a valid ruler
+    m["GolombNoValid"] = sum(1 for r in rows if r["family"] == "Golomb rulers"
+                             and r["arm"] in ("random", "anneal") and r["best"] is None)
+    m["GolombHeuristicRuns"] = sum(1 for r in rows if r["family"] == "Golomb rulers" and r["arm"] in ("random", "anneal"))
+    ex = [r for r in rows if r["arm"] == "exhaustive" and r["exhaustive"]]
+    m["ExhaustiveComplete"] = len(ex)
+    m["ExhaustiveMaxSeconds"] = f"{max((r['seconds'] or 0) for r in ex):.0f}" if ex else "0"
+    lines = ["% generated by probatio study analyze; do not edit"]
+    for k, v in m.items():
+        lines.append(f"\\newcommand{{\\{k}}}{{{v}}}")
+    (out / "numbers.tex").write_text("\n".join(lines) + "\n")
 
 
 # ---------------------------------------------------------------- notebook

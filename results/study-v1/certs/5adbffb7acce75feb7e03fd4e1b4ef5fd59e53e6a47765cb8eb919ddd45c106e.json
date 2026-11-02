@@ -1,0 +1,46 @@
+{
+  "candidate": {
+    "points": [
+      [
+        "1.0000000",
+        "0.9995584"
+      ],
+      [
+        "0.0000000",
+        "0.0000000"
+      ],
+      [
+        "0.0000000",
+        "0.9993639"
+      ],
+      [
+        "1.0000000",
+        "0.0006448"
+      ]
+    ]
+  },
+  "candidate_hash": "32ee89a941a9cedb2d6982d187ae9245de3164816bc446abac625b776970e409",
+  "checker": "point_spread@0.1.0",
+  "created_at": "2026-11-02T02:40:18+00:00",
+  "problem_hash": "6fb7fa9411013eeb45887a7a62da933d113a717e6b5a8c886c4fd4932fc1173d",
+  "problem_id": "spread.n4",
+  "provenance": {
+    "attempt": 2416,
+    "proposer": "mutation",
+    "seed": 2
+  },
+  "trust": "T2",
+  "verdict": {
+    "score": {
+      "min_dist_sq": "389776711041/390625000000",
+      "min_distance": 0.9989136,
+      "n": 4
+    },
+    "transcript": [
+      "4 points, all inside [0,1]^2 (exact rational check)",
+      "minimum pairwise distance squared = 389776711041/390625000000 exactly (points 0 and 3)",
+      "minimum distance = 0.998913600; equal circles of radius 0.249864126 fit in a unit square"
+    ],
+    "valid": true
+  }
+}

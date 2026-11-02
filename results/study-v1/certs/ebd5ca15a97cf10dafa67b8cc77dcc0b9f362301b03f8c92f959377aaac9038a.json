@@ -1,0 +1,40 @@
+{
+  "candidate": {
+    "generators": [
+      "IIZIZ",
+      "ZIIZI",
+      "IZIIZ",
+      "ZIZII",
+      "IZIZI"
+    ],
+    "seed": "IIZIZ"
+  },
+  "candidate_hash": "cf88295ae262af6744c9ddd3dc452742467da9a60d59ac413dd41f200a4fe03e",
+  "checker": "stabilizer_code@0.1.0",
+  "created_at": "2026-11-02T02:34:02+00:00",
+  "problem_hash": "c34e18a0886cdaf124ceb5348276427e50f04db25cc37382cc933a2ee3131268",
+  "problem_id": "qec.cyclic.n5.k1",
+  "provenance": {
+    "attempt": 11,
+    "proposer": "mutation",
+    "seed": 1
+  },
+  "trust": "T2",
+  "verdict": {
+    "score": {
+      "d": 1,
+      "d_lower": null,
+      "k": 1,
+      "min_weight_witness": "ZIIII",
+      "n": 5,
+      "operators_examined": 2
+    },
+    "transcript": [
+      "family: generators are exactly the n cyclic shifts of the seed",
+      "all 5 generators pairwise commute",
+      "GF(2) rank = 4, so k = 1",
+      "exhaustive search: no logical operator of weight < 1; witness of weight 1: ZIIII"
+    ],
+    "valid": true
+  }
+}

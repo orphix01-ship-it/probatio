@@ -155,6 +155,8 @@ math[display="block"]{display:block;text-align:left;margin:0}
 .bitgrid .rowzero span{opacity:.35}
 .bitrow{display:contents}
 .cmat span{width:18px;height:18px}
+.gen span{width:9px;height:9px;font-size:0}
+.gen span.lab{font-size:9px;width:22px}
 .cmat span.zero{background:var(--soft);color:var(--pass)}
 .tri{display:flex;flex-direction:column;align-items:center;gap:3px;margin-top:12px;overflow-x:auto}
 .tri div{display:flex;gap:3px}
@@ -285,17 +287,26 @@ const fromSlug = Object.fromEntries(DATA.results.map(r => [slug(r.id), r.id]));
 const verified = {};   // id -> true/false after in-browser check
 
 function title(r) {
-  if (r.checker === "stabilizer_code") return `Cyclic quantum code on ${r.params.n} qubits`;
-  if (r.checker === "golomb_ruler") return `Golomb ruler with ${r.params.marks} marks`;
+  const p = r.params;
+  if (r.checker === "stabilizer_code") return `Cyclic quantum code on ${p.n} qubits`;
+  if (r.checker === "golomb_ruler") return `Golomb ruler with ${p.marks} marks`;
+  if (r.checker === "cap_set") return `Cap set in ${p.n} dimensions`;
+  if (r.checker === "linear_code") return `Binary linear [${p.n}, ${p.k}] code`;
+  if (r.checker === "point_spread") return `${p.n} points spread in a square`;
   return r.id;
 }
 function short(r) {
-  if (r.checker === "stabilizer_code") return `n = ${r.params.n}, k = ${r.params.k}`;
-  if (r.checker === "golomb_ruler") return `${r.params.marks} marks`;
+  const p = r.params;
+  if (r.checker === "stabilizer_code") return `n = ${p.n}, k = ${p.k}`;
+  if (r.checker === "golomb_ruler") return `${p.marks} marks`;
+  if (r.checker === "cap_set") return `F₃^${p.n}`;
+  if (r.checker === "linear_code") return `[${p.n}, ${p.k}]`;
+  if (r.checker === "point_spread") return `${p.n} points`;
   return r.id;
 }
-function metric(r) { return r.objective.field === "d" ? "d" : r.objective.field; }
-function valueText(r) { return r.best_value == null ? "—" : `${metric(r)} = ${fmt(r.best_value)}`; }
+function metric(r) { return { d: "d", min_distance: "m", size: "size", length: "length" }[r.objective.field] || r.objective.field; }
+function numText(r, v) { return v == null ? "—" : (r.objective.field === "min_distance" ? Number(v).toFixed(5) : fmt(v)); }
+function valueText(r) { return r.best_value == null ? "—" : `${metric(r)} = ${numText(r, r.best_value)}`; }
 function statusText(r) {
   return { "matches-known": "matches known best", "below-known": "below known best", "CANDIDATE-NEW": "CANDIDATE-NEW",
            "no-recorded-bound": "no recorded best", "no-valid-result": "no result yet" }[r.status] || r.status;
@@ -316,13 +327,13 @@ function renderStats() {
 
 /* ---------- register ---------- */
 function renderRegister(current) {
-  const groups = [["quantum-codes", "Quantum error correction"], ["combinatorics", "Combinatorics"], ["formal-proof", "Formal proof"]];
+  const groups = [["quantum-codes", "Quantum error correction"], ["coding-theory", "Classical error correction"], ["combinatorics", "Combinatorics"], ["geometry", "Geometry"], ["formal-proof", "Formal proof"]];
   $("#register").innerHTML = groups.map(([d, name]) => {
     const items = DATA.results.filter(r => r.domain === d);
     if (!items.length) return "";
     return `<div class="reg-group"><span class="label">${name}</span>${items.map(r => {
       const dot = verified[r.id] === true ? "ok" : verified[r.id] === false ? "bad" : "";
-      const sub = r.best_cert ? (r.exhaustive ? "optimal in family" : statusText(r)) : "open target";
+      const sub = r.best_cert ? (r.exhaustive ? "optimal in family" : statusText(r)) + (r.role === "open-target" ? " · open target" : "") : "no result yet";
       return `<button type="button" class="reg-item" data-id="${esc(r.id)}" aria-current="${r.id === current}">
         <span class="t">${esc(short(r))}</span><span class="v">${esc(valueText(r))}</span>
         <span class="s"><i class="dot ${dot}"></i>${esc(sub)}</span></button>`;
@@ -387,15 +398,14 @@ function renderSheet(id) {
     <h2>${esc(title(r))}</h2>
     <p class="statement">${esc(r.statement)}</p>
     <div class="figures">
-      <div class="fig"><span class="label">Certified</span><div class="n">${r.best_value == null ? "—" : `${isCode ? "d = " : ""}${fmt(r.best_value)}`}</div><small>${isCode ? "code distance: corrects any error on up to " + (r.best_value ? Math.floor((r.best_value - 1) / 2) : 0) + " qubit(s)" : "ruler length"}</small></div>
-      <div class="fig"><span class="label">${isCode ? "Upper bound" : "Proven optimum"}</span><div class="n dim">${isCode ? (ub ?? "—") : (kb ?? "—")}</div><small>${esc(isCode ? (r.upper_bound ? "quantum Singleton bound, all stabilizer codes" : "") : (r.known_best ? "OEIS A003022" : ""))}</small></div>
+      ${figuresHTML(r)}
       <div class="fig"><span class="label">Search</span><div class="n dim">${fmt(r.attempts)}</div><small>candidates checked in ${r.seconds}s across ${r.runs.length} run${r.runs.length === 1 ? "" : "s"}, $${r.cost_usd.toFixed(2)} model spend</small></div>
     </div>
     <div class="chips">${chips.join("")}</div>
   </section>`;
 
   if (!c) {
-    html += `<section><span class="label">Open target</span><p class="statement">No certified result yet. The annealing baseline found no valid ruler. Exhaustive search at this size is the next calibration step, and it is a natural first target for the AI proposers.</p>
+    html += `<section><span class="label">No certified result yet</span><p class="statement">None of the search runs so far produced a valid candidate here. It is an open target for stronger search, including the AI proposers.</p>
       ${tryHTML(r)}</section>`;
     $("#sheet").innerHTML = html;
     wireTry(r);
@@ -403,15 +413,7 @@ function renderSheet(id) {
   }
 
   const cand = c.candidate;
-  html += `<section><div class="two">
-    <div><span class="label">${isCode ? "The code" : "The ruler"}</span>
-      <div id="viz">${isCode ? ringSVG(cand.seed) : rulerSVG([...cand.marks].sort((a, b) => a - b))}</div>
-      ${isCode ? `<div class="legend"><span><i class="sw bX"></i>X</span><span><i class="sw bZ"></i>Z</span><span><i class="sw bY"></i>Y</span><span>· identity</span><span id="viz-note"></span></div>` : `<div class="legend" id="viz-note">marks: ${esc(cand.marks.join(", "))}</div>`}
-    </div>
-    <div><span class="label">${isCode ? `Stabilizer generators (${cand.generators.length})` : "Pairwise differences"}</span>
-      ${isCode ? matrixHTML(cand.generators) : `<p class="mono" style="font-size:13px;line-height:1.9;margin:10px 0 0;word-spacing:4px">${esc(V.checkGolomb({ params: r.params }, cand).differences.join(" "))}</p>`}
-    </div>
-  </div></section>`;
+  html += vizHTML(r, cand, isCode);
 
   html += `<section><span class="label">Checker transcript, from the certificate</span>
     <ol class="steps">${c.verdict.transcript.map(t => `<li><span>${esc(t)}</span></li>`).join("")}</ol></section>`;
@@ -448,6 +450,7 @@ function renderSheet(id) {
 }
 
 function tryHTML(r, cand) {
+  if (r.checker !== "stabilizer_code" && r.checker !== "golomb_ruler") return "";
   const isCode = r.checker === "stabilizer_code";
   const val = cand ? (isCode ? cand.seed : cand.marks.join(", ")) : "";
   return `<p class="label" style="margin-top:22px">Try your own candidate</p>
@@ -481,7 +484,8 @@ async function verifyCert(r) {
   const t0 = performance.now();
   const res = V.check(r, c.candidate);
   const ms = performance.now() - t0;
-  const keys = r.checker === "golomb_ruler" ? ["marks", "length"] : ["n", "k", "d", "d_lower"];
+  const keys = { golomb_ruler: ["marks", "length"], cap_set: ["n", "size"], linear_code: ["n", "k", "d", "A_d"],
+                  point_spread: ["n", "min_dist_sq"] }[r.checker] || ["n", "k", "d", "d_lower"];
   const claimOk = res.valid && keys.every(k => res.score[k] === c.verdict.score[k]);
   return { ok: hashOk && claimOk, hashOk, claimOk, h, res, ms, c };
 }
@@ -493,9 +497,9 @@ async function verifyOne(r) {
   const isCode = r.checker === "stabilizer_code";
   $("#verify-out").innerHTML = `
     <div class="verdict ${v.ok ? "pass" : "fail"}"><b>${v.ok ? "PASS" : "FAIL"}</b>
-      <span>${v.ok ? `The certificate is intact and its claim holds: ${esc(metric(r))} = ${r.best_value}.` : esc(!v.hashOk ? "The certificate does not match its content address." : (v.res.reason || "The recomputed result differs from the certified claim."))}</span></div>
+      <span>${v.ok ? `The certificate is intact and its claim holds: ${esc(metric(r))} = ${numText(r, r.best_value)}.` : esc(!v.hashOk ? "The certificate does not match its content address." : (v.res.reason || "The recomputed result differs from the certified claim."))}</span></div>
     <div class="hashrow"><span class="label">Address</span><code>${esc(r.best_cert)}</code><span class="label">Recomputed</span><code>${esc(v.h)}</code></div>
-    <ol class="steps">${(v.res.steps || []).map(s => `<li><span>${esc(s)}</span></li>`).join("")}<li><span>Checked ${fmt(v.res.score ? v.res.score.operators_examined ?? 0 : 0)} operators in ${v.ms.toFixed(0)} ms</span></li></ol>`;
+    <ol class="steps">${(v.res.steps || []).map(s => `<li><span>${esc(s)}</span></li>`).join("")}<li><span>${v.res.score && v.res.score.operators_examined != null ? `Checked ${fmt(v.res.score.operators_examined)} operators in ` : "Finished in "}${v.ms.toFixed(0)} ms</span></li></ol>`;
   if (isCode && v.res.score && v.res.score.min_weight_witness) {
     const w = v.res.score.min_weight_witness, sup = [...w].map((ch, i) => ch !== "I" ? i : -1).filter(i => i >= 0);
     $("#viz").innerHTML = ringSVG(v.c.candidate.seed, sup);
@@ -506,6 +510,107 @@ async function verifyOne(r) {
 }
 
 
+
+
+/* ---------- family-specific figures and pictures ---------- */
+function figuresHTML(r) {
+  const ub = r.upper_bound && r.upper_bound.value, kb = r.known_best && r.known_best.value, v = r.best_value;
+  const fig = (label, val, note, dim) => `<div class="fig"><span class="label">${label}</span><div class="n${dim ? " dim" : ""}">${val}</div><small>${esc(note)}</small></div>`;
+  switch (r.checker) {
+    case "stabilizer_code":
+      return fig("Certified", v == null ? "—" : `d = ${v}`, `code distance: corrects any error on up to ${v ? Math.floor((v - 1) / 2) : 0} qubit(s)`) +
+             fig("Upper bound", ub ?? "—", ub ? "quantum Singleton bound, all stabilizer codes" : "", true);
+    case "golomb_ruler":
+      return fig("Certified", v == null ? "—" : fmt(v), "ruler length") + fig("Proven optimum", kb ?? "—", kb ? "OEIS A003022" : "", true);
+    case "cap_set":
+      return fig("Certified", v == null ? "—" : fmt(v), "points, no three on a line") +
+             fig(r.known_best.kind === "proven" ? "Proven maximum" : "Best known", fmt(kb), r.known_best.kind === "proven" ? "proven optimal" : "best known construction", true);
+    case "linear_code":
+      return fig("Certified", v == null ? "—" : `d = ${v}`, `corrects any ${v ? Math.floor((v - 1) / 2) : 0} bit errors`) +
+             fig(r.role === "open-target" ? "Best known · bound" : "Optimum", r.role === "open-target" ? `${kb} · ${ub}` : kb, r.role === "open-target" ? "record lower bound and proven upper bound (codetables.de)" : "proven optimal (codetables.de)", true);
+    case "point_spread":
+      return fig("Certified", v == null ? "—" : Number(v).toFixed(5), "smallest distance between points") +
+             fig("Proven optimum", Number(kb).toFixed(5), "Packomania; success means within 10⁻⁴", true);
+  }
+  return "";
+}
+
+function vizHTML(r, cand, isCode) {
+  const two = (a, b) => `<section><div class="two"><div>${a}</div><div>${b}</div></div></section>`;
+  if (r.checker === "stabilizer_code")
+    return two(`<span class="label">The code</span><div id="viz">${ringSVG(cand.seed)}</div><div class="legend"><span><i class="sw bX"></i>X</span><span><i class="sw bZ"></i>Z</span><span><i class="sw bY"></i>Y</span><span>· identity</span><span id="viz-note"></span></div>`,
+      `<span class="label">Stabilizer generators (${cand.generators.length})</span>${matrixHTML(cand.generators)}`);
+  if (r.checker === "golomb_ruler")
+    return two(`<span class="label">The ruler</span><div id="viz">${rulerSVG([...cand.marks].sort((a, b) => a - b))}</div><div class="legend" id="viz-note">marks: ${esc(cand.marks.join(", "))}</div>`,
+      `<span class="label">Pairwise differences</span><p class="mono" style="font-size:13px;line-height:1.9;margin:10px 0 0;word-spacing:4px">${esc(V.checkGolomb({ params: r.params }, cand).differences.join(" "))}</p>`);
+  if (r.checker === "cap_set")
+    return `<section><span class="label">The cap set</span><p class="statement" style="margin-top:6px">Every point of F₃^${r.params.n} drawn as a cell (${3 ** r.params.n} cells, nested 3 × 3 blocks); gold cells are the ${cand.points.length} points of the set. No line of three passes through three gold cells.</p>${capSetHTML(r.params.n, cand.points)}</section>`;
+  if (r.checker === "linear_code") {
+    const res = V.checkLinearCode({ params: r.params }, cand);
+    return two(`<span class="label">Generator matrix (${r.params.k} × ${r.params.n})</span><div style="overflow-x:auto">${bitGridHTML(cand.generator.map(row => [...row].map(Number)), { cls: "gen" })}</div>`,
+      `<span class="label">Weight distribution</span><p class="statement" style="margin-top:6px">How many codewords have each weight. The smallest nonzero weight is the distance.</p>${weightChartSVG(res.distribution, res.score.d)}`);
+  }
+  if (r.checker === "point_spread") {
+    const res = V.checkPointSpread({ params: r.params }, cand);
+    return two(`<span class="label">The packing</span>${spreadSVG(cand.points, res.score.min_distance)}`,
+      `<span class="label">Reading the picture</span><p class="statement">Each point is the centre of a circle whose radius is half the smallest distance, so neighbouring circles at that distance just touch (gold). Shrinking everything to fit inside the square gives ${r.params.n} equal circles of radius ${(res.score.min_distance / (2 * (1 + res.score.min_distance))).toFixed(6)}.</p>`);
+  }
+  return "";
+}
+
+function capSetHTML(n, points) {
+  const sel = new Set(points);
+  // coordinates: even-indexed digits -> column, odd-indexed -> row, as nested base-3 with block gaps
+  const hx = Math.ceil(n / 2), hy = Math.floor(n / 2);
+  const cols = 3 ** hx, rows = 3 ** hy;
+  const cell = n >= 7 ? 3 : n >= 6 ? 5 : n >= 5 ? 8 : 14;
+  const pos = (digits) => { let p = 0, g = 0; for (let i = 0; i < digits.length; i++) { p = p * 3 + digits[i]; } return p; };
+  const gapAt = (idx, h) => { let g = 0; for (let lvl = 1; lvl < h; lvl++) g += Math.floor(idx / 3 ** lvl); return g; };
+  const W = cols * cell + gapAt(cols - 1, hx) * 2 + cell, H = rows * cell + gapAt(rows - 1, hy) * 2 + cell;
+  const canvasId = "cap-" + Math.random().toString(36).slice(2);
+  setTimeout(() => {
+    const cv = document.getElementById(canvasId); if (!cv) return;
+    const dpr = window.devicePixelRatio || 1; cv.width = W * dpr; cv.height = H * dpr; cv.style.width = "100%"; cv.style.maxWidth = W + "px";
+    const ctx = cv.getContext("2d"); ctx.scale(dpr, dpr);
+    const css = getComputedStyle(document.documentElement);
+    const gold = css.getPropertyValue("--gold").trim(), rule = css.getPropertyValue("--rule").trim();
+    const all = (function* gen(k) { if (!k) { yield ""; return; } for (const s of gen(k - 1)) for (const d of "012") yield s + d; })(n);
+    for (const p of all) {
+      const d = [...p].map(Number), xd = d.filter((_, i) => i % 2 === 0), yd = d.filter((_, i) => i % 2 === 1);
+      const xi = pos(xd), yi = pos(yd);
+      const x = xi * cell + gapAt(xi, hx) * 2, y = yi * cell + gapAt(yi, hy) * 2;
+      ctx.fillStyle = sel.has(p) ? gold : rule;
+      ctx.fillRect(x + 0.5, y + 0.5, cell - 1, cell - 1);
+    }
+  }, 0);
+  return `<div style="overflow-x:auto;margin-top:10px"><canvas id="${canvasId}" role="img" aria-label="Cap set of ${points.length} points in F3^${n}"></canvas></div>`;
+}
+
+function weightChartSVG(dist, d) {
+  const n = dist.length - 1, W = 340, H = 180, L = 30, B = 26, T = 10;
+  const maxv = Math.max(...dist.slice(1)), bw = (W - L - 6) / n;
+  const y = (v) => T + (H - T - B) * (1 - Math.log10(1 + v) / Math.log10(1 + maxv));
+  let s = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Weight distribution">`;
+  for (let w = 1; w <= n; w++) if (dist[w]) s += `<rect x="${(L + (w - 1) * bw).toFixed(1)}" y="${y(dist[w]).toFixed(1)}" width="${Math.max(1, bw - 1).toFixed(1)}" height="${(y(0) - y(dist[w])).toFixed(1)}" fill="${w === d ? "var(--gold)" : "var(--mute)"}"/>`;
+  s += `<line x1="${L}" x2="${W - 6}" y1="${y(0)}" y2="${y(0)}" stroke="var(--rule)"/>`;
+  for (const w of [1, d, n]) s += `<text x="${(L + (w - 0.5) * bw).toFixed(1)}" y="${H - 8}" text-anchor="middle">${w}</text>`;
+  s += `<text x="${L + 2}" y="${T + 2}" text-anchor="start">max ${fmt(maxv)}</text><text x="${(L + W) / 2}" y="${H}" text-anchor="middle">weight (log count)</text>`;
+  return s + "</svg>";
+}
+
+function spreadSVG(points, m) {
+  const S = 300, pad = 20, sc = S - 2 * pad, P = points.map(([x, y]) => [Number(x), Number(y)]);
+  let s = `<svg class="diagram" viewBox="0 0 ${S} ${S}" role="img" aria-label="Packing of ${points.length} points">`;
+  s += `<rect x="${pad}" y="${pad}" width="${sc}" height="${sc}" fill="none" stroke="var(--ink)" stroke-width="1"/>`;
+  const X = (v) => pad + v * sc, Y = (v) => pad + (1 - v) * sc;
+  P.forEach(([x, y]) => s += `<circle cx="${X(x).toFixed(1)}" cy="${Y(y).toFixed(1)}" r="${(m / 2 * sc).toFixed(1)}" fill="none" stroke="var(--rule)" stroke-width="1"/>`);
+  for (let i = 0; i < P.length; i++) for (let j = i + 1; j < P.length; j++) {
+    const dd = Math.hypot(P[i][0] - P[j][0], P[i][1] - P[j][1]);
+    if (dd <= m * (1 + 2e-4)) s += `<line x1="${X(P[i][0]).toFixed(1)}" y1="${Y(P[i][1]).toFixed(1)}" x2="${X(P[j][0]).toFixed(1)}" y2="${Y(P[j][1]).toFixed(1)}" stroke="var(--gold)" stroke-width="1.6"/>`;
+  }
+  P.forEach(([x, y]) => s += `<circle cx="${X(x).toFixed(1)}" cy="${Y(y).toFixed(1)}" r="3.2" fill="var(--ink)"/>`);
+  return s + "</svg>";
+}
 
 /* ---------- mathematics (MathML, rendered natively by the browser) ---------- */
 const mi = (x) => `<mi>${x}</mi>`, mn = (x) => `<mn>${x}</mn>`, mo = (x) => `<mo>${x}</mo>`;
@@ -554,6 +659,40 @@ function mathSectionHTML(r, cand) {
       </div>
     </section>`;
   }
+  if (r.checker === "cap_set") {
+    const n = r.params.n, size = cand.points.length, kb = r.known_best.value;
+    const rows = [
+      frow("The space: all strings of length n over {0, 1, 2}, with addition mod 3.", MATH(sp(sb(mi("𝔽"), mn(3)), mi("n")), mo(","), mspace(), mo("|"), sp(sb(mi("𝔽"), mn(3)), mn(n)), mo("|"), mo("="), sp(mn(3), mn(n)), mo("="), mn(3 ** n))),
+      frow("Three distinct points lie on a line exactly when they sum to zero.", MATH(mi("a"), mo("+"), mi("b"), mo("+"), mi("c"), mo("≡"), mn(0), mspace(), mr(mo("("), mt("mod" + " "), mn(3), mo(")")))),
+      frow("A cap set avoids every line, so for each pair the third point is excluded.", MATH(mo("∀"), mi("a"), mo("≠"), mi("b"), mo("∈"), mi("A"), mo(":"), mspace(), mo("−"), mo("("), mi("a"), mo("+"), mi("b"), mo(")"), mo("∉"), mi("A"))),
+      frow("This certified set and the reference value.", MATH(mo("|"), mi("A"), mo("|"), mo("="), mn(size), mspace(), mt(r.known_best.kind === "proven" ? "proven maximum " : "best known "), mn(kb))),
+      frow("Large n: the maximum grows exponentially slower than 3ⁿ (Ellenberg–Gijswijt, 2017).", MATH(mi("r"), mo("("), sp(sb(mi("𝔽"), mn(3)), mi("n")), mo(")"), mo("="), mi("O"), mo("("), sp(mn("2.756"), mi("n")), mo(")"))),
+    ];
+    return `<section><span class="label">The mathematics</span><div class="formulas">${rows.join("")}</div></section>`;
+  }
+  if (r.checker === "linear_code") {
+    const { n, k } = r.params, d = r.best_value, ub = r.upper_bound && r.upper_bound.value;
+    let gries = 0; for (let i = 0; i < k; i++) gries += Math.ceil(d / 2 ** i);
+    const rows = [
+      frow("A linear code: all GF(2) combinations of k rows of length n.", MATH(mi("C"), mo("="), mo("{"), mi("m"), mi("G"), mo(":"), mi("m"), mo("∈"), sp(sb(mi("𝔽"), mn(2)), mn(k)), mo("}"), mo(","), mspace(), mo("|"), mi("C"), mo("|"), mo("="), sp(mn(2), mn(k)), mo("="), mn(fmt(2 ** k)))),
+      frow("Distance: the smallest number of 1s in any nonzero codeword.", MATH(mi("d"), mo("="), sb(mi("min"), mr(mi("c"), mo("∈"), mi("C"), mo("∖"), mo("{"), mn(0), mo("}"))), mt("wt"), mo("("), mi("c"), mo(")"), mo("="), mn(d))),
+      frow("Errors it corrects in any n-bit word.", MATH(mi("t"), mo("="), mr(mo("⌊"), fr(mr(mi("d"), mo("−"), mn(1)), mn(2)), mo("⌋")), mo("="), mn(Math.floor((d - 1) / 2)))),
+      frow("Griesmer bound: every [n, k, d] code needs at least this length.", MATH(mi("n"), mo("≥"), `<munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>0</mn></mrow><mrow><mi>k</mi><mo>−</mo><mn>1</mn></mrow></munderover>`, mr(mo("⌈"), fr(mi("d"), sp(mn(2), mi("i"))), mo("⌉")), mo("="), mn(gries), mspace(), mo("≤"), mn(n), mspace(), mtextOk("✓"))),
+      frow(r.role === "open-target" ? "The record and the ceiling for this cell. Beating the record means d = " + (r.known_best.value + 1) + "." : "Proven optimum for these n and k.",
+        MATH(mn(r.known_best.value), mo("≤"), sb(mi("d"), mt("max")), mo("("), mn(n), mo(","), mn(k), mo(")"), mo("≤"), mn(ub ?? r.known_best.value))),
+    ];
+    return `<section><span class="label">The mathematics</span><div class="formulas">${rows.join("")}</div></section>`;
+  }
+  if (r.checker === "point_spread") {
+    const n = r.params.n, res = V.checkPointSpread({ params: r.params }, cand), kb = r.known_best.value;
+    const rows = [
+      frow("Choose n points in the unit square to make the closest pair as far apart as possible.", MATH(sb(mi("m"), mi("n")), mo("="), sb(mi("max"), mr(sb(mi("p"), mn(1)), mo(","), mo("…"), mo(","), sb(mi("p"), mi("n")), mo("∈"), sp(mo("[0,1]"), mn(2)))), sb(mi("min"), mr(mi("i"), mo("<"), mi("j"))), mo("‖"), sb(mi("p"), mi("i")), mo("−"), sb(mi("p"), mi("j")), mo("‖"))),
+      frow("The certified configuration, computed exactly with rational arithmetic.", MATH(sp(mi("m"), mn(2)), mo("="), mn(res.score.min_dist_sq), mspace(), mo("⟹"), mspace(), mi("m"), mo("≈"), mn(res.score.min_distance.toFixed(9)))),
+      frow("Equivalent circle packing: n equal circles in a unit square.", MATH(mi("r"), mo("="), fr(mi("m"), mr(mn(2), mo("("), mn(1), mo("+"), mi("m"), mo(")"))), mo("≈"), mn((res.score.min_distance / (2 * (1 + res.score.min_distance))).toFixed(6)))),
+      frow("Gap to the proven optimum.", MATH(sb(mi("m"), mn(n)), mo("−"), mi("m"), mo("≈"), mn((kb - res.score.min_distance).toExponential(2)))),
+    ];
+    return `<section><span class="label">The mathematics</span><div class="formulas">${rows.join("")}</div></section>`;
+  }
   if (r.checker === "golomb_ruler") {
     const mk = [...cand.marks].sort((a, b) => a - b), m = mk.length, L = mk[m - 1], pairs = m * (m - 1) / 2;
     const rows = [
@@ -585,7 +724,8 @@ function mtextOk(x) { return `<mtext class="ok-inline">${x}</mtext>`; }
 function bitGridHTML(M, opt = {}) {
   const cols = M[0].length, half = opt.split ? cols / 2 : 0;
   const tmpl = `24px repeat(${half ? half : cols}, 15px)${half ? ` 6px repeat(${half}, 15px)` : ""}`;
-  let h = `<div class="bitgrid ${opt.cls || ""}" style="grid-template-columns:${tmpl.replace(/15px/g, opt.cls === "cmat" ? "18px" : "15px")}">`;
+  const px = opt.cls === "cmat" ? "18px" : opt.cls === "gen" ? "9px" : "15px";
+  let h = `<div class="bitgrid ${opt.cls || ""}" style="grid-template-columns:${tmpl.replace(/15px/g, px).replace("24px", opt.cls === "gen" ? "22px" : "24px")}">`;
   M.forEach((row, i) => {
     h += `<div class="bitrow" data-row="${i}"><span class="lab">g${i}</span>`;
     row.forEach((b, j) => {
@@ -646,35 +786,49 @@ function wireRank(r, cand) {
 
 /* ---------- landscape charts ---------- */
 function renderLandscape() {
-  const codes = DATA.results.filter(r => r.checker === "stabilizer_code").sort((a, b) => a.params.n - b.params.n);
-  const rulers = DATA.results.filter(r => r.checker === "golomb_ruler").sort((a, b) => a.params.marks - b.params.marks);
+  const fam = (chk, key) => DATA.results.filter(r => r.checker === chk).sort((a, b) => key(a) - key(b));
   const chart = (items, opt) => {
-    const W = 520, H = 230, L = 34, R = 10, T = 14, B = 34, ymax = opt.ymax;
+    const W = 520, H = 230, L = 40, R = 10, T = 14, B = 38, ymax = opt.ymax;
     const bw = (W - L - R) / items.length, y = (v) => T + (H - T - B) * (1 - v / ymax);
     let s = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${opt.aria}">`;
     for (const tk of opt.ticks) s += `<line x1="${L}" x2="${W - R}" y1="${y(tk).toFixed(1)}" y2="${y(tk).toFixed(1)}" stroke="var(--rule)"/><text x="${L - 6}" y="${(y(tk) + 3).toFixed(1)}" text-anchor="end">${tk}</text>`;
     items.forEach((r, i) => {
-      const x = L + i * bw, cx = x + bw / 2, v = r.best_value, ref = opt.ref(r);
+      const x = L + i * bw, cx = x + bw / 2, v = r.best_value, ref = opt.ref(r), up = opt.up ? opt.up(r) : null;
       s += `<g class="bar" data-id="${esc(r.id)}" tabindex="0" role="link" aria-label="${esc(r.id)}">`;
       s += `<rect x="${x}" y="${T}" width="${bw}" height="${H - T - B}" fill="transparent"/>`;
-      if (v != null) s += `<rect x="${(x + bw * 0.2).toFixed(1)}" y="${y(v).toFixed(1)}" width="${(bw * 0.6).toFixed(1)}" height="${(y(0) - y(v)).toFixed(1)}" fill="${r.exhaustive ? "var(--gold)" : "var(--mute)"}"/>` +
-        `<text x="${cx.toFixed(1)}" y="${(y(v) - 4).toFixed(1)}" text-anchor="middle" style="fill:var(--ink)">${v}</text>`;
-      if (ref != null) s += `<line x1="${(x + bw * 0.12).toFixed(1)}" x2="${(x + bw * 0.88).toFixed(1)}" y1="${y(ref).toFixed(1)}" y2="${y(ref).toFixed(1)}" stroke="var(--ink)" stroke-width="2" stroke-dasharray="${opt.dash}"/>`;
-      if (v == null) s += `<text x="${cx.toFixed(1)}" y="${(y(ref) - 6).toFixed(1)}" text-anchor="middle" style="fill:var(--fail)">open</text>`;
+      if (up != null && up !== ref) s += `<rect x="${(x + bw * 0.12).toFixed(1)}" y="${y(up).toFixed(1)}" width="${(bw * 0.76).toFixed(1)}" height="${(y(ref) - y(up)).toFixed(1)}" fill="var(--soft)" stroke="var(--rule)" stroke-dasharray="2 2"/>`;
+      const ok = r.status === "matches-known" || r.exhaustive;
+      if (v != null) s += `<rect x="${(x + bw * 0.22).toFixed(1)}" y="${y(v).toFixed(1)}" width="${(bw * 0.56).toFixed(1)}" height="${(y(0) - y(v)).toFixed(1)}" fill="${ok ? "var(--gold)" : "var(--mute)"}"/>` +
+        (opt.labels !== false ? `<text x="${cx.toFixed(1)}" y="${(y(v) - 4).toFixed(1)}" text-anchor="middle" style="fill:var(--ink)">${opt.vl ? opt.vl(v) : v}</text>` : "");
+      if (ref != null) s += `<line x1="${(x + bw * 0.1).toFixed(1)}" x2="${(x + bw * 0.9).toFixed(1)}" y1="${y(ref).toFixed(1)}" y2="${y(ref).toFixed(1)}" stroke="var(--ink)" stroke-width="2" stroke-dasharray="${opt.dash || "0"}"/>`;
+      if (r.role === "open-target") s += `<text x="${cx.toFixed(1)}" y="${(y(Math.max(ref, up || 0)) - 6).toFixed(1)}" text-anchor="middle" style="fill:var(--gold)">open</text>`;
+      else if (v == null) s += `<text x="${cx.toFixed(1)}" y="${(y(ref) - 6).toFixed(1)}" text-anchor="middle" style="fill:var(--fail)">none</text>`;
       s += `<text x="${cx.toFixed(1)}" y="${H - B + 14}" text-anchor="middle">${opt.xl(r)}</text></g>`;
     });
-    s += `<text x="${(L + W - R) / 2}" y="${H - 4}" text-anchor="middle">${opt.xt}</text>`;
+    s += `<text x="${(L + W - R) / 2}" y="${H - 6}" text-anchor="middle">${opt.xt}</text>`;
     return s + "</svg>";
   };
-  $("#landscape").innerHTML = `
-    <div class="panel"><span class="label">Quantum error correction</span><h3>Distance against the limit</h3>
-      <p>Certified distance d of the best cyclic code at each size, against the quantum Singleton bound that no stabilizer code can beat.</p>
-      ${chart(codes, { ymax: 9, ticks: [0, 2, 4, 6, 8], ref: r => r.upper_bound && r.upper_bound.value, dash: "4 3", xl: r => r.params.n, xt: "qubits n", aria: "Certified distance by number of qubits" })}
-      <div class="chart-legend"><span><i class="sw" style="background:var(--gold)"></i>proved best in family</span><span><i class="sw" style="background:var(--mute)"></i>best found by search</span><span>- - Singleton bound</span></div></div>
-    <div class="panel"><span class="label">Combinatorics</span><h3>Golomb rulers against the optimum</h3>
-      <p>Certified ruler length for each number of marks, against the proven optimal length. Matching bars are optimal.</p>
-      ${chart(rulers, { ymax: 95, ticks: [0, 20, 40, 60, 80], ref: r => r.known_best && r.known_best.value, dash: "0", xl: r => r.params.marks, xt: "marks", aria: "Certified ruler length by number of marks" })}
-      <div class="chart-legend"><span><i class="sw" style="background:var(--gold)"></i>proved optimal by exhaustive search</span><span>— proven optimum</span></div></div>`;
+  const panel = (label, h, p, svg, legend) => `<div class="panel"><span class="label">${label}</span><h3>${h}</h3><p>${p}</p>${svg}<div class="chart-legend">${legend}</div></div>`;
+  const gold = `<span><i class="sw" style="background:var(--gold)"></i>reaches the reference</span>`, grey = `<span><i class="sw" style="background:var(--mute)"></i>below it</span>`;
+  const parts = [];
+  const codes = fam("stabilizer_code", r => r.params.n);
+  if (codes.length) parts.push(panel("Quantum error correction", "Distance against the limit", "Best certified cyclic code at each size, against the quantum Singleton bound no stabilizer code can beat. Gold: proved best among cyclic codes.",
+    chart(codes, { ymax: 9, ticks: [0, 2, 4, 6, 8], ref: r => r.upper_bound && r.upper_bound.value, dash: "4 3", xl: r => r.params.n, xt: "qubits n", aria: "Certified distance by qubits" }),
+    `${gold}${grey}<span>- - Singleton bound</span>`));
+  const lin = fam("linear_code", r => r.params.n * 100 + r.params.k);
+  if (lin.length) parts.push(panel("Classical error correction", "Codes against the record tables", "Certified distance of each binary linear code against codetables.de. Shaded boxes on open targets span the record to the proven ceiling.",
+    chart(lin, { ymax: 28, ticks: [0, 8, 16, 24], ref: r => r.known_best.value, up: r => r.upper_bound && r.upper_bound.value, xl: r => `${r.params.n},${r.params.k}`, xt: "[n, k]", aria: "Certified distance of linear codes" }),
+    `${gold}${grey}<span>— record</span>`));
+  const caps = fam("cap_set", r => r.params.n);
+  if (caps.length) parts.push(panel("Combinatorics", "Cap sets against the maximum", "Largest certified cap set in each dimension, against the proven maximum (n ≤ 6) or best known construction (n = 7, 8; FunSearch holds n = 8).",
+    chart(caps, { ymax: 560, ticks: [0, 100, 200, 300, 400, 500], ref: r => r.known_best.value, xl: r => r.params.n, xt: "dimension n", aria: "Cap set sizes" }), `${gold}${grey}<span>— maximum or record</span>`));
+  const rul = fam("golomb_ruler", r => r.params.marks);
+  if (rul.length) parts.push(panel("Combinatorics", "Golomb rulers against the optimum", "Certified ruler length for each number of marks, against the proven optimal length. Lower is better; matching bars are optimal.",
+    chart(rul, { ymax: 95, ticks: [0, 20, 40, 60, 80], ref: r => r.known_best.value, xl: r => r.params.marks, xt: "marks", aria: "Golomb ruler lengths" }), `${gold}${grey}<span>— proven optimum</span>`));
+  const spr = fam("point_spread", r => r.params.n);
+  if (spr.length) parts.push(panel("Geometry", "Point spreading against the optimum", "Smallest distance between n points in a square, against the proven optimum (Packomania). Success means within 10⁻⁴.",
+    chart(spr, { ymax: 1.5, ticks: [0, 0.5, 1, 1.5], ref: r => r.known_best.value, vl: v => v.toFixed(2), xl: r => r.params.n, xt: "points n", aria: "Point spreading" }), `${gold}${grey}<span>— proven optimum</span>`));
+  $("#landscape").innerHTML = parts.join("");
   $("#landscape").querySelectorAll(".bar").forEach(g => {
     const go = () => { location.hash = slug(g.dataset.id); $("#sheet").scrollIntoView({ behavior: "smooth", block: "start" }); };
     g.addEventListener("click", go);

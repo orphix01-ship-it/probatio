@@ -1,0 +1,36 @@
+{
+  "candidate": {
+    "marks": [
+      0,
+      1,
+      10,
+      14,
+      17,
+      29,
+      35,
+      37
+    ]
+  },
+  "candidate_hash": "100d3946b5be671bb81623c32d52c24f82717780e2ac607aa465e3c5b608886b",
+  "checker": "golomb_ruler@0.1.0",
+  "created_at": "2026-11-02T02:20:31+00:00",
+  "problem_hash": "3df3d8241d5f19ac21e6670b33d8fb522d4859fefbec27b8bfc66becbdfd60e7",
+  "problem_id": "golomb.m8",
+  "provenance": {
+    "attempt": 15704,
+    "proposer": "mutation",
+    "seed": 1
+  },
+  "trust": "T2",
+  "verdict": {
+    "score": {
+      "length": 37,
+      "marks": 8
+    },
+    "transcript": [
+      "8 marks, 28 pairwise differences, all distinct",
+      "length = 37"
+    ],
+    "valid": true
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "candidate": {
+    "generator": [
+      "1000010010110001",
+      "0100011111011111",
+      "0010000011011010",
+      "0001001111101101",
+      "0000111111110010"
+    ]
+  },
+  "candidate_hash": "99736bf20a84c21cd7c617d1c1a579d4f104f3c02d2e5489c5868255b3a83742",
+  "checker": "linear_code@0.1.0",
+  "created_at": "2026-11-02T02:23:45+00:00",
+  "problem_hash": "12570c54594aa375a4d1eb34d0b46b902a3cba43c735d8af3ed09ea679ae5507",
+  "problem_id": "lincode.n16.k5",
+  "provenance": {
+    "attempt": 132,
+    "proposer": "mutation",
+    "seed": 2
+  },
+  "trust": "T2",
+  "verdict": {
+    "score": {
+      "A_d": 5,
+      "d": 6,
+      "k": 5,
+      "n": 16
+    },
+    "transcript": [
+      "generator matrix 5 x 16; GF(2) rank = 5, so dimension is exactly 5",
+      "enumerated all 31 nonzero codewords",
+      "minimum weight 6, attained by 5 codewords; this is a [16,5,6] code"
+    ],
+    "valid": true
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "candidate": {
+    "points": [
+      [
+        "0.0000000",
+        "0.8036523"
+      ],
+      [
+        "0.5188229",
+        "0.0007897"
+      ],
+      [
+        "0.2784852",
+        "0.4215357"
+      ],
+      [
+        "0.6019892",
+        "0.6731168"
+      ],
+      [
+        "0.0952863",
+        "0.0141062"
+      ],
+      [
+        "1.0000000",
+        "0.6364060"
+      ],
+      [
+        "1.0000000",
+        "0.0293624"
+      ],
+      [
+        "0.3586087",
+        "1.0000000"
+      ]
+    ]
+  },
+  "candidate_hash": "be3c69056b5333319a126272acc897a335f89c874f048a3c61f81c413d2abb6a",
+  "checker": "point_spread@0.1.0",
+  "created_at": "2026-11-02T02:43:06+00:00",
+  "problem_hash": "b57a9c30cc99dc79902077b94d0d0b52a6376d2dab03928f30b885bcbb874d27",
+  "problem_id": "spread.n8",
+  "provenance": {
+    "attempt": 6350,
+    "proposer": "mutation",
+    "seed": 1
+  },
+  "trust": "T2",
+  "verdict": {
+    "score": {
+      "min_dist_sq": "499250874229/3125000000000",
+      "min_distance": 0.39970023737,
+      "n": 8
+    },
+    "transcript": [
+      "8 points, all inside [0,1]^2 (exact rational check)",
+      "minimum pairwise distance squared = 499250874229/3125000000000 exactly (points 3 and 5)",
+      "minimum distance = 0.399700237; equal circles of radius 0.142780656 fit in a unit square"
+    ],
+    "valid": true
+  }
+}

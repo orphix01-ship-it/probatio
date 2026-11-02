@@ -1,0 +1,38 @@
+{
+  "candidate": {
+    "generator": [
+      "100000000010110",
+      "010000000111010",
+      "001000001110100",
+      "000100000001101",
+      "000010001111110",
+      "000001011011111",
+      "000000111110101"
+    ]
+  },
+  "candidate_hash": "0d5548d688d956a70e73b1cb7832aa527f2d00ac39b1695cab26e6682b0db2b7",
+  "checker": "linear_code@0.1.0",
+  "created_at": "2026-11-02T02:23:01+00:00",
+  "problem_hash": "1b265e0a61e9e156fb23e4b23dd33fc10a7108cc81f7bfc66f11084c7706da2c",
+  "problem_id": "lincode.n15.k7",
+  "provenance": {
+    "attempt": 19,
+    "proposer": "mutation",
+    "seed": 2
+  },
+  "trust": "T2",
+  "verdict": {
+    "score": {
+      "A_d": 6,
+      "d": 4,
+      "k": 7,
+      "n": 15
+    },
+    "transcript": [
+      "generator matrix 7 x 15; GF(2) rank = 7, so dimension is exactly 7",
+      "enumerated all 127 nonzero codewords",
+      "minimum weight 4, attained by 6 codewords; this is a [15,7,4] code"
+    ],
+    "valid": true
+  }
+}

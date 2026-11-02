@@ -43,6 +43,7 @@ def build_data(results_dir: Path) -> dict[str, Any]:
             "known_best": p.get("known_best"),
             "upper_bound": p.get("upper_bound"),
             "references": p.get("references", []),
+            "role": p.get("role", "calibration"),
             "best_value": best["best_value"] if best else None,
             "best_cert": best["best_cert"] if best else None,
             "status": best["status"] if best else "no-valid-result",

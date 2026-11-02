@@ -6,3 +6,8 @@ results/.ledger.lock
 .env
 .venv/
 results/*/.ledger.lock
+paper/**/*.aux
+paper/**/*.bbl
+paper/**/*.blg
+paper/**/*.log
+paper/**/*.out

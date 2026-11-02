@@ -59,3 +59,24 @@ def test_fisher_and_wilson():
     assert abs(study.fisher_exact(3, 1, 1, 3) - 0.4857) < 1e-3
     lo, hi = study.wilson(5, 10)
     assert 0.23 < lo < 0.24 and 0.76 < hi < 0.77
+
+
+def test_problems_without_reference_are_not_scored(tmp_path):
+    # qec n6 has no recorded reference: it must not count as a failure in success rates,
+    # and its post-hoc reference appears only in the exploratory table.
+    p = _proto(tmp_path, problems=("qec.cyclic.n5.k1", "qec.cyclic.n6.k1"), seconds=1)
+    res = tmp_path / "res"
+    study.run_study(p, res, jobs=1)
+    rows = study.collect(res)
+    assert all(r["scored"] == (r["problem"] == "qec.cyclic.n5.k1") for r in rows)
+    summ = study.summarise(rows)
+    assert all(s["runs"] == 2 for s in summ)  # only the two n5 seeds
+    out = study.analyze(res)
+    ph = (out / "tables" / "posthoc.md").read_text()
+    assert "qec.cyclic.n6.k1" in ph and "qec.cyclic.n5.k1" not in ph
+
+
+def test_wilson_interval_contains_estimate():
+    for k, n in [(0, 5), (5, 5), (3, 3), (1, 7)]:
+        lo, hi = study.wilson(k, n)
+        assert lo - 1e-12 <= k / n <= hi + 1e-12
