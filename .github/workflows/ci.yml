@@ -1,0 +1,64 @@
+# Every push and pull request, and weekly: run the tests, re-verify every stored
+# certificate from scratch in Python, re-check them in the independent JavaScript
+# verifier, and audit every ledger's hash chain. Free on public repositories.
+name: verify
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: "17 6 * * 1"   # weekly re-verification, Mondays 06:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read           # least privilege: the workflow never writes to the repo
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install
+        run: python -m pip install -e ".[dev]"
+      - name: Tests (including JS-vs-Python agreement on all certificates)
+        run: python -m pytest -q
+      - name: Re-verify every certificate and audit every ledger
+        run: |
+          set -euo pipefail
+          for d in results results/study-v1 results/study-v2; do
+            [ -f "$d/ledger.jsonl" ] || continue
+            echo "== $d"
+            python -m probatio.cli --results "$d" verify --all | tail -1
+            python -m probatio.cli --results "$d" audit
+          done
+
+  lean:
+    # The formal-proof checker (trust level T1) runs against a real Lean toolchain here.
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install Lean (elan, pinned toolchain)
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -o elan-init.sh
+          sh elan-init.sh -y --default-toolchain leanprover/lean4:v4.15.0
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+      - name: Lean checker tests
+        run: |
+          python -m pip install -e ".[dev]"
+          lean --version
+          PROBATIO_REQUIRE_LEAN=1 python -m pytest -q tests/test_checkers.py -k lean

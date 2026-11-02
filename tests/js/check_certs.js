@@ -5,7 +5,7 @@ const probs = {};
 for (const f of fs.readdirSync(ROOT + '/problems')) for (const p of JSON.parse(fs.readFileSync(ROOT + '/problems/'+f))) probs[p.id]=p;
 (async () => {
   let ok = 0, bad = 0;
-  const dirs = [ROOT + '/results/certs', ROOT + '/results/study-v1/certs', process.env.EXTRA_CERTS].filter(d => d && fs.existsSync(d));
+  const dirs = [ROOT + '/results/certs', ROOT + '/results/study-v1/certs', ROOT + '/results/study-v2/certs', process.env.EXTRA_CERTS].filter(d => d && fs.existsSync(d));
   const dir = dirs[0];
   const allCerts = dirs.flatMap(d => fs.readdirSync(d).map(f => path.join(d, f)));
   for (const f of allCerts) {

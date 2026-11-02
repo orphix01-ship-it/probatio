@@ -43,7 +43,10 @@ class Ledger:
         p = Path(ref)
         if not p.exists():
             p = self.certs / f"{ref}.json"
-        cert = json.loads(p.read_text())
+        try:
+            cert = json.loads(p.read_bytes().decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise ValueError(f"certificate {p.name} is corrupted (not valid JSON): {exc}") from None
         actual = hash_obj(cert)
         expected = p.stem
         if len(expected) == 64 and actual != expected:
@@ -102,8 +105,13 @@ class Ledger:
                 cp = self.certs / f"{ref}.json"
                 if not cp.exists():
                     problems.append(f"entry {i}: referenced certificate {ref[:12]} missing")
-                elif sha256_hex(canonical_json(json.loads(cp.read_text()))) != ref:
-                    problems.append(f"entry {i}: certificate {ref[:12]} altered")
+                else:
+                    try:
+                        altered = sha256_hex(canonical_json(json.loads(cp.read_bytes().decode("utf-8")))) != ref
+                    except (UnicodeDecodeError, json.JSONDecodeError):
+                        altered = True  # unreadable counts as altered, never as a crash
+                    if altered:
+                        problems.append(f"entry {i}: certificate {ref[:12]} altered")
             prev = e.get("hash")
         return problems
 

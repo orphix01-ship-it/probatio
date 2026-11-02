@@ -145,8 +145,18 @@ def _reason_class(reason: str) -> str:
 
 def verify(cert_ref: str, results_dir: Path | None = None) -> tuple[bool, str]:
     """Re-run the checker on a stored certificate from scratch."""
+    try:
+        return _verify(cert_ref, results_dir)
+    except (KeyError, TypeError, AttributeError) as exc:
+        return False, f"malformed certificate: {exc!r}"
+
+
+def _verify(cert_ref: str, results_dir: Path | None = None) -> tuple[bool, str]:
     ledger = Ledger(results_dir or DEFAULT_RESULTS)
-    cert = ledger.load_certificate(cert_ref)
+    try:
+        cert = ledger.load_certificate(cert_ref)
+    except (ValueError, OSError) as exc:  # tampered, corrupted or missing: a failure, not a crash
+        return False, str(exc)
     problem = registry.get(cert["problem_id"])
     if registry.problem_hash(problem) != cert["problem_hash"]:
         return False, "problem specification changed since certification"

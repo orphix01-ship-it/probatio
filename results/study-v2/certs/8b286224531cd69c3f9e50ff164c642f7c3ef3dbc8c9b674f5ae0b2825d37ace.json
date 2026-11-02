@@ -1,0 +1,38 @@
+{
+  "candidate": {
+    "points": [
+      "000",
+      "010",
+      "112",
+      "120",
+      "122",
+      "202",
+      "212",
+      "220"
+    ]
+  },
+  "candidate_hash": "f96501aa1c2a646235d934a966b9f6407c31d2e681896df4cf5dd81e2a3a3efa",
+  "checker": "cap_set@0.1.0",
+  "created_at": "2026-11-02T13:39:17+00:00",
+  "problem_hash": "db1d9342cf2701637f182df5a6c3e7ee3f20634fa4ac543497c62966475c570b",
+  "problem_id": "capset.n3",
+  "provenance": {
+    "attempt": 1,
+    "proposer": "random",
+    "search_space": "cap_set",
+    "seed": 2
+  },
+  "trust": "T2",
+  "verdict": {
+    "score": {
+      "n": 3,
+      "size": 8
+    },
+    "transcript": [
+      "8 distinct points in F_3^3",
+      "checked all 28 pairs: the third point on each line is never in the set",
+      "cap set of size 8"
+    ],
+    "valid": true
+  }
+}

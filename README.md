@@ -127,7 +127,30 @@ python3 -m probatio.cli report             # results/report.html
 python3 -m probatio.cli site               # results/site/index.html: public page with in-browser verification
 ```
 
-AI proposers:
+Free AI proposers (an open-weight model on your own machine, no key, $0):
+
+```bash
+brew install ollama && ollama serve &              # or the Ollama app
+ollama pull qwen2.5-coder:7b
+python3 -m probatio.cli run capset.n6 --proposer llm --backend local --model qwen2.5-coder:7b --max-calls 20
+```
+
+The local backend accepts only loopback hosts, bypasses any proxy, records the model's
+content digest with every run and seeds sampling so runs can be repeated.
+
+Stronger search and record hunts (exploratory, resumable, outside any protocol):
+
+```bash
+python3 -m probatio.cli run lincode.n24.k12 --space linear_code_qc      # quasi-cyclic codes
+python3 -m probatio.cli run golomb.m10 --space golomb_constructive      # valid by construction
+python3 -m probatio.cli --results results/hunt hunt lincode.n72.k18 lincode.n80.k20 \
+    --space linear_code_qc --hours 8 --jobs 4
+```
+
+Any value that beats a recorded best is written to `results/hunt/CANDIDATES.md`,
+unreviewed, for the literature check that must come before any claim.
+
+Paid AI proposers (optional):
 
 ```bash
 export ANTHROPIC_API_KEY=...                       # read from env only; never logged
@@ -144,6 +167,15 @@ python3 -m probatio.cli run qec.cyclic.n15.k1 --proposer program_evolution --bud
   certificate, and its symmetry reduction is tested against brute force.
 - **CANDIDATE-NEW** — beats the recorded best known value. The software never says
   "new": novelty requires a human literature review, recorded as a signed ledger entry.
+
+## Continuous verification
+
+Every push, every pull request and a weekly schedule run
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) on GitHub's free runners: the
+test suite (including property-based tests against naive definitions), re-verification of
+every stored certificate in Python and in the independent JavaScript verifier, an audit of
+every ledger, and the Lean checker against a real pinned Lean toolchain. A result that stops
+verifying turns the badge red.
 
 ## Architecture and security
 

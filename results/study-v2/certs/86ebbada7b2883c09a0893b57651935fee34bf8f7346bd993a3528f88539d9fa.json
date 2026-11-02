@@ -1,0 +1,50 @@
+{
+  "candidate": {
+    "generators": [
+      "XIIIIIIIIIXYY",
+      "YXIIIIIIIIIXY",
+      "YYXIIIIIIIIIX",
+      "XYYXIIIIIIIII",
+      "IXYYXIIIIIIII",
+      "IIXYYXIIIIIII",
+      "IIIXYYXIIIIII",
+      "IIIIXYYXIIIII",
+      "IIIIIXYYXIIII",
+      "IIIIIIXYYXIII",
+      "IIIIIIIXYYXII",
+      "IIIIIIIIXYYXI",
+      "IIIIIIIIIXYYX"
+    ],
+    "seed": "XIIIIIIIIIXYY"
+  },
+  "candidate_hash": "e8b09d4283de30177880552db378c2df37c86409e473b8ef67582f640974a434",
+  "checker": "stabilizer_code@0.1.0",
+  "created_at": "2026-11-02T13:36:53+00:00",
+  "problem_hash": "bd3ac3a5b61b918b18ce23e0dbcba1be0ec4c9e200ba1c84cd3427865760adf7",
+  "problem_id": "qec.cyclic.n13.k1",
+  "provenance": {
+    "attempt": 9,
+    "enumerated": 4096,
+    "proposer": "exhaustive",
+    "search_space": "cyclic_stabilizer",
+    "seed": 0
+  },
+  "trust": "T2",
+  "verdict": {
+    "score": {
+      "d": 3,
+      "d_lower": null,
+      "k": 1,
+      "min_weight_witness": "XZXIIIIIIIIII",
+      "n": 13,
+      "operators_examined": 745
+    },
+    "transcript": [
+      "family: generators are exactly the n cyclic shifts of the seed",
+      "all 13 generators pairwise commute",
+      "GF(2) rank = 12, so k = 1",
+      "exhaustive search: no logical operator of weight < 3; witness of weight 3: XZXIIIIIIIIII"
+    ],
+    "valid": true
+  }
+}

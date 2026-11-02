@@ -72,7 +72,8 @@ def main(argv: list[str] | None = None) -> int:
 
     if a.cmd == "verify":
         led = Ledger(a.results)
-        refs = [h for h, _ in led.iter_certificates()] if a.all else [a.cert]
+        # list by file name only, so one corrupted certificate cannot stop the others being checked
+        refs = [p.stem for p in sorted(led.certs.glob("*.json"))] if a.all else [a.cert]
         if not refs or refs == [None]:
             ap.error("give a certificate hash/path or --all")
         failures = 0

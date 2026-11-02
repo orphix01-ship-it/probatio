@@ -1,0 +1,44 @@
+{
+  "candidate": {
+    "generators": [
+      "XIIIIIX",
+      "XXIIIII",
+      "IXXIIII",
+      "IIXXIII",
+      "IIIXXII",
+      "IIIIXXI",
+      "IIIIIXX"
+    ],
+    "seed": "XIIIIIX"
+  },
+  "candidate_hash": "7af353cd5b20b92d5fa9880bc878c1b6ed315e2d928fba5c609ec8b1d8c1ee41",
+  "checker": "stabilizer_code@0.1.0",
+  "created_at": "2026-11-02T13:36:35+00:00",
+  "problem_hash": "60324754cbf49e711dafb7a715949b9d7bb1361133d0acbfbd2c9ecd81ea5033",
+  "problem_id": "qec.cyclic.n7.k1",
+  "provenance": {
+    "attempt": 2,
+    "enumerated": 57,
+    "proposer": "exhaustive",
+    "search_space": "cyclic_stabilizer",
+    "seed": 0
+  },
+  "trust": "T2",
+  "verdict": {
+    "score": {
+      "d": 1,
+      "d_lower": null,
+      "k": 1,
+      "min_weight_witness": "XIIIIII",
+      "n": 7,
+      "operators_examined": 1
+    },
+    "transcript": [
+      "family: generators are exactly the n cyclic shifts of the seed",
+      "all 7 generators pairwise commute",
+      "GF(2) rank = 6, so k = 1",
+      "exhaustive search: no logical operator of weight < 1; witness of weight 1: XIIIIII"
+    ],
+    "valid": true
+  }
+}

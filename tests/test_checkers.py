@@ -80,4 +80,12 @@ def test_lean_forbidden_and_unavailable():
     assert "tampering" in chk.check(prob, {"lean_source": "theorem t : 2 = 2 := rfl"}).reason
     v = chk.check(prob, {"lean_source": "theorem t : 1 + 1 = 2 := rfl"})
     # valid only if a real Lean is installed; never valid without one
-    assert v.valid or "checker-unavailable" in v.reason
+    import os
+    if os.environ.get("PROBATIO_REQUIRE_LEAN"):
+        assert v.valid, v.reason
+        # and a false statement must be rejected by the kernel
+        bad = chk.check({"params": {"statement": "theorem t : 1 + 1 = 3", "theorem_name": "t"}},
+                        {"lean_source": "theorem t : 1 + 1 = 3 := rfl"})
+        assert not bad.valid
+    else:
+        assert v.valid or "checker-unavailable" in v.reason

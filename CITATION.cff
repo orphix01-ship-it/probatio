@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+message: "If you use PROBATIO or its study data, please cite it as below."
+title: "PROBATIO: a verified discovery engine for machine-assisted mathematics"
+type: software
+authors:
+  - family-names: Venegas
+    given-names: Vasilios
+    # orcid: "https://orcid.org/0000-0000-0000-0000"   # add before archiving
+version: 0.2.0
+date-released: 2026-11-02
+license: Apache-2.0
+repository-code: "https://github.com/orphix01-ship-it/probatio"
+keywords:
+  - verified computation
+  - machine-assisted mathematics
+  - quantum error correction
+  - coding theory
+  - combinatorics
+  - pre-registration
+  - reproducibility

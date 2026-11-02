@@ -17,6 +17,10 @@ and no generated program can harm the host or leak secrets.**
 | Secret leakage (API keys) | Sandbox receives a scrubbed environment; keys are read only by the API client and never logged | `test_sandbox_env_scrubbed` |
 | Lean proof cheats | Rejects `sorry`, `admit`, `axiom`, `unsafe`, `implemented_by`, `extern`, `opaque`, `native_decide`; statement must match verbatim; `#print axioms` allow-list | `test_lean_forbidden_and_unavailable` |
 | Silent edit of results | Content-addressed certificates; hash-chained ledger; optional Ed25519 signatures; `probatio audit` | ledger tests |
+| Local model backend leaks prompts or is redirected | Loopback hosts only (`127.0.0.0/8`, `::1`, `localhost`); requests bypass any configured proxy; no key exists to leak | `test_loopback_only` |
+| Corrupted or truncated certificate crashes verification | Unreadable or non-JSON certificates are reported as failures; `verify --all` continues through the rest | `test_any_byte_change_in_a_certificate_is_detected` (property-based) |
+| Results drift after a code change | CI re-verifies every certificate in Python and JavaScript and audits every ledger on each push and weekly | `.github/workflows/ci.yml` |
+| Study design changed after results | Protocol hash is ledger entry 0; runner refuses a changed protocol; analysis locates the protocol by hash | `test_protocol_registered_first_and_change_refused` |
 | Overclaiming novelty | Software only ever says `CANDIDATE-NEW`; novelty requires signed human literature review | — |
 
 ## Honest limits
