@@ -1,0 +1,139 @@
+{
+  "id": "probatio-study-v1",
+  "frozen": "2026-11-02",
+  "problems": [
+    "capset.n3",
+    "capset.n4",
+    "capset.n5",
+    "capset.n6",
+    "capset.n7",
+    "capset.n8",
+    "golomb.m10",
+    "golomb.m11",
+    "golomb.m12",
+    "golomb.m6",
+    "golomb.m7",
+    "golomb.m8",
+    "golomb.m9",
+    "lincode.n12.k4",
+    "lincode.n15.k7",
+    "lincode.n16.k5",
+    "lincode.n23.k12",
+    "lincode.n24.k12",
+    "lincode.n32.k10",
+    "lincode.n48.k14",
+    "lincode.n60.k16",
+    "lincode.n7.k4",
+    "lincode.n70.k18",
+    "qec.cyclic.n10.k1",
+    "qec.cyclic.n11.k1",
+    "qec.cyclic.n12.k1",
+    "qec.cyclic.n13.k1",
+    "qec.cyclic.n14.k1",
+    "qec.cyclic.n15.k1",
+    "qec.cyclic.n5.k1",
+    "qec.cyclic.n6.k1",
+    "qec.cyclic.n7.k1",
+    "qec.cyclic.n8.k1",
+    "qec.cyclic.n9.k1",
+    "spread.n10",
+    "spread.n2",
+    "spread.n3",
+    "spread.n4",
+    "spread.n5",
+    "spread.n6",
+    "spread.n7",
+    "spread.n8",
+    "spread.n9"
+  ],
+  "arms": [
+    {
+      "name": "random",
+      "proposer": "random",
+      "seeds": [
+        1,
+        2,
+        3
+      ],
+      "seconds": 30,
+      "budget": 100000000,
+      "batch": 64,
+      "status": "active"
+    },
+    {
+      "name": "anneal",
+      "proposer": "mutation",
+      "seeds": [
+        1,
+        2,
+        3
+      ],
+      "seconds": 30,
+      "budget": 100000000,
+      "batch": 64,
+      "status": "active"
+    },
+    {
+      "name": "llm-direct",
+      "proposer": "llm",
+      "seeds": [
+        1,
+        2,
+        3
+      ],
+      "seconds": 1800,
+      "budget": 600,
+      "batch": 20,
+      "max_usd": 1.0,
+      "max_calls": 30,
+      "status": "pending"
+    },
+    {
+      "name": "llm-program",
+      "proposer": "program_evolution",
+      "seeds": [
+        1,
+        2,
+        3
+      ],
+      "seconds": 1800,
+      "budget": 3000,
+      "batch": 100,
+      "max_usd": 1.0,
+      "max_calls": 30,
+      "status": "pending"
+    }
+  ],
+  "exhaustive": {
+    "name": "exhaustive",
+    "seconds": 1800,
+    "batch": 4096,
+    "problems": [
+      "qec.cyclic.n5.k1",
+      "qec.cyclic.n6.k1",
+      "qec.cyclic.n7.k1",
+      "qec.cyclic.n8.k1",
+      "qec.cyclic.n9.k1",
+      "qec.cyclic.n10.k1",
+      "qec.cyclic.n11.k1",
+      "qec.cyclic.n12.k1",
+      "qec.cyclic.n13.k1",
+      "golomb.m6",
+      "golomb.m7",
+      "golomb.m8",
+      "golomb.m9",
+      "golomb.m10",
+      "golomb.m11"
+    ],
+    "status": "active"
+  },
+  "outcomes": {
+    "primary": "success_rate",
+    "secondary": [
+      "normalised_gap",
+      "valid_rate",
+      "checks_to_best",
+      "cost_usd"
+    ]
+  }
+}

@@ -1,0 +1,362 @@
+[
+  {
+    "id": "lincode.n7.k4",
+    "domain": "coding-theory",
+    "space": "linear_code",
+    "statement": "Find a binary linear [7,4] code with the largest possible minimum distance d.",
+    "candidate_format": {
+      "generator": "4 binary strings of length 7 (rows of a generator matrix)"
+    },
+    "checker": "linear_code",
+    "params": {
+      "n": 7,
+      "k": 4
+    },
+    "objective": {
+      "sense": "maximize",
+      "field": "d"
+    },
+    "known_best": {
+      "value": 3,
+      "kind": "proven optimal",
+      "source": "Hamming code; M. Grassl, codetables.de"
+    },
+    "upper_bound": {
+      "value": 3,
+      "source": "M. Grassl, Bounds on the minimum distance of linear codes, codetables.de"
+    },
+    "references": [
+      "M. Grassl, Bounds on the minimum distance of linear codes and quantum codes, http://www.codetables.de"
+    ],
+    "search_hints": {
+      "temp": 0.3,
+      "cool": 0.9995,
+      "restart_after": 4000
+    },
+    "role": "calibration"
+  },
+  {
+    "id": "lincode.n12.k4",
+    "domain": "coding-theory",
+    "space": "linear_code",
+    "statement": "Find a binary linear [12,4] code with the largest possible minimum distance d.",
+    "candidate_format": {
+      "generator": "4 binary strings of length 12 (rows of a generator matrix)"
+    },
+    "checker": "linear_code",
+    "params": {
+      "n": 12,
+      "k": 4
+    },
+    "objective": {
+      "sense": "maximize",
+      "field": "d"
+    },
+    "known_best": {
+      "value": 6,
+      "kind": "proven optimal",
+      "source": "Griesmer bound attained; M. Grassl, codetables.de"
+    },
+    "upper_bound": {
+      "value": 6,
+      "source": "M. Grassl, Bounds on the minimum distance of linear codes, codetables.de"
+    },
+    "references": [
+      "M. Grassl, Bounds on the minimum distance of linear codes and quantum codes, http://www.codetables.de"
+    ],
+    "search_hints": {
+      "temp": 0.3,
+      "cool": 0.9995,
+      "restart_after": 4000
+    },
+    "role": "calibration"
+  },
+  {
+    "id": "lincode.n15.k7",
+    "domain": "coding-theory",
+    "space": "linear_code",
+    "statement": "Find a binary linear [15,7] code with the largest possible minimum distance d.",
+    "candidate_format": {
+      "generator": "7 binary strings of length 15 (rows of a generator matrix)"
+    },
+    "checker": "linear_code",
+    "params": {
+      "n": 15,
+      "k": 7
+    },
+    "objective": {
+      "sense": "maximize",
+      "field": "d"
+    },
+    "known_best": {
+      "value": 5,
+      "kind": "proven optimal",
+      "source": "BCH code; M. Grassl, codetables.de"
+    },
+    "upper_bound": {
+      "value": 5,
+      "source": "M. Grassl, Bounds on the minimum distance of linear codes, codetables.de"
+    },
+    "references": [
+      "M. Grassl, Bounds on the minimum distance of linear codes and quantum codes, http://www.codetables.de"
+    ],
+    "search_hints": {
+      "temp": 0.3,
+      "cool": 0.9995,
+      "restart_after": 4000
+    },
+    "role": "calibration"
+  },
+  {
+    "id": "lincode.n16.k5",
+    "domain": "coding-theory",
+    "space": "linear_code",
+    "statement": "Find a binary linear [16,5] code with the largest possible minimum distance d.",
+    "candidate_format": {
+      "generator": "5 binary strings of length 16 (rows of a generator matrix)"
+    },
+    "checker": "linear_code",
+    "params": {
+      "n": 16,
+      "k": 5
+    },
+    "objective": {
+      "sense": "maximize",
+      "field": "d"
+    },
+    "known_best": {
+      "value": 8,
+      "kind": "proven optimal",
+      "source": "Reed-Muller RM(1,4); M. Grassl, codetables.de"
+    },
+    "upper_bound": {
+      "value": 8,
+      "source": "M. Grassl, Bounds on the minimum distance of linear codes, codetables.de"
+    },
+    "references": [
+      "M. Grassl, Bounds on the minimum distance of linear codes and quantum codes, http://www.codetables.de"
+    ],
+    "search_hints": {
+      "temp": 0.3,
+      "cool": 0.9995,
+      "restart_after": 4000
+    },
+    "role": "calibration"
+  },
+  {
+    "id": "lincode.n23.k12",
+    "domain": "coding-theory",
+    "space": "linear_code",
+    "statement": "Find a binary linear [23,12] code with the largest possible minimum distance d.",
+    "candidate_format": {
+      "generator": "12 binary strings of length 23 (rows of a generator matrix)"
+    },
+    "checker": "linear_code",
+    "params": {
+      "n": 23,
+      "k": 12
+    },
+    "objective": {
+      "sense": "maximize",
+      "field": "d"
+    },
+    "known_best": {
+      "value": 7,
+      "kind": "proven optimal",
+      "source": "binary Golay code; M. Grassl, codetables.de"
+    },
+    "upper_bound": {
+      "value": 7,
+      "source": "M. Grassl, Bounds on the minimum distance of linear codes, codetables.de"
+    },
+    "references": [
+      "M. Grassl, Bounds on the minimum distance of linear codes and quantum codes, http://www.codetables.de"
+    ],
+    "search_hints": {
+      "temp": 0.3,
+      "cool": 0.9995,
+      "restart_after": 4000
+    },
+    "role": "calibration"
+  },
+  {
+    "id": "lincode.n24.k12",
+    "domain": "coding-theory",
+    "space": "linear_code",
+    "statement": "Find a binary linear [24,12] code with the largest possible minimum distance d.",
+    "candidate_format": {
+      "generator": "12 binary strings of length 24 (rows of a generator matrix)"
+    },
+    "checker": "linear_code",
+    "params": {
+      "n": 24,
+      "k": 12
+    },
+    "objective": {
+      "sense": "maximize",
+      "field": "d"
+    },
+    "known_best": {
+      "value": 8,
+      "kind": "proven optimal",
+      "source": "extended binary Golay code; M. Grassl, codetables.de"
+    },
+    "upper_bound": {
+      "value": 8,
+      "source": "M. Grassl, Bounds on the minimum distance of linear codes, codetables.de"
+    },
+    "references": [
+      "M. Grassl, Bounds on the minimum distance of linear codes and quantum codes, http://www.codetables.de"
+    ],
+    "search_hints": {
+      "temp": 0.3,
+      "cool": 0.9995,
+      "restart_after": 4000
+    },
+    "role": "calibration"
+  },
+  {
+    "id": "lincode.n32.k10",
+    "domain": "coding-theory",
+    "space": "linear_code",
+    "statement": "Find a binary linear [32,10] code with the largest possible minimum distance d.",
+    "candidate_format": {
+      "generator": "10 binary strings of length 32 (rows of a generator matrix)"
+    },
+    "checker": "linear_code",
+    "params": {
+      "n": 32,
+      "k": 10
+    },
+    "objective": {
+      "sense": "maximize",
+      "field": "d"
+    },
+    "known_best": {
+      "value": 12,
+      "kind": "proven optimal",
+      "source": "codetables.de, Lb = Ub = 12; M. Grassl, codetables.de"
+    },
+    "upper_bound": {
+      "value": 12,
+      "source": "M. Grassl, Bounds on the minimum distance of linear codes, codetables.de"
+    },
+    "references": [
+      "M. Grassl, Bounds on the minimum distance of linear codes and quantum codes, http://www.codetables.de"
+    ],
+    "search_hints": {
+      "temp": 0.3,
+      "cool": 0.9995,
+      "restart_after": 4000
+    },
+    "role": "calibration"
+  },
+  {
+    "id": "lincode.n48.k14",
+    "domain": "coding-theory",
+    "space": "linear_code",
+    "statement": "Find a binary linear [48,14] code with minimum distance above the best known value 16. The proven upper bound is 17; a [48,14,17] code would be a new record.",
+    "candidate_format": {
+      "generator": "14 binary strings of length 48"
+    },
+    "checker": "linear_code",
+    "params": {
+      "n": 48,
+      "k": 14
+    },
+    "objective": {
+      "sense": "maximize",
+      "field": "d"
+    },
+    "known_best": {
+      "value": 16,
+      "kind": "best known lower bound",
+      "source": "M. Grassl, codetables.de, entry [48,14], retrieved 2026-11-01"
+    },
+    "upper_bound": {
+      "value": 17,
+      "source": "codetables.de entry [48,14] (Griesmer-type bound), retrieved 2026-11-01"
+    },
+    "references": [
+      "M. Grassl, codetables.de"
+    ],
+    "search_hints": {
+      "temp": 0.3,
+      "cool": 0.9995,
+      "restart_after": 4000
+    },
+    "role": "open-target"
+  },
+  {
+    "id": "lincode.n60.k16",
+    "domain": "coding-theory",
+    "space": "linear_code",
+    "statement": "Find a binary linear [60,16] code with minimum distance above the best known value 20. The proven upper bound is 22; a [60,16,21] code would be a new record.",
+    "candidate_format": {
+      "generator": "16 binary strings of length 60"
+    },
+    "checker": "linear_code",
+    "params": {
+      "n": 60,
+      "k": 16
+    },
+    "objective": {
+      "sense": "maximize",
+      "field": "d"
+    },
+    "known_best": {
+      "value": 20,
+      "kind": "best known lower bound",
+      "source": "M. Grassl, codetables.de, entry [60,16], retrieved 2026-11-01"
+    },
+    "upper_bound": {
+      "value": 22,
+      "source": "codetables.de entry [60,16] (Griesmer-type bound), retrieved 2026-11-01"
+    },
+    "references": [
+      "M. Grassl, codetables.de"
+    ],
+    "search_hints": {
+      "temp": 0.3,
+      "cool": 0.9995,
+      "restart_after": 4000
+    },
+    "role": "open-target"
+  },
+  {
+    "id": "lincode.n70.k18",
+    "domain": "coding-theory",
+    "space": "linear_code",
+    "statement": "Find a binary linear [70,18] code with minimum distance above the best known value 24. The proven upper bound is 26; a [70,18,25] code would be a new record.",
+    "candidate_format": {
+      "generator": "18 binary strings of length 70"
+    },
+    "checker": "linear_code",
+    "params": {
+      "n": 70,
+      "k": 18
+    },
+    "objective": {
+      "sense": "maximize",
+      "field": "d"
+    },
+    "known_best": {
+      "value": 24,
+      "kind": "best known lower bound",
+      "source": "M. Grassl, codetables.de, entry [70,18], retrieved 2026-11-01"
+    },
+    "upper_bound": {
+      "value": 26,
+      "source": "codetables.de entry [70,18] (Griesmer-type bound), retrieved 2026-11-01"
+    },
+    "references": [
+      "M. Grassl, codetables.de"
+    ],
+    "search_hints": {
+      "temp": 0.3,
+      "cool": 0.9995,
+      "restart_after": 4000
+    },
+    "role": "open-target"
+  }
+]

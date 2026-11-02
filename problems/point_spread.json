@@ -1,0 +1,299 @@
+[
+  {
+    "id": "spread.n2",
+    "domain": "geometry",
+    "space": "point_spread",
+    "statement": "Place 2 points in the unit square so that the smallest distance between any two is as large as possible (equivalently, pack 2 equal circles in a square).",
+    "candidate_format": {
+      "points": "2 pairs of exact decimal strings in [0,1]"
+    },
+    "checker": "point_spread",
+    "params": {
+      "n": 2
+    },
+    "objective": {
+      "sense": "maximize",
+      "field": "min_distance"
+    },
+    "known_best": {
+      "value": 1.414213562,
+      "tolerance": 0.0001,
+      "kind": "proven optimal",
+      "source": "Proven optimal for n <= 30 (Schaer, Mark\u00f3t, Csendes and others); values from E. Specht, Packomania"
+    },
+    "references": [
+      "E. Specht, Packomania, http://hydra.nat.uni-magdeburg.de/packing/csq/csq.html",
+      "Mark\u00f3t & Csendes, SIAM J. Optim. 16 (2005)"
+    ],
+    "search_hints": {
+      "temp": 0.002,
+      "cool": 0.998,
+      "restart_after": 3000
+    },
+    "role": "calibration"
+  },
+  {
+    "id": "spread.n3",
+    "domain": "geometry",
+    "space": "point_spread",
+    "statement": "Place 3 points in the unit square so that the smallest distance between any two is as large as possible (equivalently, pack 3 equal circles in a square).",
+    "candidate_format": {
+      "points": "3 pairs of exact decimal strings in [0,1]"
+    },
+    "checker": "point_spread",
+    "params": {
+      "n": 3
+    },
+    "objective": {
+      "sense": "maximize",
+      "field": "min_distance"
+    },
+    "known_best": {
+      "value": 1.03527618,
+      "tolerance": 0.0001,
+      "kind": "proven optimal",
+      "source": "Proven optimal for n <= 30 (Schaer, Mark\u00f3t, Csendes and others); values from E. Specht, Packomania"
+    },
+    "references": [
+      "E. Specht, Packomania, http://hydra.nat.uni-magdeburg.de/packing/csq/csq.html",
+      "Mark\u00f3t & Csendes, SIAM J. Optim. 16 (2005)"
+    ],
+    "search_hints": {
+      "temp": 0.002,
+      "cool": 0.998,
+      "restart_after": 3000
+    },
+    "role": "calibration"
+  },
+  {
+    "id": "spread.n4",
+    "domain": "geometry",
+    "space": "point_spread",
+    "statement": "Place 4 points in the unit square so that the smallest distance between any two is as large as possible (equivalently, pack 4 equal circles in a square).",
+    "candidate_format": {
+      "points": "4 pairs of exact decimal strings in [0,1]"
+    },
+    "checker": "point_spread",
+    "params": {
+      "n": 4
+    },
+    "objective": {
+      "sense": "maximize",
+      "field": "min_distance"
+    },
+    "known_best": {
+      "value": 1.0,
+      "tolerance": 0.0001,
+      "kind": "proven optimal",
+      "source": "Proven optimal for n <= 30 (Schaer, Mark\u00f3t, Csendes and others); values from E. Specht, Packomania"
+    },
+    "references": [
+      "E. Specht, Packomania, http://hydra.nat.uni-magdeburg.de/packing/csq/csq.html",
+      "Mark\u00f3t & Csendes, SIAM J. Optim. 16 (2005)"
+    ],
+    "search_hints": {
+      "temp": 0.002,
+      "cool": 0.998,
+      "restart_after": 3000
+    },
+    "role": "calibration"
+  },
+  {
+    "id": "spread.n5",
+    "domain": "geometry",
+    "space": "point_spread",
+    "statement": "Place 5 points in the unit square so that the smallest distance between any two is as large as possible (equivalently, pack 5 equal circles in a square).",
+    "candidate_format": {
+      "points": "5 pairs of exact decimal strings in [0,1]"
+    },
+    "checker": "point_spread",
+    "params": {
+      "n": 5
+    },
+    "objective": {
+      "sense": "maximize",
+      "field": "min_distance"
+    },
+    "known_best": {
+      "value": 0.707106781,
+      "tolerance": 0.0001,
+      "kind": "proven optimal",
+      "source": "Proven optimal for n <= 30 (Schaer, Mark\u00f3t, Csendes and others); values from E. Specht, Packomania"
+    },
+    "references": [
+      "E. Specht, Packomania, http://hydra.nat.uni-magdeburg.de/packing/csq/csq.html",
+      "Mark\u00f3t & Csendes, SIAM J. Optim. 16 (2005)"
+    ],
+    "search_hints": {
+      "temp": 0.002,
+      "cool": 0.998,
+      "restart_after": 3000
+    },
+    "role": "calibration"
+  },
+  {
+    "id": "spread.n6",
+    "domain": "geometry",
+    "space": "point_spread",
+    "statement": "Place 6 points in the unit square so that the smallest distance between any two is as large as possible (equivalently, pack 6 equal circles in a square).",
+    "candidate_format": {
+      "points": "6 pairs of exact decimal strings in [0,1]"
+    },
+    "checker": "point_spread",
+    "params": {
+      "n": 6
+    },
+    "objective": {
+      "sense": "maximize",
+      "field": "min_distance"
+    },
+    "known_best": {
+      "value": 0.600925212,
+      "tolerance": 0.0001,
+      "kind": "proven optimal",
+      "source": "Proven optimal for n <= 30 (Schaer, Mark\u00f3t, Csendes and others); values from E. Specht, Packomania"
+    },
+    "references": [
+      "E. Specht, Packomania, http://hydra.nat.uni-magdeburg.de/packing/csq/csq.html",
+      "Mark\u00f3t & Csendes, SIAM J. Optim. 16 (2005)"
+    ],
+    "search_hints": {
+      "temp": 0.002,
+      "cool": 0.998,
+      "restart_after": 3000
+    },
+    "role": "calibration"
+  },
+  {
+    "id": "spread.n7",
+    "domain": "geometry",
+    "space": "point_spread",
+    "statement": "Place 7 points in the unit square so that the smallest distance between any two is as large as possible (equivalently, pack 7 equal circles in a square).",
+    "candidate_format": {
+      "points": "7 pairs of exact decimal strings in [0,1]"
+    },
+    "checker": "point_spread",
+    "params": {
+      "n": 7
+    },
+    "objective": {
+      "sense": "maximize",
+      "field": "min_distance"
+    },
+    "known_best": {
+      "value": 0.535898385,
+      "tolerance": 0.0001,
+      "kind": "proven optimal",
+      "source": "Proven optimal for n <= 30 (Schaer, Mark\u00f3t, Csendes and others); values from E. Specht, Packomania"
+    },
+    "references": [
+      "E. Specht, Packomania, http://hydra.nat.uni-magdeburg.de/packing/csq/csq.html",
+      "Mark\u00f3t & Csendes, SIAM J. Optim. 16 (2005)"
+    ],
+    "search_hints": {
+      "temp": 0.002,
+      "cool": 0.998,
+      "restart_after": 3000
+    },
+    "role": "calibration"
+  },
+  {
+    "id": "spread.n8",
+    "domain": "geometry",
+    "space": "point_spread",
+    "statement": "Place 8 points in the unit square so that the smallest distance between any two is as large as possible (equivalently, pack 8 equal circles in a square).",
+    "candidate_format": {
+      "points": "8 pairs of exact decimal strings in [0,1]"
+    },
+    "checker": "point_spread",
+    "params": {
+      "n": 8
+    },
+    "objective": {
+      "sense": "maximize",
+      "field": "min_distance"
+    },
+    "known_best": {
+      "value": 0.51763809,
+      "tolerance": 0.0001,
+      "kind": "proven optimal",
+      "source": "Proven optimal for n <= 30 (Schaer, Mark\u00f3t, Csendes and others); values from E. Specht, Packomania"
+    },
+    "references": [
+      "E. Specht, Packomania, http://hydra.nat.uni-magdeburg.de/packing/csq/csq.html",
+      "Mark\u00f3t & Csendes, SIAM J. Optim. 16 (2005)"
+    ],
+    "search_hints": {
+      "temp": 0.002,
+      "cool": 0.998,
+      "restart_after": 3000
+    },
+    "role": "calibration"
+  },
+  {
+    "id": "spread.n9",
+    "domain": "geometry",
+    "space": "point_spread",
+    "statement": "Place 9 points in the unit square so that the smallest distance between any two is as large as possible (equivalently, pack 9 equal circles in a square).",
+    "candidate_format": {
+      "points": "9 pairs of exact decimal strings in [0,1]"
+    },
+    "checker": "point_spread",
+    "params": {
+      "n": 9
+    },
+    "objective": {
+      "sense": "maximize",
+      "field": "min_distance"
+    },
+    "known_best": {
+      "value": 0.5,
+      "tolerance": 0.0001,
+      "kind": "proven optimal",
+      "source": "Proven optimal for n <= 30 (Schaer, Mark\u00f3t, Csendes and others); values from E. Specht, Packomania"
+    },
+    "references": [
+      "E. Specht, Packomania, http://hydra.nat.uni-magdeburg.de/packing/csq/csq.html",
+      "Mark\u00f3t & Csendes, SIAM J. Optim. 16 (2005)"
+    ],
+    "search_hints": {
+      "temp": 0.002,
+      "cool": 0.998,
+      "restart_after": 3000
+    },
+    "role": "calibration"
+  },
+  {
+    "id": "spread.n10",
+    "domain": "geometry",
+    "space": "point_spread",
+    "statement": "Place 10 points in the unit square so that the smallest distance between any two is as large as possible (equivalently, pack 10 equal circles in a square).",
+    "candidate_format": {
+      "points": "10 pairs of exact decimal strings in [0,1]"
+    },
+    "checker": "point_spread",
+    "params": {
+      "n": 10
+    },
+    "objective": {
+      "sense": "maximize",
+      "field": "min_distance"
+    },
+    "known_best": {
+      "value": 0.421279543,
+      "tolerance": 0.0001,
+      "kind": "proven optimal",
+      "source": "Proven optimal for n <= 30 (Schaer, Mark\u00f3t, Csendes and others); values from E. Specht, Packomania"
+    },
+    "references": [
+      "E. Specht, Packomania, http://hydra.nat.uni-magdeburg.de/packing/csq/csq.html",
+      "Mark\u00f3t & Csendes, SIAM J. Optim. 16 (2005)"
+    ],
+    "search_hints": {
+      "temp": 0.002,
+      "cool": 0.998,
+      "restart_after": 3000
+    },
+    "role": "calibration"
+  }
+]

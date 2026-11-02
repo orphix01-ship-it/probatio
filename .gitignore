@@ -5,3 +5,4 @@ __pycache__/
 results/.ledger.lock
 .env
 .venv/
+results/*/.ledger.lock

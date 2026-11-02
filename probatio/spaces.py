@@ -218,3 +218,113 @@ SPACES = {"cyclic_stabilizer": CyclicCodeSpace, "golomb": GolombSpace, "lean": L
 
 def space_for(problem: dict[str, Any]) -> Space:
     return SPACES[problem["space"]](problem)
+
+
+class CapSetSpace(Space):
+    """Cap sets in F_3^n. Candidates are built greedily so every one is valid by
+    construction; mutation removes a few points and greedily refills."""
+
+    def __init__(self, problem):
+        super().__init__(problem)
+        self.n = self.params["n"]
+        self.all = list(product(range(3), repeat=self.n))
+
+    @staticmethod
+    def _third(a, b):
+        return tuple((-(x + y)) % 3 for x, y in zip(a, b))
+
+    def _fill(self, cap: list, rng) -> list:
+        forbidden = set()
+        for i in range(len(cap)):
+            for j in range(i + 1, len(cap)):
+                forbidden.add(self._third(cap[i], cap[j]))
+        have = set(cap)
+        order = self.all[:]
+        rng.shuffle(order)
+        for p in order:
+            if p in have or p in forbidden:
+                continue
+            for q in cap:
+                forbidden.add(self._third(p, q))
+            cap.append(p)
+            have.add(p)
+        return cap
+
+    def _cand(self, cap):
+        return {"points": sorted("".join(map(str, p)) for p in cap)}
+
+    def random(self, rng):
+        return self._cand(self._fill([], rng))
+
+    def mutate(self, c, rng):
+        cap = [tuple(int(ch) for ch in p) for p in c["points"]]
+        rng.shuffle(cap)
+        drop = rng.choice((1, 2, 2, 3, 4))
+        return self._cand(self._fill(cap[drop:], rng))
+
+    def canonical(self, c):
+        return ",".join(sorted(c["points"]))
+
+
+class LinearCodeSpace(Space):
+    """Binary linear [n, k] codes in systematic form [I_k | A]."""
+
+    def __init__(self, problem):
+        super().__init__(problem)
+        self.n, self.k = self.params["n"], self.params["k"]
+
+    def _cand(self, A):
+        rows = []
+        for i in range(self.k):
+            rows.append("".join("1" if j == i else "0" for j in range(self.k)) + "".join(map(str, A[i])))
+        return {"generator": rows}
+
+    def random(self, rng):
+        return self._cand([[rng.randint(0, 1) for _ in range(self.n - self.k)] for _ in range(self.k)])
+
+    def mutate(self, c, rng):
+        A = [[int(b) for b in r[self.k:]] for r in c["generator"]]
+        for _ in range(rng.choice((1, 1, 2, 3))):
+            i, j = rng.randrange(self.k), rng.randrange(self.n - self.k)
+            A[i][j] ^= 1
+        return self._cand(A)
+
+    def canonical(self, c):
+        return "|".join(c["generator"])
+
+    def shaped(self, score, value):
+        """Tie-break equal distance by fewer minimum-weight codewords."""
+        if value is None:
+            return None
+        return value - score.get("A_d", 0) / (2 ** self.k)
+
+
+class PointSpreadSpace(Space):
+    """n points in the unit square; coordinates kept as 7-decimal strings so the
+    checker can evaluate them exactly."""
+
+    def __init__(self, problem):
+        super().__init__(problem)
+        self.n = self.params["n"]
+
+    @staticmethod
+    def _fmt(v: float) -> str:
+        return f"{min(1.0, max(0.0, v)):.7f}"
+
+    def random(self, rng):
+        return {"points": [[self._fmt(rng.random()), self._fmt(rng.random())] for _ in range(self.n)]}
+
+    def mutate(self, c, rng):
+        pts = [[float(x), float(y)] for x, y in c["points"]]
+        sigma = rng.choice((0.1, 0.03, 0.01, 0.003, 0.001, 0.0003))
+        for _ in range(rng.choice((1, 1, 1, 2, 3))):
+            i = rng.randrange(self.n)
+            pts[i][0] += rng.gauss(0, sigma)
+            pts[i][1] += rng.gauss(0, sigma)
+        return {"points": [[self._fmt(x), self._fmt(y)] for x, y in pts]}
+
+    def canonical(self, c):
+        return ";".join(sorted(f"{x},{y}" for x, y in c["points"]))
+
+
+SPACES.update({"cap_set": CapSetSpace, "linear_code": LinearCodeSpace, "point_spread": PointSpreadSpace})

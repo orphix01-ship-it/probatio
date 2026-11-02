@@ -6,7 +6,7 @@ import json
 import sys
 from pathlib import Path
 
-from . import orchestrator, registry, report, site
+from . import orchestrator, registry, report, site, study
 from .ledger import Ledger
 
 
@@ -33,6 +33,14 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("audit", help="check ledger hash chain and certificate integrity")
     sub.add_parser("report", help="build static HTML report")
     sub.add_parser("site", help="build the public results site (results/site/index.html)")
+    st = sub.add_parser("study", help="pre-registered study: run | analyze | notebook | plan")
+    st.add_argument("action", choices=["run", "analyze", "notebook", "plan"])
+    st.add_argument("--protocol", type=Path, default=registry.ROOT / "experiments" / "protocol-v1.json")
+    st.add_argument("--jobs", type=int, default=2)
+    st.add_argument("--arms", nargs="*")
+    nt = sub.add_parser("note", help="append an operator note to the ledger")
+    nt.add_argument("text")
+    nt.add_argument("--author", default="operator")
 
     a = ap.parse_args(argv)
 
@@ -71,6 +79,22 @@ def main(argv: list[str] | None = None) -> int:
 
     if a.cmd == "report":
         print(report.build(a.results))
+        return 0
+    if a.cmd == "study":
+        if a.action == "run":
+            study.run_study(a.protocol, a.results, jobs=a.jobs, arms=a.arms)
+        elif a.action == "analyze":
+            print(study.analyze(a.results))
+        elif a.action == "notebook":
+            print(study.notebook(a.results))
+        elif a.action == "plan":
+            proto = json.loads(a.protocol.read_text())
+            runs = study.planned_runs(proto, a.arms)
+            print(f"{len(runs)} runs, ~{sum(r['seconds'] for r in runs) / 3600:.1f} h of wall clock before parallelism")
+        return 0
+    if a.cmd == "note":
+        e = study.add_note(a.results, a.text, a.author)
+        print(f"note recorded as ledger entry {e['seq']}")
         return 0
     if a.cmd == "site":
         page, _ = site.build(a.results)

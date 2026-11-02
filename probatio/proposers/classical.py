@@ -21,10 +21,12 @@ class MutationProposer(Proposer):
         super().__init__(*a, **kw)
         self.current = None
         self.current_v = -math.inf
-        self.temp = float(self.opts.get("temp", 1.0))
-        self.cool = float(self.opts.get("cool", 0.999))
+        hints = self.problem.get("search_hints", {})
+        self.temp0 = float(self.opts.get("temp", hints.get("temp", 1.0)))
+        self.temp = self.temp0
+        self.cool = float(self.opts.get("cool", hints.get("cool", 0.999)))
         self.stale = 0
-        self.restart_after = int(self.opts.get("restart_after", 2000))
+        self.restart_after = int(self.opts.get("restart_after", hints.get("restart_after", 2000)))
         self._pending: list = []
 
     def propose(self, ctx: Context, batch: int):
@@ -34,10 +36,14 @@ class MutationProposer(Proposer):
 
     def observe(self, feedback: list[Feedback]):
         sense = self.problem["objective"]["sense"]
+        shaped = getattr(self.space, "shaped", None)
         for fb in feedback:
-            v = fb.value if fb.valid and fb.value is not None else -1e9
-            if sense == "minimize" and fb.valid and fb.value is not None:
-                v = -fb.value
+            raw = fb.value
+            if fb.valid and raw is not None and shaped and fb.score is not None:
+                raw = shaped(fb.score, raw)
+            v = raw if fb.valid and raw is not None else -1e9
+            if sense == "minimize" and fb.valid and raw is not None:
+                v = -raw
             delta = v - self.current_v
             if delta > 0 or (self.temp > 1e-9 and self.rng.random() < math.exp(delta / self.temp)):
                 if delta > 0:
@@ -47,7 +53,7 @@ class MutationProposer(Proposer):
         self.temp *= self.cool
         if self.stale > self.restart_after:
             self.current, self.current_v, self.stale = None, -math.inf, 0
-            self.temp = float(self.opts.get("temp", 1.0))
+            self.temp = self.temp0
 
 
 class ExhaustiveProposer(Proposer):

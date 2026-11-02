@@ -13,6 +13,7 @@ class Feedback:
     valid: bool
     value: float | None
     reason: str = ""
+    score: dict | None = None
 
 
 @dataclass

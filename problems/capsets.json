@@ -1,0 +1,194 @@
+[
+  {
+    "id": "capset.n3",
+    "domain": "combinatorics",
+    "space": "cap_set",
+    "statement": "Find the largest cap set in F_3^3: a set of points with no three distinct points on a common line (a + b + c = 0 mod 3).",
+    "candidate_format": {
+      "points": "list of distinct length-3 strings over 0,1,2"
+    },
+    "checker": "cap_set",
+    "params": {
+      "n": 3
+    },
+    "objective": {
+      "sense": "maximize",
+      "field": "size"
+    },
+    "known_best": {
+      "value": 9,
+      "kind": "proven",
+      "source": "Bose (1947); Pellegrino (1970)"
+    },
+    "references": [
+      "Edel, Y., Extensions of generalized product caps, Des. Codes Cryptogr. 31 (2004)",
+      "Romera-Paredes et al., Nature 625 (2024)"
+    ],
+    "search_hints": {
+      "temp": 0.5,
+      "cool": 0.999,
+      "restart_after": 3000
+    },
+    "role": "calibration"
+  },
+  {
+    "id": "capset.n4",
+    "domain": "combinatorics",
+    "space": "cap_set",
+    "statement": "Find the largest cap set in F_3^4: a set of points with no three distinct points on a common line (a + b + c = 0 mod 3).",
+    "candidate_format": {
+      "points": "list of distinct length-4 strings over 0,1,2"
+    },
+    "checker": "cap_set",
+    "params": {
+      "n": 4
+    },
+    "objective": {
+      "sense": "maximize",
+      "field": "size"
+    },
+    "known_best": {
+      "value": 20,
+      "kind": "proven",
+      "source": "Pellegrino (1970)"
+    },
+    "references": [
+      "Edel, Y., Extensions of generalized product caps, Des. Codes Cryptogr. 31 (2004)",
+      "Romera-Paredes et al., Nature 625 (2024)"
+    ],
+    "search_hints": {
+      "temp": 0.5,
+      "cool": 0.999,
+      "restart_after": 3000
+    },
+    "role": "calibration"
+  },
+  {
+    "id": "capset.n5",
+    "domain": "combinatorics",
+    "space": "cap_set",
+    "statement": "Find the largest cap set in F_3^5: a set of points with no three distinct points on a common line (a + b + c = 0 mod 3).",
+    "candidate_format": {
+      "points": "list of distinct length-5 strings over 0,1,2"
+    },
+    "checker": "cap_set",
+    "params": {
+      "n": 5
+    },
+    "objective": {
+      "sense": "maximize",
+      "field": "size"
+    },
+    "known_best": {
+      "value": 45,
+      "kind": "proven",
+      "source": "Edel, Ferret, Landjev, Storme (2002)"
+    },
+    "references": [
+      "Edel, Y., Extensions of generalized product caps, Des. Codes Cryptogr. 31 (2004)",
+      "Romera-Paredes et al., Nature 625 (2024)"
+    ],
+    "search_hints": {
+      "temp": 0.5,
+      "cool": 0.999,
+      "restart_after": 3000
+    },
+    "role": "calibration"
+  },
+  {
+    "id": "capset.n6",
+    "domain": "combinatorics",
+    "space": "cap_set",
+    "statement": "Find the largest cap set in F_3^6: a set of points with no three distinct points on a common line (a + b + c = 0 mod 3).",
+    "candidate_format": {
+      "points": "list of distinct length-6 strings over 0,1,2"
+    },
+    "checker": "cap_set",
+    "params": {
+      "n": 6
+    },
+    "objective": {
+      "sense": "maximize",
+      "field": "size"
+    },
+    "known_best": {
+      "value": 112,
+      "kind": "proven",
+      "source": "Potechin (2008)"
+    },
+    "references": [
+      "Edel, Y., Extensions of generalized product caps, Des. Codes Cryptogr. 31 (2004)",
+      "Romera-Paredes et al., Nature 625 (2024)"
+    ],
+    "search_hints": {
+      "temp": 0.5,
+      "cool": 0.999,
+      "restart_after": 3000
+    },
+    "role": "calibration"
+  },
+  {
+    "id": "capset.n7",
+    "domain": "combinatorics",
+    "space": "cap_set",
+    "statement": "Find the largest cap set in F_3^7: a set of points with no three distinct points on a common line (a + b + c = 0 mod 3).",
+    "candidate_format": {
+      "points": "list of distinct length-7 strings over 0,1,2"
+    },
+    "checker": "cap_set",
+    "params": {
+      "n": 7
+    },
+    "objective": {
+      "sense": "maximize",
+      "field": "size"
+    },
+    "known_best": {
+      "value": 236,
+      "kind": "best known",
+      "source": "Edel (2004), tables of caps in AG(n,3)"
+    },
+    "references": [
+      "Edel, Y., Extensions of generalized product caps, Des. Codes Cryptogr. 31 (2004)",
+      "Romera-Paredes et al., Nature 625 (2024)"
+    ],
+    "search_hints": {
+      "temp": 0.5,
+      "cool": 0.999,
+      "restart_after": 3000
+    },
+    "role": "open-target"
+  },
+  {
+    "id": "capset.n8",
+    "domain": "combinatorics",
+    "space": "cap_set",
+    "statement": "Find the largest cap set in F_3^8: a set of points with no three distinct points on a common line (a + b + c = 0 mod 3).",
+    "candidate_format": {
+      "points": "list of distinct length-8 strings over 0,1,2"
+    },
+    "checker": "cap_set",
+    "params": {
+      "n": 8
+    },
+    "objective": {
+      "sense": "maximize",
+      "field": "size"
+    },
+    "known_best": {
+      "value": 512,
+      "kind": "best known",
+      "source": "Romera-Paredes et al., Mathematical discoveries from program search with large language models, Nature 625 (2024) [FunSearch]"
+    },
+    "references": [
+      "Edel, Y., Extensions of generalized product caps, Des. Codes Cryptogr. 31 (2004)",
+      "Romera-Paredes et al., Nature 625 (2024)"
+    ],
+    "search_hints": {
+      "temp": 0.5,
+      "cool": 0.999,
+      "restart_after": 3000
+    },
+    "role": "open-target"
+  }
+]
