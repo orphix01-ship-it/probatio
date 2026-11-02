@@ -63,8 +63,22 @@ def test_sandbox_timeout():
 
 
 def test_sandbox_memory_bomb():
-    r = run_program("x = bytearray(4 * 1024**3); print('{}')", mem_mb=256)
+    # Memory that is actually written (a lazily-zeroed bytearray never touches its pages).
+    r = run_program("x = b'x' * (1536 * 1024**2); print('{}')", mem_mb=256, timeout_s=20)
     assert not r.ok
+
+
+def test_memory_watchdog_alone():
+    """The watchdog must stop a bomb even where RLIMIT_AS is not enforced (macOS)."""
+    import subprocess, sys, threading
+    from probatio.sandbox import _memory_watchdog
+    proc = subprocess.Popen([sys.executable, "-c",
+                             "import time; x = b'x' * (1536 * 1024**2); time.sleep(5)"],
+                            start_new_session=True)
+    tripped = threading.Event()
+    _memory_watchdog(proc, 256, tripped)
+    proc.wait(timeout=10)
+    assert tripped.is_set() and proc.returncode != 0
 
 
 def test_sandbox_env_scrubbed(monkeypatch):

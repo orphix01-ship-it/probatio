@@ -20,6 +20,8 @@ import signal
 import subprocess
 import sys
 import tempfile
+import threading
+import time
 from dataclasses import dataclass
 from typing import Any
 
@@ -130,6 +132,40 @@ def _docker_cmd(tmp: str, mem_mb: int, cpu_s: int) -> list[str] | None:
             "-v", f"{tmp}:/w:ro", "-w", "/w", image, "python", "-I", "-S", "/w/candidate.py"]
 
 
+def _rss_kb(pid: int) -> int:
+    """Resident memory of a process in KB (Linux /proc, otherwise ps). 0 if gone."""
+    try:
+        with open(f"/proc/{pid}/status") as fh:
+            for line in fh:
+                if line.startswith("VmRSS:"):
+                    return int(line.split()[1])
+        return 0
+    except OSError:
+        pass
+    try:
+        out = subprocess.run(["ps", "-o", "rss=", "-p", str(pid)], capture_output=True,
+                             text=True, timeout=2).stdout.strip()
+        return int(out) if out else 0
+    except (OSError, ValueError, subprocess.TimeoutExpired):
+        return 0
+
+
+def _memory_watchdog(proc: subprocess.Popen, limit_mb: int, tripped: threading.Event,
+                     interval: float = 0.05) -> None:
+    """Kill the process group if resident memory exceeds the limit. Needed because
+    macOS does not enforce RLIMIT_AS; on Linux it is a second, independent layer."""
+    limit_kb = limit_mb * 1024
+    while proc.poll() is None:
+        if _rss_kb(proc.pid) > limit_kb:
+            tripped.set()
+            try:
+                os.killpg(proc.pid, signal.SIGKILL)
+            except (ProcessLookupError, PermissionError):
+                pass
+            return
+        time.sleep(interval)
+
+
 def run_program(source: str, *, timeout_s: float = 10, cpu_s: int = 10, mem_mb: int = 512,
                 max_output: int = 1_000_000, require_isolation: bool = False,
                 guard: bool = True) -> SandboxResult:
@@ -157,6 +193,10 @@ def run_program(source: str, *, timeout_s: float = 10, cpu_s: int = 10, mem_mb: 
                                     preexec_fn=_limits(cpu_s, mem_mb))
         except OSError as exc:
             return SandboxResult(False, error=f"spawn failed: {exc}", network_isolated=isolated)
+        tripped = threading.Event()
+        if backend != "docker":  # docker enforces --memory itself
+            threading.Thread(target=_memory_watchdog, args=(proc, mem_mb, tripped),
+                             daemon=True).start()
         try:
             out, err = proc.communicate(timeout=timeout_s)
         except subprocess.TimeoutExpired:
@@ -167,6 +207,9 @@ def run_program(source: str, *, timeout_s: float = 10, cpu_s: int = 10, mem_mb: 
             proc.communicate()
             return SandboxResult(False, error="timeout", network_isolated=isolated)
     tail = err.decode("utf-8", "replace")[-2000:]
+    if tripped.is_set():
+        return SandboxResult(False, error=f"memory limit of {mem_mb} MB exceeded",
+                             network_isolated=isolated, stderr_tail=tail)
     if proc.returncode != 0:
         return SandboxResult(False, error=f"exit code {proc.returncode}",
                              network_isolated=isolated, stderr_tail=tail)

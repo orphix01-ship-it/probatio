@@ -13,7 +13,7 @@ and no generated program can harm the host or leak secrets.**
 | Generated program reaches the network | Linux user + network namespace (`unshare -rn`); socket imports blocked by the audit-hook guard; docker backend uses `--network none` | `test_sandbox_no_network`, guard tests |
 | Generated program writes or deletes host files | Audit-hook guard blocks writes, deletes, renames and chmods outside the sandbox directory; docker backend mounts read-only | `test_sandbox_guard_blocks` |
 | Generated program spawns processes / loads native code | Guard blocks `os.system`, `exec*`, `fork`, `subprocess`, `ctypes`; `RLIMIT_NPROC` | guard tests |
-| Resource exhaustion | `RLIMIT_CPU`, `RLIMIT_AS`, `RLIMIT_FSIZE`, `RLIMIT_NOFILE`, wall-clock kill of the process group, output size cap | timeout, memory, output tests |
+| Resource exhaustion | `RLIMIT_CPU`, `RLIMIT_AS`, `RLIMIT_FSIZE`, `RLIMIT_NOFILE`; a resident-memory watchdog that kills the process group past the limit (macOS ignores `RLIMIT_AS`); wall-clock kill; output size cap | timeout, memory, watchdog, output tests |
 | Secret leakage (API keys) | Sandbox receives a scrubbed environment; keys are read only by the API client and never logged | `test_sandbox_env_scrubbed` |
 | Lean proof cheats | Rejects `sorry`, `admit`, `axiom`, `unsafe`, `implemented_by`, `extern`, `opaque`, `native_decide`; statement must match verbatim; `#print axioms` allow-list | `test_lean_forbidden_and_unavailable` |
 | Silent edit of results | Content-addressed certificates; hash-chained ledger; optional Ed25519 signatures; `probatio audit` | ledger tests |
