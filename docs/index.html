@@ -1,0 +1,738 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>
+<title>PROBATIO</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Verified discovery engine. Every result is re-checkable in your browser from its certificate.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap">
+<style>
+/* Layout: a register of results beside a certificate sheet; ledger and method as sibling views. */
+:root{
+  --paper:#fafafb; --sheet:#ffffff; --ink:#15171b; --mute:#686c76; --rule:#e3e4e8; --soft:#f2f2f4;
+  --gold:#8a6a1c; --pass:#2e7a4c; --fail:#b0392d;
+  --px:#2a5a96; --pz:#94304f; --py:#6b5596;
+  --display:"Cormorant Garamond","Iowan Old Style",Georgia,serif;
+  --sans:"IBM Plex Sans",-apple-system,"Helvetica Neue",Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0c0d0f; --sheet:#121316; --ink:#ebebee; --mute:#8f939c; --rule:#25272c; --soft:#1a1b1f;
+  --gold:#c9a052; --pass:#6dbb8a; --fail:#e0766a; --px:#7fa6dd; --pz:#dc7f9c; --py:#ad9ad8; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0c0d0f; --sheet:#121316; --ink:#ebebee; --mute:#8f939c; --rule:#25272c; --soft:#1a1b1f;
+  --gold:#c9a052; --pass:#6dbb8a; --fail:#e0766a; --px:#7fa6dd; --pz:#dc7f9c; --py:#ad9ad8; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font:300 15px/1.6 var(--sans);-webkit-font-smoothing:antialiased}
+.wrap{max-width:1240px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+a{color:inherit}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.mono{font-family:var(--mono);font-weight:400}
+.label{font:500 10.5px/1.4 var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
+h1,h2,h3{font-weight:300;margin:0;text-wrap:balance}
+
+/* masthead */
+header.mast{border-bottom:1px solid var(--rule);background:var(--paper)}
+.mast .wrap{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px 32px;padding-block:28px 0}
+.brand h1{font:300 clamp(34px,5vw,48px)/1 var(--display);letter-spacing:.14em}
+.brand p{margin:8px 0 0;color:var(--mute);max-width:60ch}
+nav.tabs{display:flex;gap:4px;margin-top:18px}
+nav.tabs a{padding:10px 14px;text-decoration:none;color:var(--mute);border-bottom:2px solid transparent;font-weight:400}
+nav.tabs a[aria-current="page"]{color:var(--ink);border-color:var(--gold)}
+.stats{display:flex;flex-wrap:wrap;gap:6px 28px;padding-block:18px;width:100%;border-top:1px solid var(--rule);margin-top:20px}
+.stat b{font:400 15px var(--mono);display:block;font-variant-numeric:tabular-nums}
+.stat span{color:var(--mute);font-size:12px}
+
+main{padding-block:28px 64px}
+.view[hidden]{display:none!important}
+
+/* results view */
+.results{display:grid;grid-template-columns:minmax(260px,320px) minmax(0,1fr);gap:28px;align-items:start}
+.register{position:sticky;top:calc(16px + env(safe-area-inset-top,0px));max-height:calc(100vh - 32px - env(safe-area-inset-top,0px));overflow-y:auto;border:1px solid var(--rule);background:var(--sheet)}
+.register .head{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--rule)}
+.reg-group{padding:6px 0;border-bottom:1px solid var(--rule)}
+.reg-group:last-child{border-bottom:0}
+.reg-group .label{padding:8px 14px 4px;display:block}
+.reg-item{display:grid;grid-template-columns:1fr auto;gap:2px 10px;width:100%;text-align:left;background:none;border:0;border-left:2px solid transparent;padding:7px 14px 7px 12px;cursor:pointer}
+.reg-item:hover{background:var(--soft)}
+.reg-item[aria-current="true"]{border-left-color:var(--gold);background:var(--soft)}
+.reg-item .t{font-weight:400}
+.reg-item .v{font:400 13px var(--mono);font-variant-numeric:tabular-nums;color:var(--ink)}
+.reg-item .s{grid-column:1/-1;font-size:11.5px;color:var(--mute)}
+.reg-item .dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:6px;vertical-align:1px;background:var(--rule)}
+.reg-item .dot.ok{background:var(--pass)} .reg-item .dot.bad{background:var(--fail)}
+.btn{border:1px solid var(--ink);background:var(--ink);color:var(--paper);padding:9px 16px;cursor:pointer;font-weight:400;letter-spacing:.02em}
+.btn:hover{opacity:.88}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--rule)}
+.btn.small{padding:5px 10px;font-size:12.5px}
+.btn:disabled{opacity:.5;cursor:default}
+
+/* certificate sheet */
+.sheet{background:var(--sheet);border:1px solid var(--rule);min-width:0}
+.sheet > section{padding:24px clamp(18px,3vw,36px);border-bottom:1px solid var(--rule)}
+.sheet > section:last-child{border-bottom:0}
+.eyebrow{display:flex;flex-wrap:wrap;gap:6px 16px}
+.sheet h2{font:300 clamp(28px,3.4vw,40px)/1.1 var(--display);margin-top:10px}
+.statement{color:var(--mute);max-width:68ch;margin:12px 0 0}
+.figures{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:18px;margin-top:22px}
+.fig .n{font:300 44px/1 var(--display);font-variant-numeric:lining-nums tabular-nums;margin-top:6px}
+.fig .n.dim{color:var(--mute)}
+.fig small{display:block;color:var(--mute);font-size:12px;margin-top:4px;max-width:28ch}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:18px}
+.chip{border:1px solid var(--rule);padding:2px 9px;font-size:12px;color:var(--mute)}
+.chip.gold{border-color:var(--gold);color:var(--gold)}
+.chip.pass{border-color:var(--pass);color:var(--pass)}
+
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px}
+.diagram{width:100%;max-width:340px;height:auto;display:block;margin:6px auto 0}
+.diagram text{font-family:var(--mono);font-size:13px}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--mute);margin-top:8px;justify-content:center}
+.sw{display:inline-block;width:9px;height:9px;margin-right:5px;vertical-align:0}
+
+.matrix{overflow-x:auto;margin-top:10px}
+.matrix table{border-collapse:collapse;font:400 13px/1 var(--mono)}
+.matrix td{width:22px;height:22px;text-align:center;border:1px solid var(--rule)}
+.matrix td.rowlab{border:0;color:var(--mute);font-size:11px;padding-right:8px;width:auto;text-align:right}
+.pX{color:var(--px)} .pZ{color:var(--pz)} .pY{color:var(--py)} .pI{color:var(--rule)}
+.bX{background:var(--px)} .bZ{background:var(--pz)} .bY{background:var(--py)}
+
+ol.steps{margin:12px 0 0;padding:0;list-style:none;counter-reset:s}
+ol.steps li{counter-increment:s;display:grid;grid-template-columns:28px minmax(0,1fr);gap:8px;padding:7px 0;border-top:1px solid var(--rule)}
+ol.steps li:first-child{border-top:0}
+ol.steps li::before{content:counter(s);font:400 12px/1.9 var(--mono);color:var(--mute)}
+ol.steps li code{font-family:var(--mono);font-size:13px;word-break:break-all}
+
+.verify-out{margin-top:16px}
+.verdict{display:flex;align-items:baseline;flex-wrap:wrap;gap:6px 14px;padding:12px 0 4px}
+.verdict b{font:500 13px var(--mono);letter-spacing:.08em}
+.verdict.pass b{color:var(--pass)} .verdict.fail b{color:var(--fail)}
+.hashrow{display:grid;grid-template-columns:110px minmax(0,1fr);gap:4px 12px;font-size:12.5px;margin-top:8px}
+.hashrow code{font-family:var(--mono);word-break:break-all}
+.try{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.try input{flex:1 1 260px;min-width:0;border:1px solid var(--rule);background:var(--paper);padding:9px 12px;font-family:var(--mono);font-size:13.5px}
+details{margin-top:6px}
+summary{cursor:pointer;color:var(--mute)}
+pre.json{overflow:auto;max-height:420px;background:var(--soft);padding:14px;font:400 12px/1.5 var(--mono);margin:10px 0 0}
+table.data{border-collapse:collapse;width:100%;font-size:13px}
+table.data th{font:500 10.5px var(--sans);letter-spacing:.1em;text-transform:uppercase;color:var(--mute);text-align:left;padding:8px 10px;border-bottom:1px solid var(--rule)}
+table.data td{padding:8px 10px;border-bottom:1px solid var(--rule);vertical-align:top}
+table.data td.num{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--mono)}
+.scroll{overflow-x:auto}
+.refs{margin:8px 0 0;padding-left:18px;color:var(--mute)}
+
+/* ledger + method */
+.panel{background:var(--sheet);border:1px solid var(--rule);padding:24px clamp(18px,3vw,36px)}
+.panel + .panel{margin-top:20px}
+.panel h2{font:300 32px/1.15 var(--display)}
+.prose{max-width:68ch}
+.prose p{margin:12px 0}
+.flow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;margin-top:20px;border:1px solid var(--rule)}
+.flow div{padding:16px;border-left:1px solid var(--rule)}
+.flow div:first-child{border-left:0}
+.flow b{display:block;font:400 22px var(--display);margin:4px 0}
+.flow p{margin:0;color:var(--mute);font-size:13.5px}
+.chain-ok{color:var(--pass)} .chain-bad{color:var(--fail)}
+footer{color:var(--mute);font-size:12.5px;border-top:1px solid var(--rule)}
+footer .wrap{padding-block:20px 32px}
+
+@media (max-width:860px){
+  .results{grid-template-columns:minmax(0,1fr)}
+  .register{position:static;max-height:none;overflow:visible}
+  .two{grid-template-columns:minmax(0,1fr)}
+  .flow{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .flow div:nth-child(3){border-left:0}
+  .flow div:nth-child(n+3){border-top:1px solid var(--rule)}
+}
+@media (max-width:480px){.flow{grid-template-columns:minmax(0,1fr)} .flow div{border-left:0;border-top:1px solid var(--rule)} .flow div:first-child{border-top:0}}
+@media (prefers-reduced-motion:no-preference){.reg-item,.btn{transition:background .15s,opacity .15s}}
+</style>
+
+<header class="mast">
+  <div class="wrap">
+    <div class="brand">
+      <h1>PROBATIO</h1>
+      <p>A verified discovery engine. Search and AI propose answers to open problems in mathematics and physics; exact checkers certify them. Every result here can be re-checked in your browser.</p>
+    </div>
+    <nav class="tabs" aria-label="Views">
+      <a href="#results" data-view="results">Results</a>
+      <a href="#ledger" data-view="ledger">Ledger</a>
+      <a href="#method" data-view="method">Method</a>
+    </nav>
+    <div class="stats" id="stats"></div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="view" id="view-results">
+    <div class="results">
+      <aside class="register" aria-label="Results">
+        <div class="head">
+          <span class="label">Register</span>
+          <button class="btn small ghost" id="verify-all" type="button">Verify all here</button>
+        </div>
+        <div id="register"></div>
+      </aside>
+      <article class="sheet" id="sheet" aria-live="polite"></article>
+    </div>
+  </div>
+
+  <div class="view" id="view-ledger" hidden>
+    <div class="panel">
+      <span class="label">Append-only record</span>
+      <h2>Ledger</h2>
+      <div class="prose"><p>Every certificate and every run, successful or not, is appended here. Each entry stores the SHA-256 hash of the entry before it, so changing, deleting or reordering any past entry breaks the chain from that point on.</p></div>
+      <div class="try"><button class="btn" id="audit" type="button">Audit the chain in this browser</button><span id="audit-out" style="align-self:center"></span></div>
+    </div>
+    <div class="panel"><div class="scroll"><table class="data" id="ledger-table"></table></div></div>
+  </div>
+
+  <div class="view" id="view-method" hidden>
+    <div class="panel">
+      <span class="label">How it works</span>
+      <h2>Propose, certify, record</h2>
+      <div class="flow">
+        <div><span class="label">Untrusted</span><b>Propose</b><p>Exhaustive search, annealing, or an AI model suggests candidates. Nothing it says is believed.</p></div>
+        <div><span class="label">Contained</span><b>Sandbox</b><p>AI-written programs run without network, process spawning or file access outside a scratch folder.</p></div>
+        <div><span class="label">Trusted</span><b>Certify</b><p>A small exact checker recomputes every claim from the raw candidate.</p></div>
+        <div><span class="label">Tamper-evident</span><b>Record</b><p>Certificates are stored by content hash in a hash-chained ledger.</p></div>
+      </div>
+      <div class="prose">
+        <p><strong>Why.</strong> AI systems can now generate mathematical candidates far faster than people can. The results that hold up, such as AI agents settling open Erdős problems in Lean, all rest on a checker that confirms each one independently. PROBATIO is an open implementation of that loop.</p>
+        <p><strong>Trust levels.</strong> T1 means a proof assistant kernel decided (Lean). T2 means exact integer or GF(2) computation by open, tested code. Floating-point simulation is never enough on its own.</p>
+        <p><strong>Two implementations.</strong> The Python checkers produce certificates. This page re-checks them with a separate JavaScript implementation of the same method. The two are tested against each other on every stored certificate.</p>
+        <p><strong>Optimal in family.</strong> When an exhaustive search covers a whole symmetry-reduced family, the best result is optimal within that family. That claim comes from open search code, is labelled separately from the certificate, and its symmetry reduction is tested against brute force.</p>
+        <p><strong>Limits.</strong> Experimental and unaudited. Verification proves correctness, not novelty. The current results are calibration: known optima rediscovered from scratch. A result that beats the recorded best is marked CANDIDATE-NEW and is claimed only after a human literature review.</p>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer><div class="wrap" id="foot"></div></footer>
+
+<script>
+/* PROBATIO browser verifier.
+ * A second implementation, in JavaScript, of the stabilizer-code and Golomb-ruler
+ * checkers, plus SHA-256 and hash-chain auditing. It shares no code with the
+ * Python checkers; it implements the same published method so a reader can
+ * re-check any certificate without installing anything.
+ */
+const ProbatioVerify = (() => {
+  "use strict";
+
+  // ---------- SHA-256 (WebCrypto when available, small fallback otherwise) ----------
+  const K = new Uint32Array([
+    0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+    0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+    0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+    0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+    0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+    0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+    0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+    0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2]);
+
+  function sha256Fallback(bytes) {
+    const l = bytes.length, bitLen = l * 8;
+    const padded = new Uint8Array(((l + 9 + 63) >> 6) << 6);
+    padded.set(bytes); padded[l] = 0x80;
+    const dv = new DataView(padded.buffer);
+    dv.setUint32(padded.length - 4, bitLen >>> 0);
+    dv.setUint32(padded.length - 8, Math.floor(bitLen / 2 ** 32));
+    const H = new Uint32Array([0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19]);
+    const W = new Uint32Array(64);
+    const r = (x, n) => (x >>> n) | (x << (32 - n));
+    for (let o = 0; o < padded.length; o += 64) {
+      for (let i = 0; i < 16; i++) W[i] = dv.getUint32(o + i * 4);
+      for (let i = 16; i < 64; i++) {
+        const s0 = r(W[i-15], 7) ^ r(W[i-15], 18) ^ (W[i-15] >>> 3);
+        const s1 = r(W[i-2], 17) ^ r(W[i-2], 19) ^ (W[i-2] >>> 10);
+        W[i] = (W[i-16] + s0 + W[i-7] + s1) >>> 0;
+      }
+      let [a, b, c, d, e, f, g, h] = H;
+      for (let i = 0; i < 64; i++) {
+        const t1 = (h + (r(e, 6) ^ r(e, 11) ^ r(e, 25)) + ((e & f) ^ (~e & g)) + K[i] + W[i]) >>> 0;
+        const t2 = ((r(a, 2) ^ r(a, 13) ^ r(a, 22)) + ((a & b) ^ (a & c) ^ (b & c))) >>> 0;
+        h = g; g = f; f = e; e = (d + t1) >>> 0; d = c; c = b; b = a; a = (t1 + t2) >>> 0;
+      }
+      H[0] += a; H[1] += b; H[2] += c; H[3] += d; H[4] += e; H[5] += f; H[6] += g; H[7] += h;
+    }
+    return Array.from(H, x => x.toString(16).padStart(8, "0")).join("");
+  }
+
+  async function sha256Hex(text) {
+    const bytes = new TextEncoder().encode(text);
+    const subtle = typeof crypto !== "undefined" && crypto.subtle;
+    if (subtle) {
+      try {
+        const buf = await subtle.digest("SHA-256", bytes);
+        return Array.from(new Uint8Array(buf), b => b.toString(16).padStart(2, "0")).join("");
+      } catch (_) { /* fall through */ }
+    }
+    return sha256Fallback(bytes);
+  }
+
+  // ---------- Stabilizer codes ----------
+  const BITS = { I: [0, 0], X: [1, 0], Z: [0, 1], Y: [1, 1] };
+  const popParity = (x) => { let p = 0; while (x) { x &= x - 1; p ^= 1; } return p; };
+
+  function cyclicShifts(seed) {
+    const n = seed.length, out = [];
+    for (let i = 0; i < n; i++) out.push(seed.slice(n - i) + seed.slice(0, n - i));
+    return out;
+  }
+
+  function toXZ(p) {
+    let x = 0n, z = 0n;
+    for (let i = 0; i < p.length; i++) {
+      const [bx, bz] = BITS[p[i]];
+      if (bx) x |= 1n << BigInt(i);
+      if (bz) z |= 1n << BigInt(i);
+    }
+    return [x, z];
+  }
+
+  function bitLength(v) { return v === 0n ? 0 : v.toString(2).length; }
+
+  function reduce(v, basis) {
+    while (v) {
+      const piv = bitLength(v) - 1;
+      if (basis.has(piv)) v ^= basis.get(piv); else return v;
+    }
+    return 0n;
+  }
+
+  function analyseCode(gens, maxWeight) {
+    if (!gens.length) throw new Error("no generators");
+    const n = gens[0].length;
+    if (n < 1 || n > 30) throw new Error("browser verifier supports 1 ≤ n ≤ 30");
+    for (const g of gens) {
+      if (g.length !== n) throw new Error("generators have different lengths");
+      for (const c of g) if (!(c in BITS)) throw new Error(`invalid character "${c}" in ${g}`);
+    }
+    const xz = gens.map(toXZ);
+    const anti = (a, b) => {
+      let v = (a[0] & b[1]) ^ (a[1] & b[0]), p = 0;
+      while (v) { v &= v - 1n; p ^= 1; }
+      return p;
+    };
+    for (let i = 0; i < xz.length; i++)
+      for (let j = i + 1; j < xz.length; j++)
+        if (anti(xz[i], xz[j])) throw new Error(`generators ${i} and ${j} anticommute`);
+
+    const N = BigInt(n);
+    const basis = new Map();
+    for (const [x, z] of xz) {
+      let v = reduce((x << N) | z, basis);
+      if (v) {
+        const piv = bitLength(v) - 1;
+        for (const [p, b] of basis) if ((b >> BigInt(piv)) & 1n) basis.set(p, b ^ v);
+        basis.set(piv, v);
+      }
+    }
+    const rank = basis.size, k = n - rank;
+    const mask = (1n << N) - 1n;
+    const stab = [...basis.values()].map(v => [v >> N, v & mask]);
+
+    const singles = [[1, 0], [0, 1], [1, 1]];
+    const syn = [];
+    for (let q = 0; q < n; q++) {
+      syn.push(singles.map(([bx, bz]) => {
+        let s = 0;
+        stab.forEach(([gx, gz], j) => {
+          const gxq = Number((gx >> BigInt(q)) & 1n), gzq = Number((gz >> BigInt(q)) & 1n);
+          if ((bx & gzq) ^ (bz & gxq)) s |= 1 << j;
+        });
+        return s;
+      }));
+    }
+
+    const cap = Math.min(maxWeight || n, n);
+    let examined = 0;
+    const support = [], types = [];
+    let found = null;
+
+    function witness() {
+      const ch = Array(n).fill("I");
+      support.forEach((q, i) => { ch[q] = "XZY"[types[i]]; });
+      return ch.join("");
+    }
+    function isLogical() {
+      if (k === 0) return true;
+      let x = 0n, z = 0n;
+      support.forEach((q, i) => {
+        const [bx, bz] = singles[types[i]];
+        if (bx) x |= 1n << BigInt(q);
+        if (bz) z |= 1n << BigInt(q);
+      });
+      return reduce((x << N) | z, basis) !== 0n;
+    }
+    // Enumerate weight-w Paulis: positions in increasing order, each with type X/Z/Y.
+    function search(w, start, s) {
+      if (support.length === w) {
+        examined++;
+        if (s === 0 && isLogical()) { found = witness(); return true; }
+        return false;
+      }
+      for (let q = start; q <= n - (w - support.length); q++) {
+        support.push(q);
+        for (let t = 0; t < 3; t++) {
+          types.push(t);
+          if (search(w, q + 1, s ^ syn[q][t])) return true;
+          types.pop();
+        }
+        support.pop();
+      }
+      return false;
+    }
+    for (let w = 1; w <= cap; w++) {
+      if (search(w, 0, 0)) return { n, k, d: w, d_lower: null, min_weight_witness: found, operators_examined: examined };
+    }
+    return { n, k, d: null, d_lower: cap + 1, min_weight_witness: null, operators_examined: examined };
+  }
+
+  function checkStabilizer(problem, cand) {
+    const params = problem.params || {}, steps = [];
+    const gens = cand.generators;
+    if (!Array.isArray(gens)) return { valid: false, reason: "candidate has no generator list", steps };
+    if (params.family === "cyclic") {
+      const expect = cyclicShifts(cand.seed || "");
+      if (expect.length !== gens.length || expect.some((g, i) => g !== gens[i]))
+        return { valid: false, reason: "generators are not the cyclic shifts of the seed", steps };
+      steps.push(`Family: the ${gens.length} generators are exactly the cyclic shifts of ${cand.seed}`);
+    }
+    let r;
+    try { r = analyseCode(gens, params.max_weight); }
+    catch (e) { return { valid: false, reason: e.message, steps }; }
+    steps.push(`All ${gens.length} generators pairwise commute`);
+    steps.push(`Rank over GF(2) is ${r.n - r.k}, so the code encodes k = ${r.k} logical qubit${r.k === 1 ? "" : "s"}`);
+    if (r.d !== null) {
+      steps.push(`Searched every Pauli operator of weight below ${r.d}: none is a logical operator`);
+      steps.push(`Found a logical operator of weight ${r.d}: ${r.min_weight_witness}, so d = ${r.d}`);
+    }
+    if (params.n !== undefined && r.n !== params.n) return { valid: false, reason: `n = ${r.n}, problem requires ${params.n}`, score: r, steps };
+    if (params.k !== undefined && r.k !== params.k) return { valid: false, reason: `k = ${r.k}, problem requires ${params.k}`, score: r, steps };
+    return { valid: true, score: r, steps };
+  }
+
+  // ---------- Golomb rulers ----------
+  function checkGolomb(problem, cand) {
+    const steps = [], marks = cand.marks, want = (problem.params || {}).marks;
+    if (!Array.isArray(marks) || !marks.every(Number.isInteger)) return { valid: false, reason: "marks must be integers", steps };
+    if (want !== undefined && marks.length !== want) return { valid: false, reason: `${marks.length} marks given, problem requires ${want}`, steps };
+    const m = [...marks].sort((a, b) => a - b);
+    if (new Set(m).size !== m.length) return { valid: false, reason: "duplicate marks", steps };
+    if (m[0] !== 0) return { valid: false, reason: "ruler must start at 0", steps };
+    const seen = new Map();
+    for (let i = 0; i < m.length; i++) for (let j = i + 1; j < m.length; j++) {
+      const d = m[j] - m[i];
+      if (seen.has(d)) return { valid: false, reason: `difference ${d} occurs twice (${seen.get(d)} and ${m[j]}−${m[i]})`, steps };
+      seen.set(d, `${m[j]}−${m[i]}`);
+    }
+    steps.push(`${m.length} marks give ${seen.size} pairwise differences`);
+    steps.push(`All ${seen.size} differences are distinct`);
+    steps.push(`Length is ${m[m.length - 1]}`);
+    return { valid: true, score: { marks: m.length, length: m[m.length - 1] }, steps, differences: [...seen.keys()].sort((a, b) => a - b) };
+  }
+
+  function check(problem, cand) {
+    if (problem.checker === "stabilizer_code") return checkStabilizer(problem, cand);
+    if (problem.checker === "golomb_ruler") return checkGolomb(problem, cand);
+    return { valid: false, reason: `no browser checker for ${problem.checker}`, steps: [] };
+  }
+
+  // ---------- Ledger ----------
+  async function auditChain(entries) {
+    const problems = [];
+    let prev = "0".repeat(64);
+    for (let i = 0; i < entries.length; i++) {
+      const e = entries[i], core = JSON.parse(e.core);
+      if (core.seq !== i) problems.push(`entry ${i}: sequence number out of order`);
+      if (core.prev !== prev) problems.push(`entry ${i}: does not link to the previous entry`);
+      if (await sha256Hex(e.core) !== e.hash) problems.push(`entry ${i}: content does not match its hash`);
+      prev = e.hash;
+    }
+    return problems;
+  }
+
+  return { sha256Hex, sha256Fallback, cyclicShifts, analyseCode, check, checkStabilizer, checkGolomb, auditChain };
+})();
+if (typeof module !== "undefined") module.exports = ProbatioVerify;
+
+</script>
+<script>
+(() => {
+"use strict";
+const DATA = {"results":[{"id":"golomb.m6","domain":"combinatorics","statement":"Find a Golomb ruler with 6 marks (integers starting at 0, all pairwise differences distinct) of minimum length.","checker":"golomb_ruler","params":{"marks":6,"search_max_length":27},"objective":{"sense":"minimize","field":"length"},"known_best":{"value":17,"source":"Optimal Golomb rulers, OEIS A003022 (proven optimal; distributed.net OGR project for larger m)"},"upper_bound":null,"references":["OEIS A003022","distributed.net OGR project"],"best_value":17.0,"best_cert":"922e612a0103f7a22a06557b9ce610bc806680b5c3d7c6576dc85c8505960279","status":"matches-known","exhaustive":true,"attempts":1,"seconds":0.0,"cost_usd":0.0,"runs":[{"proposer":"exhaustive","candidates_checked":1,"best_value":17.0,"exhaustive_complete":true,"seconds":0.0,"status":"matches-known"}]},{"id":"golomb.m7","domain":"combinatorics","statement":"Find a Golomb ruler with 7 marks (integers starting at 0, all pairwise differences distinct) of minimum length.","checker":"golomb_ruler","params":{"marks":7,"search_max_length":35},"objective":{"sense":"minimize","field":"length"},"known_best":{"value":25,"source":"Optimal Golomb rulers, OEIS A003022 (proven optimal; distributed.net OGR project for larger m)"},"upper_bound":null,"references":["OEIS A003022","distributed.net OGR project"],"best_value":25.0,"best_cert":"109bd02ea108952b29d185f72443a88ded8e73e9f92a31d17b8b2f0944b8b20d","status":"matches-known","exhaustive":true,"attempts":1,"seconds":0.0,"cost_usd":0.0,"runs":[{"proposer":"exhaustive","candidates_checked":1,"best_value":25.0,"exhaustive_complete":true,"seconds":0.02,"status":"matches-known"}]},{"id":"golomb.m8","domain":"combinatorics","statement":"Find a Golomb ruler with 8 marks (integers starting at 0, all pairwise differences distinct) of minimum length.","checker":"golomb_ruler","params":{"marks":8,"search_max_length":44},"objective":{"sense":"minimize","field":"length"},"known_best":{"value":34,"source":"Optimal Golomb rulers, OEIS A003022 (proven optimal; distributed.net OGR project for larger m)"},"upper_bound":null,"references":["OEIS A003022","distributed.net OGR project"],"best_value":34.0,"best_cert":"a8f22243f4269f8251b13101bd6c1fb47a4e28e69e44e3d19ddd5fa76500dcae","status":"matches-known","exhaustive":true,"attempts":1,"seconds":0.2,"cost_usd":0.0,"runs":[{"proposer":"exhaustive","candidates_checked":1,"best_value":34.0,"exhaustive_complete":true,"seconds":0.22,"status":"matches-known"}]},{"id":"golomb.m9","domain":"combinatorics","statement":"Find a Golomb ruler with 9 marks (integers starting at 0, all pairwise differences distinct) of minimum length.","checker":"golomb_ruler","params":{"marks":9,"search_max_length":54},"objective":{"sense":"minimize","field":"length"},"known_best":{"value":44,"source":"Optimal Golomb rulers, OEIS A003022 (proven optimal; distributed.net OGR project for larger m)"},"upper_bound":null,"references":["OEIS A003022","distributed.net OGR project"],"best_value":44.0,"best_cert":"5a2c6d9066b3f3774bf6ce9c29a0ca9bc1c1a8a08ea5a34401fe006711fedef8","status":"matches-known","exhaustive":true,"attempts":1,"seconds":3.1,"cost_usd":0.0,"runs":[{"proposer":"exhaustive","candidates_checked":1,"best_value":44.0,"exhaustive_complete":true,"seconds":3.06,"status":"matches-known"}]},{"id":"golomb.m10","domain":"combinatorics","statement":"Find a Golomb ruler with 10 marks (integers starting at 0, all pairwise differences distinct) of minimum length.","checker":"golomb_ruler","params":{"marks":10,"search_max_length":65},"objective":{"sense":"minimize","field":"length"},"known_best":{"value":55,"source":"Optimal Golomb rulers, OEIS A003022 (proven optimal; distributed.net OGR project for larger m)"},"upper_bound":null,"references":["OEIS A003022","distributed.net OGR project"],"best_value":55.0,"best_cert":"4898f9ace22cfa9341b3b57faab90e288710a2124794bad1eee5679052187d8a","status":"matches-known","exhaustive":true,"attempts":1,"seconds":30.4,"cost_usd":0.0,"runs":[{"proposer":"exhaustive","candidates_checked":1,"best_value":55.0,"exhaustive_complete":true,"seconds":30.4,"status":"matches-known"}]},{"id":"golomb.m11","domain":"combinatorics","statement":"Find a Golomb ruler with 11 marks (integers starting at 0, all pairwise differences distinct) of minimum length.","checker":"golomb_ruler","params":{"marks":11,"search_max_length":82},"objective":{"sense":"minimize","field":"length"},"known_best":{"value":72,"source":"Optimal Golomb rulers, OEIS A003022 (proven optimal; distributed.net OGR project for larger m)"},"upper_bound":null,"references":["OEIS A003022","distributed.net OGR project"],"best_value":72.0,"best_cert":"bddef698682756cc30973e467038eb77ac98fe98264edc7cd78369e554ee4036","status":"matches-known","exhaustive":true,"attempts":300001,"seconds":880.9,"cost_usd":0.0,"runs":[{"proposer":"mutation","candidates_checked":300000,"best_value":null,"exhaustive_complete":false,"seconds":4.34,"status":"no-valid-result"},{"proposer":"exhaustive","candidates_checked":1,"best_value":72.0,"exhaustive_complete":true,"seconds":876.57,"status":"matches-known"}]},{"id":"golomb.m12","domain":"combinatorics","statement":"Find a Golomb ruler with 12 marks (integers starting at 0, all pairwise differences distinct) of minimum length.","checker":"golomb_ruler","params":{"marks":12,"search_max_length":95},"objective":{"sense":"minimize","field":"length"},"known_best":{"value":85,"source":"Optimal Golomb rulers, OEIS A003022 (proven optimal; distributed.net OGR project for larger m)"},"upper_bound":null,"references":["OEIS A003022","distributed.net OGR project"],"best_value":null,"best_cert":null,"status":"no-valid-result","exhaustive":false,"attempts":300000,"seconds":4.5,"cost_usd":0.0,"runs":[{"proposer":"mutation","candidates_checked":300000,"best_value":null,"exhaustive_complete":false,"seconds":4.5,"status":"no-valid-result"}]},{"id":"qec.cyclic.n5.k1","domain":"quantum-codes","statement":"Find a cyclic stabilizer code on n=5 qubits encoding k=1 logical qubit with the largest possible distance d. The stabilizer group is generated by the 5 cyclic shifts of a single Pauli string (the seed) over I,X,Y,Z.","checker":"stabilizer_code","params":{"n":5,"k":1,"family":"cyclic"},"objective":{"sense":"maximize","field":"d"},"known_best":{"value":3,"source":"[[5,1,3]] perfect code (Laflamme et al. 1996; Bennett et al. 1996); optimal by the quantum Singleton bound"},"upper_bound":{"value":3,"source":"Quantum Singleton bound n-k >= 2(d-1) (Knill & Laflamme 1997); applies to all stabilizer codes"},"references":["M. Grassl, Bounds on the minimum distance of quantum codes, codetables.de","Calderbank, Rains, Shor, Sloane, Quantum error correction via codes over GF(4), IEEE Trans. Inf. Theory 44 (1998)"],"best_value":3.0,"best_cert":"06126ae370982fc3c724efce37e0c5153a595a185d0eede34f537883f9fae779","status":"matches-known","exhaustive":true,"attempts":14,"seconds":0.0,"cost_usd":0.0,"runs":[{"proposer":"exhaustive","candidates_checked":14,"best_value":3.0,"exhaustive_complete":true,"seconds":0.0,"status":"matches-known"}]},{"id":"qec.cyclic.n6.k1","domain":"quantum-codes","statement":"Find a cyclic stabilizer code on n=6 qubits encoding k=1 logical qubit with the largest possible distance d. The stabilizer group is generated by the 6 cyclic shifts of a single Pauli string (the seed) over I,X,Y,Z.","checker":"stabilizer_code","params":{"n":6,"k":1,"family":"cyclic"},"objective":{"sense":"maximize","field":"d"},"known_best":null,"upper_bound":{"value":3,"source":"Quantum Singleton bound n-k >= 2(d-1) (Knill & Laflamme 1997); applies to all stabilizer codes"},"references":["M. Grassl, Bounds on the minimum distance of quantum codes, codetables.de","Calderbank, Rains, Shor, Sloane, Quantum error correction via codes over GF(4), IEEE Trans. Inf. Theory 44 (1998)"],"best_value":2.0,"best_cert":"86fe5439ba76b6656f899c06331b3bb6bbd67d07f2c2ba4349fc08e03dcbabb0","status":"no-recorded-bound","exhaustive":true,"attempts":48,"seconds":0.0,"cost_usd":0.0,"runs":[{"proposer":"exhaustive","candidates_checked":48,"best_value":2.0,"exhaustive_complete":true,"seconds":0.02,"status":"no-recorded-bound"}]},{"id":"qec.cyclic.n7.k1","domain":"quantum-codes","statement":"Find a cyclic stabilizer code on n=7 qubits encoding k=1 logical qubit with the largest possible distance d. The stabilizer group is generated by the 7 cyclic shifts of a single Pauli string (the seed) over I,X,Y,Z.","checker":"stabilizer_code","params":{"n":7,"k":1,"family":"cyclic"},"objective":{"sense":"maximize","field":"d"},"known_best":null,"upper_bound":{"value":4,"source":"Quantum Singleton bound n-k >= 2(d-1) (Knill & Laflamme 1997); applies to all stabilizer codes"},"references":["M. Grassl, Bounds on the minimum distance of quantum codes, codetables.de","Calderbank, Rains, Shor, Sloane, Quantum error correction via codes over GF(4), IEEE Trans. Inf. Theory 44 (1998)"],"best_value":3.0,"best_cert":"c10ed9d7ef4f68936f8168fd6e65bc3cc58cfa25b35eb798c0971ad5f3846c67","status":"no-recorded-bound","exhaustive":true,"attempts":57,"seconds":0.0,"cost_usd":0.0,"runs":[{"proposer":"exhaustive","candidates_checked":57,"best_value":3.0,"exhaustive_complete":true,"seconds":0.04,"status":"no-recorded-bound"}]},{"id":"qec.cyclic.n8.k1","domain":"quantum-codes","statement":"Find a cyclic stabilizer code on n=8 qubits encoding k=1 logical qubit with the largest possible distance d. The stabilizer group is generated by the 8 cyclic shifts of a single Pauli string (the seed) over I,X,Y,Z.","checker":"stabilizer_code","params":{"n":8,"k":1,"family":"cyclic"},"objective":{"sense":"maximize","field":"d"},"known_best":null,"upper_bound":{"value":4,"source":"Quantum Singleton bound n-k >= 2(d-1) (Knill & Laflamme 1997); applies to all stabilizer codes"},"references":["M. Grassl, Bounds on the minimum distance of quantum codes, codetables.de","Calderbank, Rains, Shor, Sloane, Quantum error correction via codes over GF(4), IEEE Trans. Inf. Theory 44 (1998)"],"best_value":3.0,"best_cert":"048c89cdfdfff0d3a1a9bf95aae004fc666f588549b9415e5305ee56c7eef5e7","status":"no-recorded-bound","exhaustive":true,"attempts":220,"seconds":0.2,"cost_usd":0.0,"runs":[{"proposer":"exhaustive","candidates_checked":220,"best_value":3.0,"exhaustive_complete":true,"seconds":0.24,"status":"no-recorded-bound"}]},{"id":"qec.cyclic.n9.k1","domain":"quantum-codes","statement":"Find a cyclic stabilizer code on n=9 qubits encoding k=1 logical qubit with the largest possible distance d. The stabilizer group is generated by the 9 cyclic shifts of a single Pauli string (the seed) over I,X,Y,Z.","checker":"stabilizer_code","params":{"n":9,"k":1,"family":"cyclic"},"objective":{"sense":"maximize","field":"d"},"known_best":null,"upper_bound":{"value":5,"source":"Quantum Singleton bound n-k >= 2(d-1) (Knill & Laflamme 1997); applies to all stabilizer codes"},"references":["M. Grassl, Bounds on the minimum distance of quantum codes, codetables.de","Calderbank, Rains, Shor, Sloane, Quantum error correction via codes over GF(4), IEEE Trans. Inf. Theory 44 (1998)"],"best_value":3.0,"best_cert":"dc20f5228471a064d54bda3e5b5c771ee38f621f35124ee86e5cf3be76b45e25","status":"no-recorded-bound","exhaustive":true,"attempts":319,"seconds":0.4,"cost_usd":0.0,"runs":[{"proposer":"exhaustive","candidates_checked":319,"best_value":3.0,"exhaustive_complete":true,"seconds":0.42,"status":"no-recorded-bound"}]},{"id":"qec.cyclic.n10.k1","domain":"quantum-codes","statement":"Find a cyclic stabilizer code on n=10 qubits encoding k=1 logical qubit with the largest possible distance d. The stabilizer group is generated by the 10 cyclic shifts of a single Pauli string (the seed) over I,X,Y,Z.","checker":"stabilizer_code","params":{"n":10,"k":1,"family":"cyclic"},"objective":{"sense":"maximize","field":"d"},"known_best":null,"upper_bound":{"value":5,"source":"Quantum Singleton bound n-k >= 2(d-1) (Knill & Laflamme 1997); applies to all stabilizer codes"},"references":["M. Grassl, Bounds on the minimum distance of quantum codes, codetables.de","Calderbank, Rains, Shor, Sloane, Quantum error correction via codes over GF(4), IEEE Trans. Inf. Theory 44 (1998)"],"best_value":4.0,"best_cert":"5a46951c3f62c6d5fe4dcd015906a6988817a98d963bdeace9a4b4933fd7761b","status":"no-recorded-bound","exhaustive":true,"attempts":1012,"seconds":2.6,"cost_usd":0.0,"runs":[{"proposer":"exhaustive","candidates_checked":1012,"best_value":4.0,"exhaustive_complete":true,"seconds":2.63,"status":"no-recorded-bound"}]},{"id":"qec.cyclic.n11.k1","domain":"quantum-codes","statement":"Find a cyclic stabilizer code on n=11 qubits encoding k=1 logical qubit with the largest possible distance d. The stabilizer group is generated by the 11 cyclic shifts of a single Pauli string (the seed) over I,X,Y,Z.","checker":"stabilizer_code","params":{"n":11,"k":1,"family":"cyclic"},"objective":{"sense":"maximize","field":"d"},"known_best":null,"upper_bound":{"value":6,"source":"Quantum Singleton bound n-k >= 2(d-1) (Knill & Laflamme 1997); applies to all stabilizer codes"},"references":["M. Grassl, Bounds on the minimum distance of quantum codes, codetables.de","Calderbank, Rains, Shor, Sloane, Quantum error correction via codes over GF(4), IEEE Trans. Inf. Theory 44 (1998)"],"best_value":3.0,"best_cert":"868648f6edc47889b34662a0c7d99fcdb947a4aacf1217896337881b6e40f354","status":"no-recorded-bound","exhaustive":true,"attempts":1427,"seconds":5.5,"cost_usd":0.0,"runs":[{"proposer":"exhaustive","candidates_checked":1427,"best_value":3.0,"exhaustive_complete":true,"seconds":5.51,"status":"no-recorded-bound"}]},{"id":"qec.cyclic.n12.k1","domain":"quantum-codes","statement":"Find a cyclic stabilizer code on n=12 qubits encoding k=1 logical qubit with the largest possible distance d. The stabilizer group is generated by the 12 cyclic shifts of a single Pauli string (the seed) over I,X,Y,Z.","checker":"stabilizer_code","params":{"n":12,"k":1,"family":"cyclic"},"objective":{"sense":"maximize","field":"d"},"known_best":null,"upper_bound":{"value":6,"source":"Quantum Singleton bound n-k >= 2(d-1) (Knill & Laflamme 1997); applies to all stabilizer codes"},"references":["M. Grassl, Bounds on the minimum distance of quantum codes, codetables.de","Calderbank, Rains, Shor, Sloane, Quantum error correction via codes over GF(4), IEEE Trans. Inf. Theory 44 (1998)"],"best_value":4.0,"best_cert":"d3a4c528b9641294e2cb2b733f58621552506d70ebb714f775c05e6220987562","status":"no-recorded-bound","exhaustive":true,"attempts":7937,"seconds":48.5,"cost_usd":0.0,"runs":[{"proposer":"exhaustive","candidates_checked":7937,"best_value":4.0,"exhaustive_complete":true,"seconds":48.51,"status":"no-recorded-bound"}]},{"id":"qec.cyclic.n13.k1","domain":"quantum-codes","statement":"Find a cyclic stabilizer code on n=13 qubits encoding k=1 logical qubit with the largest possible distance d. The stabilizer group is generated by the 13 cyclic shifts of a single Pauli string (the seed) over I,X,Y,Z.","checker":"stabilizer_code","params":{"n":13,"k":1,"family":"cyclic"},"objective":{"sense":"maximize","field":"d"},"known_best":null,"upper_bound":{"value":7,"source":"Quantum Singleton bound n-k >= 2(d-1) (Knill & Laflamme 1997); applies to all stabilizer codes"},"references":["M. Grassl, Bounds on the minimum distance of quantum codes, codetables.de","Calderbank, Rains, Shor, Sloane, Quantum error correction via codes over GF(4), IEEE Trans. Inf. Theory 44 (1998)"],"best_value":5.0,"best_cert":"4bf3aa0c2e407331e175179b99773e26af0a190ccb12b6d51be2c63211956361","status":"no-recorded-bound","exhaustive":true,"attempts":8380,"seconds":114.5,"cost_usd":0.0,"runs":[{"proposer":"exhaustive","candidates_checked":8380,"best_value":5.0,"exhaustive_complete":true,"seconds":114.48,"status":"no-recorded-bound"}]},{"id":"qec.cyclic.n14.k1","domain":"quantum-codes","statement":"Find a cyclic stabilizer code on n=14 qubits encoding k=1 logical qubit with the largest possible distance d. The stabilizer group is generated by the 14 cyclic shifts of a single Pauli string (the seed) over I,X,Y,Z.","checker":"stabilizer_code","params":{"n":14,"k":1,"family":"cyclic"},"objective":{"sense":"maximize","field":"d"},"known_best":null,"upper_bound":{"value":7,"source":"Quantum Singleton bound n-k >= 2(d-1) (Knill & Laflamme 1997); applies to all stabilizer codes"},"references":["M. Grassl, Bounds on the minimum distance of quantum codes, codetables.de","Calderbank, Rains, Shor, Sloane, Quantum error correction via codes over GF(4), IEEE Trans. Inf. Theory 44 (1998)"],"best_value":5.0,"best_cert":"2b1e221e0906f11b650656d80849691c3a1ec650f27fd0fbac14f84c94ebd0b9","status":"no-recorded-bound","exhaustive":false,"attempts":200000,"seconds":155.2,"cost_usd":0.0,"runs":[{"proposer":"mutation","candidates_checked":200000,"best_value":5.0,"exhaustive_complete":false,"seconds":155.22,"status":"no-recorded-bound"}]},{"id":"qec.cyclic.n15.k1","domain":"quantum-codes","statement":"Find a cyclic stabilizer code on n=15 qubits encoding k=1 logical qubit with the largest possible distance d. The stabilizer group is generated by the 15 cyclic shifts of a single Pauli string (the seed) over I,X,Y,Z.","checker":"stabilizer_code","params":{"n":15,"k":1,"family":"cyclic"},"objective":{"sense":"maximize","field":"d"},"known_best":null,"upper_bound":{"value":8,"source":"Quantum Singleton bound n-k >= 2(d-1) (Knill & Laflamme 1997); applies to all stabilizer codes"},"references":["M. Grassl, Bounds on the minimum distance of quantum codes, codetables.de","Calderbank, Rains, Shor, Sloane, Quantum error correction via codes over GF(4), IEEE Trans. Inf. Theory 44 (1998)"],"best_value":5.0,"best_cert":"ab93c4a28fb10056e48d5cd29e168aaad818ba77015922415a9a5976b244190b","status":"no-recorded-bound","exhaustive":false,"attempts":200000,"seconds":113.3,"cost_usd":0.0,"runs":[{"proposer":"mutation","candidates_checked":200000,"best_value":5.0,"exhaustive_complete":false,"seconds":113.29,"status":"no-recorded-bound"}]}],"certs":{"922e612a0103f7a22a06557b9ce610bc806680b5c3d7c6576dc85c8505960279":"{\"candidate\":{\"marks\":[0,1,4,10,12,17]},\"candidate_hash\":\"19974647c9761c878e08968f5b3acbcac43cc6b80501aa775f0a21cb5ccec8a4\",\"checker\":\"golomb_ruler@0.1.0\",\"created_at\":\"2026-11-01T19:32:57+00:00\",\"problem_hash\":\"b75a6053d0cb714c9c232613d6d7738bf996eb4e53c898dd5a66f04ca3fdb74d\",\"problem_id\":\"golomb.m6\",\"provenance\":{\"attempt\":1,\"enumerated\":1,\"proposer\":\"exhaustive\",\"seed\":0},\"trust\":\"T2\",\"verdict\":{\"score\":{\"length\":17,\"marks\":6},\"transcript\":[\"6 marks, 15 pairwise differences, all distinct\",\"length = 17\"],\"valid\":true}}","5a46951c3f62c6d5fe4dcd015906a6988817a98d963bdeace9a4b4933fd7761b":"{\"candidate\":{\"generators\":[\"XIIIYXZIZY\",\"YXIIIYXZIZ\",\"ZYXIIIYXZI\",\"IZYXIIIYXZ\",\"ZIZYXIIIYX\",\"XZIZYXIIIY\",\"YXZIZYXIII\",\"IYXZIZYXII\",\"IIYXZIZYXI\",\"IIIYXZIZYX\"],\"seed\":\"XIIIYXZIZY\"},\"candidate_hash\":\"9f63206b4526a1d2f28e6d33280444ce0d5d7ea0b2e9bcdf13db74cd8d927dc4\",\"checker\":\"stabilizer_code@0.1.0\",\"created_at\":\"2026-11-01T19:29:49+00:00\",\"problem_hash\":\"2f3669d5d2d21cac69a45b3355f797d0e97a73186fff905734a8b43889c7a34f\",\"problem_id\":\"qec.cyclic.n10.k1\",\"provenance\":{\"attempt\":123,\"enumerated\":1012,\"proposer\":\"exhaustive\",\"seed\":0},\"trust\":\"T2\",\"verdict\":{\"score\":{\"d\":4,\"d_lower\":null,\"k\":1,\"min_weight_witness\":\"ZXZIIIYIII\",\"n\":10,\"operators_examined\":3951},\"transcript\":[\"family: generators are exactly the n cyclic shifts of the seed\",\"all 10 generators pairwise commute\",\"GF(2) rank = 9, so k = 1\",\"exhaustive search: no logical operator of weight < 4; witness of weight 4: ZXZIIIYIII\"],\"valid\":true}}","d3a4c528b9641294e2cb2b733f58621552506d70ebb714f775c05e6220987562":"{\"candidate\":{\"generators\":[\"XIIIIIIXIYYI\",\"IXIIIIIIXIYY\",\"YIXIIIIIIXIY\",\"YYIXIIIIIIXI\",\"IYYIXIIIIIIX\",\"XIYYIXIIIIII\",\"IXIYYIXIIIII\",\"IIXIYYIXIIII\",\"IIIXIYYIXIII\",\"IIIIXIYYIXII\",\"IIIIIXIYYIXI\",\"IIIIIIXIYYIX\"],\"seed\":\"XIIIIIIXIYYI\"},\"candidate_hash\":\"0dda0ce2e6342aa0fec484ed9c8ef4782715e557cedfdea09eaa1578aadebd81\",\"checker\":\"stabilizer_code@0.1.0\",\"created_at\":\"2026-11-01T19:30:06+00:00\",\"problem_hash\":\"15ce1a474c4fbc9080cd89681a299968cbccb0539e4b1019f50014ff12152ba4\",\"problem_id\":\"qec.cyclic.n12.k1\",\"provenance\":{\"attempt\":29,\"enumerated\":4096,\"proposer\":\"exhaustive\",\"seed\":0},\"trust\":\"T2\",\"verdict\":{\"score\":{\"d\":4,\"d_lower\":null,\"k\":1,\"min_weight_witness\":\"ZXZIIIIYIIII\",\"n\":12,\"operators_examined\":6927},\"transcript\":[\"family: generators are exactly the n cyclic shifts of the seed\",\"all 12 generators pairwise commute\",\"GF(2) rank = 11, so k = 1\",\"exhaustive search: no logical operator of weight < 4; witness of weight 4: ZXZIIIIYIIII\"],\"valid\":true}}","c10ed9d7ef4f68936f8168fd6e65bc3cc58cfa25b35eb798c0971ad5f3846c67":"{\"candidate\":{\"generators\":[\"XIIIXYY\",\"YXIIIXY\",\"YYXIIIX\",\"XYYXIII\",\"IXYYXII\",\"IIXYYXI\",\"IIIXYYX\"],\"seed\":\"XIIIXYY\"},\"candidate_hash\":\"fe10609bb267932dadf18a921ae72143bd4cee01e31da7b900566b4c50d4765a\",\"checker\":\"stabilizer_code@0.1.0\",\"created_at\":\"2026-11-01T19:29:46+00:00\",\"problem_hash\":\"60324754cbf49e711dafb7a715949b9d7bb1361133d0acbfbd2c9ecd81ea5033\",\"problem_id\":\"qec.cyclic.n7.k1\",\"provenance\":{\"attempt\":9,\"enumerated\":57,\"proposer\":\"exhaustive\",\"seed\":0},\"trust\":\"T2\",\"verdict\":{\"score\":{\"d\":3,\"d_lower\":null,\"k\":1,\"min_weight_witness\":\"XZXIIII\",\"n\":7,\"operators_examined\":214},\"transcript\":[\"family: generators are exactly the n cyclic shifts of the seed\",\"all 7 generators pairwise commute\",\"GF(2) rank = 6, so k = 1\",\"exhaustive search: no logical operator of weight < 3; witness of weight 3: XZXIIII\"],\"valid\":true}}","4bf3aa0c2e407331e175179b99773e26af0a190ccb12b6d51be2c63211956361":"{\"candidate\":{\"generators\":[\"XIIIIIIIXIYYI\",\"IXIIIIIIIXIYY\",\"YIXIIIIIIIXIY\",\"YYIXIIIIIIIXI\",\"IYYIXIIIIIIIX\",\"XIYYIXIIIIIII\",\"IXIYYIXIIIIII\",\"IIXIYYIXIIIII\",\"IIIXIYYIXIIII\",\"IIIIXIYYIXIII\",\"IIIIIXIYYIXII\",\"IIIIIIXIYYIXI\",\"IIIIIIIXIYYIX\"],\"seed\":\"XIIIIIIIXIYYI\"},\"candidate_hash\":\"b2a995a9949d3d249a5b90dcca19bec87789fa5c86e3325f42e5829f1f766f00\",\"checker\":\"stabilizer_code@0.1.0\",\"created_at\":\"2026-11-01T19:30:55+00:00\",\"problem_hash\":\"bd3ac3a5b61b918b18ce23e0dbcba1be0ec4c9e200ba1c84cd3427865760adf7\",\"problem_id\":\"qec.cyclic.n13.k1\",\"provenance\":{\"attempt\":29,\"enumerated\":4096,\"proposer\":\"exhaustive\",\"seed\":0},\"trust\":\"T2\",\"verdict\":{\"score\":{\"d\":5,\"d_lower\":null,\"k\":1,\"min_weight_witness\":\"XXZXXIIIIIIII\",\"n\":13,\"operators_examined\":66388},\"transcript\":[\"family: generators are exactly the n cyclic shifts of the seed\",\"all 13 generators pairwise commute\",\"GF(2) rank = 12, so k = 1\",\"exhaustive search: no logical operator of weight < 5; witness of weight 5: XXZXXIIIIIIII\"],\"valid\":true}}","048c89cdfdfff0d3a1a9bf95aae004fc666f588549b9415e5305ee56c7eef5e7":"{\"candidate\":{\"generators\":[\"XIIIIXYY\",\"YXIIIIXY\",\"YYXIIIIX\",\"XYYXIIII\",\"IXYYXIII\",\"IIXYYXII\",\"IIIXYYXI\",\"IIIIXYYX\"],\"seed\":\"XIIIIXYY\"},\"candidate_hash\":\"899c0305c387bf6daa22619f5a46a6efc06164ed3e14fd06dc0c107af6a9cd12\",\"checker\":\"stabilizer_code@0.1.0\",\"created_at\":\"2026-11-01T19:29:47+00:00\",\"problem_hash\":\"0e8f306fafc5550fccbae524d8db72c38dcf02afd21c3f6ef7ce55bf42ab9900\",\"problem_id\":\"qec.cyclic.n8.k1\",\"provenance\":{\"attempt\":9,\"enumerated\":220,\"proposer\":\"exhaustive\",\"seed\":0},\"trust\":\"T2\",\"verdict\":{\"score\":{\"d\":3,\"d_lower\":null,\"k\":1,\"min_weight_witness\":\"XZXIIIII\",\"n\":8,\"operators_examined\":280},\"transcript\":[\"family: generators are exactly the n cyclic shifts of the seed\",\"all 8 generators pairwise commute\",\"GF(2) rank = 7, so k = 1\",\"exhaustive search: no logical operator of weight < 3; witness of weight 3: XZXIIIII\"],\"valid\":true}}","2b1e221e0906f11b650656d80849691c3a1ec650f27fd0fbac14f84c94ebd0b9":"{\"candidate\":{\"generators\":[\"YIXZXXYXZZZXXI\",\"IYIXZXXYXZZZXX\",\"XIYIXZXXYXZZZX\",\"XXIYIXZXXYXZZZ\",\"ZXXIYIXZXXYXZZ\",\"ZZXXIYIXZXXYXZ\",\"ZZZXXIYIXZXXYX\",\"XZZZXXIYIXZXXY\",\"YXZZZXXIYIXZXX\",\"XYXZZZXXIYIXZX\",\"XXYXZZZXXIYIXZ\",\"ZXXYXZZZXXIYIX\",\"XZXXYXZZZXXIYI\",\"IXZXXYXZZZXXIY\"],\"seed\":\"YIXZXXYXZZZXXI\"},\"candidate_hash\":\"7803c57188b45d5aaf599c8543c0065d9f5b2fb6a4b22bd2af3f8921c50c95d3\",\"checker\":\"stabilizer_code@0.1.0\",\"created_at\":\"2026-11-01T19:32:57+00:00\",\"problem_hash\":\"46395269c621e5f26c54f242114440c0daa25c22d1852f63eeeadd5da6f89ac6\",\"problem_id\":\"qec.cyclic.n14.k1\",\"provenance\":{\"attempt\":1978,\"proposer\":\"mutation\",\"seed\":1},\"trust\":\"T2\",\"verdict\":{\"score\":{\"d\":5,\"d_lower\":null,\"k\":1,\"min_weight_witness\":\"ZXZIIZIIIIIZII\",\"n\":14,\"operators_examined\":97697},\"transcript\":[\"family: generators are exactly the n cyclic shifts of the seed\",\"all 14 generators pairwise commute\",\"GF(2) rank = 13, so k = 1\",\"exhaustive search: no logical operator of weight < 5; witness of weight 5: ZXZIIZIIIIIZII\"],\"valid\":true}}","bddef698682756cc30973e467038eb77ac98fe98264edc7cd78369e554ee4036":"{\"candidate\":{\"marks\":[0,1,4,13,28,33,47,54,64,70,72]},\"candidate_hash\":\"d0c1e338ffcc8086da45fb63e42491667d6ff99dc1b2c0f01a41ce3e8ab0f75f\",\"checker\":\"golomb_ruler@0.1.0\",\"created_at\":\"2026-11-01T19:52:20+00:00\",\"problem_hash\":\"34627762218273c1c0456b270899173306003ed5ebeeafe972b86f6f3b2aae71\",\"problem_id\":\"golomb.m11\",\"provenance\":{\"attempt\":1,\"enumerated\":1,\"proposer\":\"exhaustive\",\"seed\":0},\"trust\":\"T2\",\"verdict\":{\"score\":{\"length\":72,\"marks\":11},\"transcript\":[\"11 marks, 55 pairwise differences, all distinct\",\"length = 72\"],\"valid\":true}}","4898f9ace22cfa9341b3b57faab90e288710a2124794bad1eee5679052187d8a":"{\"candidate\":{\"marks\":[0,1,6,10,23,26,34,41,53,55]},\"candidate_hash\":\"78e084dcfc7878f78957b64169d2ff32ba61b34b5975a4394b8f6f8e3346f529\",\"checker\":\"golomb_ruler@0.1.0\",\"created_at\":\"2026-11-01T19:33:31+00:00\",\"problem_hash\":\"f3c0c5160aa9eeb56214dac357f2faca9d6c5c531e30a42e52fcab46982ce833\",\"problem_id\":\"golomb.m10\",\"provenance\":{\"attempt\":1,\"enumerated\":1,\"proposer\":\"exhaustive\",\"seed\":0},\"trust\":\"T2\",\"verdict\":{\"score\":{\"length\":55,\"marks\":10},\"transcript\":[\"10 marks, 45 pairwise differences, all distinct\",\"length = 55\"],\"valid\":true}}","5a2c6d9066b3f3774bf6ce9c29a0ca9bc1c1a8a08ea5a34401fe006711fedef8":"{\"candidate\":{\"marks\":[0,1,5,12,25,27,35,41,44]},\"candidate_hash\":\"695b8217dc48456e5c778184d0a4c258aea19db9f362c6f4288b8d79dea620ae\",\"checker\":\"golomb_ruler@0.1.0\",\"created_at\":\"2026-11-01T19:33:00+00:00\",\"problem_hash\":\"99708e19b03f45d5591ec9fd4f6924095d6ef092168881397545e81bd3b3565e\",\"problem_id\":\"golomb.m9\",\"provenance\":{\"attempt\":1,\"enumerated\":1,\"proposer\":\"exhaustive\",\"seed\":0},\"trust\":\"T2\",\"verdict\":{\"score\":{\"length\":44,\"marks\":9},\"transcript\":[\"9 marks, 36 pairwise differences, all distinct\",\"length = 44\"],\"valid\":true}}","109bd02ea108952b29d185f72443a88ded8e73e9f92a31d17b8b2f0944b8b20d":"{\"candidate\":{\"marks\":[0,1,4,10,18,23,25]},\"candidate_hash\":\"c0a02789a2a36c22a7e12536b21e705aa4ac8d1f12a4c7591d6a0179d6e792dd\",\"checker\":\"golomb_ruler@0.1.0\",\"created_at\":\"2026-11-01T19:32:57+00:00\",\"problem_hash\":\"0a35d6fcbe332cc56234c757f12e637b69592cec9fe41bb00d1d89e63a35f25f\",\"problem_id\":\"golomb.m7\",\"provenance\":{\"attempt\":1,\"enumerated\":1,\"proposer\":\"exhaustive\",\"seed\":0},\"trust\":\"T2\",\"verdict\":{\"score\":{\"length\":25,\"marks\":7},\"transcript\":[\"7 marks, 21 pairwise differences, all distinct\",\"length = 25\"],\"valid\":true}}","ab93c4a28fb10056e48d5cd29e168aaad818ba77015922415a9a5976b244190b":"{\"candidate\":{\"generators\":[\"IYIYZIIZZIZXXXX\",\"XIYIYZIIZZIZXXX\",\"XXIYIYZIIZZIZXX\",\"XXXIYIYZIIZZIZX\",\"XXXXIYIYZIIZZIZ\",\"ZXXXXIYIYZIIZZI\",\"IZXXXXIYIYZIIZZ\",\"ZIZXXXXIYIYZIIZ\",\"ZZIZXXXXIYIYZII\",\"IZZIZXXXXIYIYZI\",\"IIZZIZXXXXIYIYZ\",\"ZIIZZIZXXXXIYIY\",\"YZIIZZIZXXXXIYI\",\"IYZIIZZIZXXXXIY\",\"YIYZIIZZIZXXXXI\"],\"seed\":\"IYIYZIIZZIZXXXX\"},\"candidate_hash\":\"23e25eec5cdeee744b41d0c051401d5708cdab4a1eb3f5381dcc30b71e3de0f4\",\"checker\":\"stabilizer_code@0.1.0\",\"created_at\":\"2026-11-01T19:35:32+00:00\",\"problem_hash\":\"a279ac5c0f3f1f9f622301471b397eab063027139a140f66b59e271dd444816f\",\"problem_id\":\"qec.cyclic.n15.k1\",\"provenance\":{\"attempt\":1129,\"proposer\":\"mutation\",\"seed\":1},\"trust\":\"T2\",\"verdict\":{\"score\":{\"d\":5,\"d_lower\":null,\"k\":1,\"min_weight_witness\":\"XXXXIIIIIXIIIII\",\"n\":15,\"operators_examined\":125056},\"transcript\":[\"family: generators are exactly the n cyclic shifts of the seed\",\"all 15 generators pairwise commute\",\"GF(2) rank = 14, so k = 1\",\"exhaustive search: no logical operator of weight < 5; witness of weight 5: XXXXIIIIIXIIIII\"],\"valid\":true}}","a8f22243f4269f8251b13101bd6c1fb47a4e28e69e44e3d19ddd5fa76500dcae":"{\"candidate\":{\"marks\":[0,1,4,9,15,22,32,34]},\"candidate_hash\":\"433c59f83d201e342ee7f5900028c1835f8ccb5697cfe81f687d35c0b8d3d35e\",\"checker\":\"golomb_ruler@0.1.0\",\"created_at\":\"2026-11-01T19:32:57+00:00\",\"problem_hash\":\"3df3d8241d5f19ac21e6670b33d8fb522d4859fefbec27b8bfc66becbdfd60e7\",\"problem_id\":\"golomb.m8\",\"provenance\":{\"attempt\":1,\"enumerated\":1,\"proposer\":\"exhaustive\",\"seed\":0},\"trust\":\"T2\",\"verdict\":{\"score\":{\"length\":34,\"marks\":8},\"transcript\":[\"8 marks, 28 pairwise differences, all distinct\",\"length = 34\"],\"valid\":true}}","86fe5439ba76b6656f899c06331b3bb6bbd67d07f2c2ba4349fc08e03dcbabb0":"{\"candidate\":{\"generators\":[\"XIIXYY\",\"YXIIXY\",\"YYXIIX\",\"XYYXII\",\"IXYYXI\",\"IIXYYX\"],\"seed\":\"XIIXYY\"},\"candidate_hash\":\"ac57b55f4c0b91cf1886979c3531b183cbdfdd97e889d70e86923624cc4b50c2\",\"checker\":\"stabilizer_code@0.1.0\",\"created_at\":\"2026-11-01T19:29:46+00:00\",\"problem_hash\":\"867d58bd4a8a700ffe359119f4941db0669a933b392116574874944cd15d26f1\",\"problem_id\":\"qec.cyclic.n6.k1\",\"provenance\":{\"attempt\":9,\"enumerated\":48,\"proposer\":\"exhaustive\",\"seed\":0},\"trust\":\"T2\",\"verdict\":{\"score\":{\"d\":2,\"d_lower\":null,\"k\":1,\"min_weight_witness\":\"YIIYII\",\"n\":6,\"operators_examined\":45},\"transcript\":[\"family: generators are exactly the n cyclic shifts of the seed\",\"all 6 generators pairwise commute\",\"GF(2) rank = 5, so k = 1\",\"exhaustive search: no logical operator of weight < 2; witness of weight 2: YIIYII\"],\"valid\":true}}","dc20f5228471a064d54bda3e5b5c771ee38f621f35124ee86e5cf3be76b45e25":"{\"candidate\":{\"generators\":[\"XIIIIIXYY\",\"YXIIIIIXY\",\"YYXIIIIIX\",\"XYYXIIIII\",\"IXYYXIIII\",\"IIXYYXIII\",\"IIIXYYXII\",\"IIIIXYYXI\",\"IIIIIXYYX\"],\"seed\":\"XIIIIIXYY\"},\"candidate_hash\":\"d46304ad37aed111cf00bac02166e1d3a53796e1d3cd1fcad6df9a6c57ac6295\",\"checker\":\"stabilizer_code@0.1.0\",\"created_at\":\"2026-11-01T19:29:47+00:00\",\"problem_hash\":\"8af491918c7805ab756beedc5491dad1714f28410f89ac7d8f2568da2109cc4f\",\"problem_id\":\"qec.cyclic.n9.k1\",\"provenance\":{\"attempt\":9,\"enumerated\":319,\"proposer\":\"exhaustive\",\"seed\":0},\"trust\":\"T2\",\"verdict\":{\"score\":{\"d\":3,\"d_lower\":null,\"k\":1,\"min_weight_witness\":\"XZXIIIIII\",\"n\":9,\"operators_examined\":355},\"transcript\":[\"family: generators are exactly the n cyclic shifts of the seed\",\"all 9 generators pairwise commute\",\"GF(2) rank = 8, so k = 1\",\"exhaustive search: no logical operator of weight < 3; witness of weight 3: XZXIIIIII\"],\"valid\":true}}","06126ae370982fc3c724efce37e0c5153a595a185d0eede34f537883f9fae779":"{\"candidate\":{\"generators\":[\"XIXYY\",\"YXIXY\",\"YYXIX\",\"XYYXI\",\"IXYYX\"],\"seed\":\"XIXYY\"},\"candidate_hash\":\"7391d502e2ea04d5a5a4e95b7855a4f7c9ca80fd86b872a111ca587eda37057b\",\"checker\":\"stabilizer_code@0.1.0\",\"created_at\":\"2026-11-01T19:29:46+00:00\",\"problem_hash\":\"c34e18a0886cdaf124ceb5348276427e50f04db25cc37382cc933a2ee3131268\",\"problem_id\":\"qec.cyclic.n5.k1\",\"provenance\":{\"attempt\":8,\"enumerated\":14,\"proposer\":\"exhaustive\",\"seed\":0},\"trust\":\"T2\",\"verdict\":{\"score\":{\"d\":3,\"d_lower\":null,\"k\":1,\"min_weight_witness\":\"XZXII\",\"n\":5,\"operators_examined\":109},\"transcript\":[\"family: generators are exactly the n cyclic shifts of the seed\",\"all 5 generators pairwise commute\",\"GF(2) rank = 4, so k = 1\",\"exhaustive search: no logical operator of weight < 3; witness of weight 3: XZXII\"],\"valid\":true}}","868648f6edc47889b34662a0c7d99fcdb947a4aacf1217896337881b6e40f354":"{\"candidate\":{\"generators\":[\"XIIIIIIIXYY\",\"YXIIIIIIIXY\",\"YYXIIIIIIIX\",\"XYYXIIIIIII\",\"IXYYXIIIIII\",\"IIXYYXIIIII\",\"IIIXYYXIIII\",\"IIIIXYYXIII\",\"IIIIIXYYXII\",\"IIIIIIXYYXI\",\"IIIIIIIXYYX\"],\"seed\":\"XIIIIIIIXYY\"},\"candidate_hash\":\"29ea8107c6cd38dcf4f76dc3564fd9d458df56b488ee7971998df611a6edc40e\",\"checker\":\"stabilizer_code@0.1.0\",\"created_at\":\"2026-11-01T19:29:54+00:00\",\"problem_hash\":\"52a92248b98a20333c7d4e0b5bdeb3bbb044662a346f571bae6426c8cc02a346\",\"problem_id\":\"qec.cyclic.n11.k1\",\"provenance\":{\"attempt\":9,\"enumerated\":1427,\"proposer\":\"exhaustive\",\"seed\":0},\"trust\":\"T2\",\"verdict\":{\"score\":{\"d\":3,\"d_lower\":null,\"k\":1,\"min_weight_witness\":\"XZXIIIIIIII\",\"n\":11,\"operators_examined\":532},\"transcript\":[\"family: generators are exactly the n cyclic shifts of the seed\",\"all 11 generators pairwise commute\",\"GF(2) rank = 10, so k = 1\",\"exhaustive search: no logical operator of weight < 3; witness of weight 3: XZXIIIIIIII\"],\"valid\":true}}"},"ledger":[{"core":"{\"body\":{\"cert\":\"5e1d11eaaa6175cc6ece627ee8bf663640b19eb81ca38705b3e770373d391540\",\"problem_id\":\"qec.cyclic.n5.k1\",\"proposer\":\"exhaustive\",\"value\":1.0},\"prev\":\"0000000000000000000000000000000000000000000000000000000000000000\",\"seq\":0,\"time\":\"2026-11-01T19:29:46+00:00\",\"type\":\"certificate\"}","hash":"a8397182725304136715c8737e53723838c2daf3b79abeda9ec3ec6d86ca915f"},{"core":"{\"body\":{\"cert\":\"06126ae370982fc3c724efce37e0c5153a595a185d0eede34f537883f9fae779\",\"problem_id\":\"qec.cyclic.n5.k1\",\"proposer\":\"exhaustive\",\"value\":3.0},\"prev\":\"a8397182725304136715c8737e53723838c2daf3b79abeda9ec3ec6d86ca915f\",\"seq\":1,\"time\":\"2026-11-01T19:29:46+00:00\",\"type\":\"certificate\"}","hash":"26cd749357fc720bfe824505fb0ca9c62e4a36293db00b9c8180b0152d959c00"},{"core":"{\"body\":{\"best_cert\":\"06126ae370982fc3c724efce37e0c5153a595a185d0eede34f537883f9fae779\",\"best_value\":3.0,\"candidates_checked\":14,\"cost_usd\":0.0,\"duplicates_skipped\":0,\"exhaustive_complete\":true,\"problem_hash\":\"c34e18a0886cdaf124ceb5348276427e50f04db25cc37382cc933a2ee3131268\",\"problem_id\":\"qec.cyclic.n5.k1\",\"proposer\":\"exhaustive\",\"provenance\":{\"enumerated\":14,\"proposer\":\"exhaustive\"},\"seconds\":0.0,\"seed\":0,\"status\":\"matches-known\",\"valid\":4},\"prev\":\"26cd749357fc720bfe824505fb0ca9c62e4a36293db00b9c8180b0152d959c00\",\"seq\":2,\"time\":\"2026-11-01T19:29:46+00:00\",\"type\":\"run\"}","hash":"99cf689f5d6dbbcea33b102e468c85ff0cd283047832e38fd0d6e06d24cccbd4"},{"core":"{\"body\":{\"cert\":\"1075a2936e0a99bd024179a727a05f31f01091889ef6a2e185108c81bc7f81e2\",\"problem_id\":\"qec.cyclic.n6.k1\",\"proposer\":\"exhaustive\",\"value\":1.0},\"prev\":\"99cf689f5d6dbbcea33b102e468c85ff0cd283047832e38fd0d6e06d24cccbd4\",\"seq\":3,\"time\":\"2026-11-01T19:29:46+00:00\",\"type\":\"certificate\"}","hash":"0b84c701940c38ee12856be7c873cdda8b7a1c7b93772fce6cace2f658f58766"},{"core":"{\"body\":{\"cert\":\"86fe5439ba76b6656f899c06331b3bb6bbd67d07f2c2ba4349fc08e03dcbabb0\",\"problem_id\":\"qec.cyclic.n6.k1\",\"proposer\":\"exhaustive\",\"value\":2.0},\"prev\":\"0b84c701940c38ee12856be7c873cdda8b7a1c7b93772fce6cace2f658f58766\",\"seq\":4,\"time\":\"2026-11-01T19:29:46+00:00\",\"type\":\"certificate\"}","hash":"c81316ecef8ada1629211569656384d4a429e29e473540898111cc17d3f828ab"},{"core":"{\"body\":{\"best_cert\":\"86fe5439ba76b6656f899c06331b3bb6bbd67d07f2c2ba4349fc08e03dcbabb0\",\"best_value\":2.0,\"candidates_checked\":48,\"cost_usd\":0.0,\"duplicates_skipped\":0,\"exhaustive_complete\":true,\"problem_hash\":\"867d58bd4a8a700ffe359119f4941db0669a933b392116574874944cd15d26f1\",\"problem_id\":\"qec.cyclic.n6.k1\",\"proposer\":\"exhaustive\",\"provenance\":{\"enumerated\":48,\"proposer\":\"exhaustive\"},\"seconds\":0.02,\"seed\":0,\"status\":\"no-recorded-bound\",\"valid\":8},\"prev\":\"c81316ecef8ada1629211569656384d4a429e29e473540898111cc17d3f828ab\",\"seq\":5,\"time\":\"2026-11-01T19:29:46+00:00\",\"type\":\"run\"}","hash":"3399cb29249a5d5c258f40a4eca427c38b997473c9f15da75f54918dcb01bace"},{"core":"{\"body\":{\"cert\":\"f2e084c52c24eda22b7ad2fe995413a32bd5a05aa062eea70108d440da6045fe\",\"problem_id\":\"qec.cyclic.n7.k1\",\"proposer\":\"exhaustive\",\"value\":1.0},\"prev\":\"3399cb29249a5d5c258f40a4eca427c38b997473c9f15da75f54918dcb01bace\",\"seq\":6,\"time\":\"2026-11-01T19:29:46+00:00\",\"type\":\"certificate\"}","hash":"86b82371027a723c59474b557426a39876232da02f46494206fc42e6108e2877"},{"core":"{\"body\":{\"cert\":\"c10ed9d7ef4f68936f8168fd6e65bc3cc58cfa25b35eb798c0971ad5f3846c67\",\"problem_id\":\"qec.cyclic.n7.k1\",\"proposer\":\"exhaustive\",\"value\":3.0},\"prev\":\"86b82371027a723c59474b557426a39876232da02f46494206fc42e6108e2877\",\"seq\":7,\"time\":\"2026-11-01T19:29:46+00:00\",\"type\":\"certificate\"}","hash":"c0ba90efe38a801fed4133764daf22099a645aa200c444cc4e5fad72d99fc0db"},{"core":"{\"body\":{\"best_cert\":\"c10ed9d7ef4f68936f8168fd6e65bc3cc58cfa25b35eb798c0971ad5f3846c67\",\"best_value\":3.0,\"candidates_checked\":57,\"cost_usd\":0.0,\"duplicates_skipped\":0,\"exhaustive_complete\":true,\"problem_hash\":\"60324754cbf49e711dafb7a715949b9d7bb1361133d0acbfbd2c9ecd81ea5033\",\"problem_id\":\"qec.cyclic.n7.k1\",\"proposer\":\"exhaustive\",\"provenance\":{\"enumerated\":57,\"proposer\":\"exhaustive\"},\"seconds\":0.04,\"seed\":0,\"status\":\"no-recorded-bound\",\"valid\":14},\"prev\":\"c0ba90efe38a801fed4133764daf22099a645aa200c444cc4e5fad72d99fc0db\",\"seq\":8,\"time\":\"2026-11-01T19:29:46+00:00\",\"type\":\"run\"}","hash":"c404ff8c3fc41fd2f229199d2f1bd0f37de87e1d4027fe4770c101a145d8f04e"},{"core":"{\"body\":{\"cert\":\"22da9e9d1b2e9c56eade99d1e3938dd6764eb78bff467fa09eff876e96be3640\",\"problem_id\":\"qec.cyclic.n8.k1\",\"proposer\":\"exhaustive\",\"value\":1.0},\"prev\":\"c404ff8c3fc41fd2f229199d2f1bd0f37de87e1d4027fe4770c101a145d8f04e\",\"seq\":9,\"time\":\"2026-11-01T19:29:47+00:00\",\"type\":\"certificate\"}","hash":"e28b3feb19cee801e521543ef08409bbb4aab35962dbaa617b6314a80a80b9e5"},{"core":"{\"body\":{\"cert\":\"048c89cdfdfff0d3a1a9bf95aae004fc666f588549b9415e5305ee56c7eef5e7\",\"problem_id\":\"qec.cyclic.n8.k1\",\"proposer\":\"exhaustive\",\"value\":3.0},\"prev\":\"e28b3feb19cee801e521543ef08409bbb4aab35962dbaa617b6314a80a80b9e5\",\"seq\":10,\"time\":\"2026-11-01T19:29:47+00:00\",\"type\":\"certificate\"}","hash":"c19d398915ff81693ac1fa8ff842ed23add51cdcfd0314ac8633c41f939a5e78"},{"core":"{\"body\":{\"best_cert\":\"048c89cdfdfff0d3a1a9bf95aae004fc666f588549b9415e5305ee56c7eef5e7\",\"best_value\":3.0,\"candidates_checked\":220,\"cost_usd\":0.0,\"duplicates_skipped\":0,\"exhaustive_complete\":true,\"problem_hash\":\"0e8f306fafc5550fccbae524d8db72c38dcf02afd21c3f6ef7ce55bf42ab9900\",\"problem_id\":\"qec.cyclic.n8.k1\",\"proposer\":\"exhaustive\",\"provenance\":{\"enumerated\":220,\"proposer\":\"exhaustive\"},\"seconds\":0.24,\"seed\":0,\"status\":\"no-recorded-bound\",\"valid\":48},\"prev\":\"c19d398915ff81693ac1fa8ff842ed23add51cdcfd0314ac8633c41f939a5e78\",\"seq\":11,\"time\":\"2026-11-01T19:29:47+00:00\",\"type\":\"run\"}","hash":"ec453b207f4f102cc9d8e41e0f7d02d81c2da74518c42e83c2f9c6ed9c8742c3"},{"core":"{\"body\":{\"cert\":\"9a8f1397fd6257b5bbef82b28901ca2bf9b9ea7f99d185d1af56685585643a07\",\"problem_id\":\"qec.cyclic.n9.k1\",\"proposer\":\"exhaustive\",\"value\":1.0},\"prev\":\"ec453b207f4f102cc9d8e41e0f7d02d81c2da74518c42e83c2f9c6ed9c8742c3\",\"seq\":12,\"time\":\"2026-11-01T19:29:47+00:00\",\"type\":\"certificate\"}","hash":"ff610b4e01cbb8c2b29454943f398e6557bbec9d09a2c8b43e0116c4d48cf5b0"},{"core":"{\"body\":{\"cert\":\"dc20f5228471a064d54bda3e5b5c771ee38f621f35124ee86e5cf3be76b45e25\",\"problem_id\":\"qec.cyclic.n9.k1\",\"proposer\":\"exhaustive\",\"value\":3.0},\"prev\":\"ff610b4e01cbb8c2b29454943f398e6557bbec9d09a2c8b43e0116c4d48cf5b0\",\"seq\":13,\"time\":\"2026-11-01T19:29:47+00:00\",\"type\":\"certificate\"}","hash":"7c5035e130d68c4a5306cd0f1a5acb37f7733e254c56cadb82a04215121f38de"},{"core":"{\"body\":{\"best_cert\":\"dc20f5228471a064d54bda3e5b5c771ee38f621f35124ee86e5cf3be76b45e25\",\"best_value\":3.0,\"candidates_checked\":319,\"cost_usd\":0.0,\"duplicates_skipped\":0,\"exhaustive_complete\":true,\"problem_hash\":\"8af491918c7805ab756beedc5491dad1714f28410f89ac7d8f2568da2109cc4f\",\"problem_id\":\"qec.cyclic.n9.k1\",\"proposer\":\"exhaustive\",\"provenance\":{\"enumerated\":319,\"proposer\":\"exhaustive\"},\"seconds\":0.42,\"seed\":0,\"status\":\"no-recorded-bound\",\"valid\":70},\"prev\":\"7c5035e130d68c4a5306cd0f1a5acb37f7733e254c56cadb82a04215121f38de\",\"seq\":14,\"time\":\"2026-11-01T19:29:47+00:00\",\"type\":\"run\"}","hash":"f38cc75722a73ab872a60b4effb67391154a8c65ced2508b14e6f8bcd626478a"},{"core":"{\"body\":{\"cert\":\"d5e9abb13e7a43aacdbe04f0c2850accd2a550c2edbc25af3d73b34d26a9d674\",\"problem_id\":\"qec.cyclic.n10.k1\",\"proposer\":\"exhaustive\",\"value\":1.0},\"prev\":\"f38cc75722a73ab872a60b4effb67391154a8c65ced2508b14e6f8bcd626478a\",\"seq\":15,\"time\":\"2026-11-01T19:29:49+00:00\",\"type\":\"certificate\"}","hash":"895202d30d9038b67b929799d7386e97f4ce1067d08f07c8129266e8a9928c67"},{"core":"{\"body\":{\"cert\":\"86945a8cc007b263e92fff7965b740342d9d178f4150a886bf627207e33d1551\",\"problem_id\":\"qec.cyclic.n10.k1\",\"proposer\":\"exhaustive\",\"value\":3.0},\"prev\":\"895202d30d9038b67b929799d7386e97f4ce1067d08f07c8129266e8a9928c67\",\"seq\":16,\"time\":\"2026-11-01T19:29:49+00:00\",\"type\":\"certificate\"}","hash":"a79792adc2aace0a6743d2b6c1c470c3763bc9f261fb70adb6d00f23b4f27694"},{"core":"{\"body\":{\"cert\":\"5a46951c3f62c6d5fe4dcd015906a6988817a98d963bdeace9a4b4933fd7761b\",\"problem_id\":\"qec.cyclic.n10.k1\",\"proposer\":\"exhaustive\",\"value\":4.0},\"prev\":\"a79792adc2aace0a6743d2b6c1c470c3763bc9f261fb70adb6d00f23b4f27694\",\"seq\":17,\"time\":\"2026-11-01T19:29:49+00:00\",\"type\":\"certificate\"}","hash":"0a38f7159757ecd0fbb81d8b83e63fb635105f9ab1ae76e9a3f6b93368342529"},{"core":"{\"body\":{\"best_cert\":\"5a46951c3f62c6d5fe4dcd015906a6988817a98d963bdeace9a4b4933fd7761b\",\"best_value\":4.0,\"candidates_checked\":1012,\"cost_usd\":0.0,\"duplicates_skipped\":0,\"exhaustive_complete\":true,\"problem_hash\":\"2f3669d5d2d21cac69a45b3355f797d0e97a73186fff905734a8b43889c7a34f\",\"problem_id\":\"qec.cyclic.n10.k1\",\"proposer\":\"exhaustive\",\"provenance\":{\"enumerated\":1012,\"proposer\":\"exhaustive\"},\"seconds\":2.63,\"seed\":0,\"status\":\"no-recorded-bound\",\"valid\":204},\"prev\":\"0a38f7159757ecd0fbb81d8b83e63fb635105f9ab1ae76e9a3f6b93368342529\",\"seq\":18,\"time\":\"2026-11-01T19:29:50+00:00\",\"type\":\"run\"}","hash":"3b9a5031e9352ccfcc1bdc240b6f13e21c4ebb6f5f91697dbd421a925552a7fc"},{"core":"{\"body\":{\"cert\":\"59e5a01a07e6a0f129788a9397c774e564458baea0df1409d265b0dcc072d2f5\",\"problem_id\":\"qec.cyclic.n11.k1\",\"proposer\":\"exhaustive\",\"value\":1.0},\"prev\":\"3b9a5031e9352ccfcc1bdc240b6f13e21c4ebb6f5f91697dbd421a925552a7fc\",\"seq\":19,\"time\":\"2026-11-01T19:29:54+00:00\",\"type\":\"certificate\"}","hash":"899d676a270584ce7de3628b26f2eb6eba415ed646be53072ff9250354a95f31"},{"core":"{\"body\":{\"cert\":\"868648f6edc47889b34662a0c7d99fcdb947a4aacf1217896337881b6e40f354\",\"problem_id\":\"qec.cyclic.n11.k1\",\"proposer\":\"exhaustive\",\"value\":3.0},\"prev\":\"899d676a270584ce7de3628b26f2eb6eba415ed646be53072ff9250354a95f31\",\"seq\":20,\"time\":\"2026-11-01T19:29:54+00:00\",\"type\":\"certificate\"}","hash":"93ed42596bb1c3648e884012ce04dfa7030cf3d4e36f5d57eba2344683499520"},{"core":"{\"body\":{\"best_cert\":\"868648f6edc47889b34662a0c7d99fcdb947a4aacf1217896337881b6e40f354\",\"best_value\":3.0,\"candidates_checked\":1427,\"cost_usd\":0.0,\"duplicates_skipped\":0,\"exhaustive_complete\":true,\"problem_hash\":\"52a92248b98a20333c7d4e0b5bdeb3bbb044662a346f571bae6426c8cc02a346\",\"problem_id\":\"qec.cyclic.n11.k1\",\"proposer\":\"exhaustive\",\"provenance\":{\"enumerated\":1427,\"proposer\":\"exhaustive\"},\"seconds\":5.51,\"seed\":0,\"status\":\"no-recorded-bound\",\"valid\":372},\"prev\":\"93ed42596bb1c3648e884012ce04dfa7030cf3d4e36f5d57eba2344683499520\",\"seq\":21,\"time\":\"2026-11-01T19:29:55+00:00\",\"type\":\"run\"}","hash":"462d9cecbef448c48f09d19c0574380044fade916333f3ea70a17380c9744b0b"},{"core":"{\"body\":{\"cert\":\"b37ae692db0efae2df3a0519906094e2775f53c31a358125c17fc558b1ccbdec\",\"problem_id\":\"qec.cyclic.n12.k1\",\"proposer\":\"exhaustive\",\"value\":1.0},\"prev\":\"462d9cecbef448c48f09d19c0574380044fade916333f3ea70a17380c9744b0b\",\"seq\":22,\"time\":\"2026-11-01T19:30:06+00:00\",\"type\":\"certificate\"}","hash":"ff3c0869929ec843311fbccc540b988dba960307dbfda2bb05c4b40cd333b62a"},{"core":"{\"body\":{\"cert\":\"0e3b6d44fac64b4d70165373e3f35c4608fbeebe7aa6f0eea9cca8d3355e3f5c\",\"problem_id\":\"qec.cyclic.n12.k1\",\"proposer\":\"exhaustive\",\"value\":3.0},\"prev\":\"ff3c0869929ec843311fbccc540b988dba960307dbfda2bb05c4b40cd333b62a\",\"seq\":23,\"time\":\"2026-11-01T19:30:06+00:00\",\"type\":\"certificate\"}","hash":"d12423379a5a8db74ebf81a4694cc8bd82858e36bb76a71ef09a3f673eb1f02b"},{"core":"{\"body\":{\"cert\":\"d3a4c528b9641294e2cb2b733f58621552506d70ebb714f775c05e6220987562\",\"problem_id\":\"qec.cyclic.n12.k1\",\"proposer\":\"exhaustive\",\"value\":4.0},\"prev\":\"d12423379a5a8db74ebf81a4694cc8bd82858e36bb76a71ef09a3f673eb1f02b\",\"seq\":24,\"time\":\"2026-11-01T19:30:06+00:00\",\"type\":\"certificate\"}","hash":"88908b1faa16f31a0f5837a212449a39e2adb80f231bb2e69ea0647bf57a3960"},{"core":"{\"body\":{\"best_cert\":\"d3a4c528b9641294e2cb2b733f58621552506d70ebb714f775c05e6220987562\",\"best_value\":4.0,\"candidates_checked\":7937,\"cost_usd\":0.0,\"duplicates_skipped\":0,\"exhaustive_complete\":true,\"problem_hash\":\"15ce1a474c4fbc9080cd89681a299968cbccb0539e4b1019f50014ff12152ba4\",\"problem_id\":\"qec.cyclic.n12.k1\",\"proposer\":\"exhaustive\",\"provenance\":{\"enumerated\":7937,\"proposer\":\"exhaustive\"},\"seconds\":48.51,\"seed\":0,\"status\":\"no-recorded-bound\",\"valid\":1696},\"prev\":\"88908b1faa16f31a0f5837a212449a39e2adb80f231bb2e69ea0647bf57a3960\",\"seq\":25,\"time\":\"2026-11-01T19:30:53+00:00\",\"type\":\"run\"}","hash":"8950f978f50195dce4f4306fc59d88224d856d4b60a732617a124ed738a91745"},{"core":"{\"body\":{\"cert\":\"a28c9b53542b04b8db5f43adb5ccbbaa213520701be478c8ca3eb636cf60f28f\",\"problem_id\":\"qec.cyclic.n13.k1\",\"proposer\":\"exhaustive\",\"value\":1.0},\"prev\":\"8950f978f50195dce4f4306fc59d88224d856d4b60a732617a124ed738a91745\",\"seq\":26,\"time\":\"2026-11-01T19:30:55+00:00\",\"type\":\"certificate\"}","hash":"69fe6571ef50cae200f134f4e3a364defb008946a1d788665dd02ea059c761cd"},{"core":"{\"body\":{\"cert\":\"699979401c84ad5a25d963a8d334a319084d8a6321bb4bbd680466dba60bae98\",\"problem_id\":\"qec.cyclic.n13.k1\",\"proposer\":\"exhaustive\",\"value\":3.0},\"prev\":\"69fe6571ef50cae200f134f4e3a364defb008946a1d788665dd02ea059c761cd\",\"seq\":27,\"time\":\"2026-11-01T19:30:55+00:00\",\"type\":\"certificate\"}","hash":"7bc6889c185dae07e760144398103f676a6139e58ac642089386db3ce898c58c"},{"core":"{\"body\":{\"cert\":\"4bf3aa0c2e407331e175179b99773e26af0a190ccb12b6d51be2c63211956361\",\"problem_id\":\"qec.cyclic.n13.k1\",\"proposer\":\"exhaustive\",\"value\":5.0},\"prev\":\"7bc6889c185dae07e760144398103f676a6139e58ac642089386db3ce898c58c\",\"seq\":28,\"time\":\"2026-11-01T19:30:55+00:00\",\"type\":\"certificate\"}","hash":"bb198814d1a9fee8e091b37a4d58a08e3e4614d3d2f42650f1a8b179bdaab352"},{"core":"{\"body\":{\"best_cert\":\"4bf3aa0c2e407331e175179b99773e26af0a190ccb12b6d51be2c63211956361\",\"best_value\":5.0,\"candidates_checked\":8380,\"cost_usd\":0.0,\"duplicates_skipped\":0,\"exhaustive_complete\":true,\"problem_hash\":\"bd3ac3a5b61b918b18ce23e0dbcba1be0ec4c9e200ba1c84cd3427865760adf7\",\"problem_id\":\"qec.cyclic.n13.k1\",\"proposer\":\"exhaustive\",\"provenance\":{\"enumerated\":8380,\"proposer\":\"exhaustive\"},\"seconds\":114.48,\"seed\":0,\"status\":\"no-recorded-bound\",\"valid\":2142},\"prev\":\"bb198814d1a9fee8e091b37a4d58a08e3e4614d3d2f42650f1a8b179bdaab352\",\"seq\":29,\"time\":\"2026-11-01T19:32:47+00:00\",\"type\":\"run\"}","hash":"8ba5415ad681cdf3cb4696cdfec62c07fea5fdb8044ba5fc8a9c845474058c29"},{"core":"{\"body\":{\"cert\":\"922e612a0103f7a22a06557b9ce610bc806680b5c3d7c6576dc85c8505960279\",\"problem_id\":\"golomb.m6\",\"proposer\":\"exhaustive\",\"value\":17.0},\"prev\":\"8ba5415ad681cdf3cb4696cdfec62c07fea5fdb8044ba5fc8a9c845474058c29\",\"seq\":30,\"time\":\"2026-11-01T19:32:57+00:00\",\"type\":\"certificate\"}","hash":"d19c6066d86c5e0d7637f14cd7a035fef1fa5bdf34c5188db4b92c63613603f0"},{"core":"{\"body\":{\"best_cert\":\"922e612a0103f7a22a06557b9ce610bc806680b5c3d7c6576dc85c8505960279\",\"best_value\":17.0,\"candidates_checked\":1,\"cost_usd\":0.0,\"duplicates_skipped\":0,\"exhaustive_complete\":true,\"problem_hash\":\"b75a6053d0cb714c9c232613d6d7738bf996eb4e53c898dd5a66f04ca3fdb74d\",\"problem_id\":\"golomb.m6\",\"proposer\":\"exhaustive\",\"provenance\":{\"enumerated\":1,\"proposer\":\"exhaustive\"},\"seconds\":0.0,\"seed\":0,\"status\":\"matches-known\",\"valid\":1},\"prev\":\"d19c6066d86c5e0d7637f14cd7a035fef1fa5bdf34c5188db4b92c63613603f0\",\"seq\":31,\"time\":\"2026-11-01T19:32:57+00:00\",\"type\":\"run\"}","hash":"f83849e6006506d25e32d1079b86cdef554bbe229da870f02569f60827ad5b3b"},{"core":"{\"body\":{\"cert\":\"109bd02ea108952b29d185f72443a88ded8e73e9f92a31d17b8b2f0944b8b20d\",\"problem_id\":\"golomb.m7\",\"proposer\":\"exhaustive\",\"value\":25.0},\"prev\":\"f83849e6006506d25e32d1079b86cdef554bbe229da870f02569f60827ad5b3b\",\"seq\":32,\"time\":\"2026-11-01T19:32:57+00:00\",\"type\":\"certificate\"}","hash":"98db976800b3c763953410bc85fb8a7ec4c87843874bd43a7452662249cda953"},{"core":"{\"body\":{\"best_cert\":\"109bd02ea108952b29d185f72443a88ded8e73e9f92a31d17b8b2f0944b8b20d\",\"best_value\":25.0,\"candidates_checked\":1,\"cost_usd\":0.0,\"duplicates_skipped\":0,\"exhaustive_complete\":true,\"problem_hash\":\"0a35d6fcbe332cc56234c757f12e637b69592cec9fe41bb00d1d89e63a35f25f\",\"problem_id\":\"golomb.m7\",\"proposer\":\"exhaustive\",\"provenance\":{\"enumerated\":1,\"proposer\":\"exhaustive\"},\"seconds\":0.02,\"seed\":0,\"status\":\"matches-known\",\"valid\":1},\"prev\":\"98db976800b3c763953410bc85fb8a7ec4c87843874bd43a7452662249cda953\",\"seq\":33,\"time\":\"2026-11-01T19:32:57+00:00\",\"type\":\"run\"}","hash":"db1e632d1b9f36a309a4d80b5f068d14ec10c4b6d938b670c1dccae945c05f1a"},{"core":"{\"body\":{\"cert\":\"c144539a5a2e9971e8d3d4c3717d1ea7ca9a1be707844565f65211371b674294\",\"problem_id\":\"qec.cyclic.n14.k1\",\"proposer\":\"mutation\",\"value\":2.0},\"prev\":\"db1e632d1b9f36a309a4d80b5f068d14ec10c4b6d938b670c1dccae945c05f1a\",\"seq\":34,\"time\":\"2026-11-01T19:32:57+00:00\",\"type\":\"certificate\"}","hash":"e9418746f9100ff06d9bedd2fa4df1f7a58bd9dbb2214446920a71e2074dd918"},{"core":"{\"body\":{\"cert\":\"a8f22243f4269f8251b13101bd6c1fb47a4e28e69e44e3d19ddd5fa76500dcae\",\"problem_id\":\"golomb.m8\",\"proposer\":\"exhaustive\",\"value\":34.0},\"prev\":\"e9418746f9100ff06d9bedd2fa4df1f7a58bd9dbb2214446920a71e2074dd918\",\"seq\":35,\"time\":\"2026-11-01T19:32:57+00:00\",\"type\":\"certificate\"}","hash":"7897b67f3663b6f3e0f1ab518cc5d0c747cdae3f0fd800f053ade052d8ff8696"},{"core":"{\"body\":{\"best_cert\":\"a8f22243f4269f8251b13101bd6c1fb47a4e28e69e44e3d19ddd5fa76500dcae\",\"best_value\":34.0,\"candidates_checked\":1,\"cost_usd\":0.0,\"duplicates_skipped\":0,\"exhaustive_complete\":true,\"problem_hash\":\"3df3d8241d5f19ac21e6670b33d8fb522d4859fefbec27b8bfc66becbdfd60e7\",\"problem_id\":\"golomb.m8\",\"proposer\":\"exhaustive\",\"provenance\":{\"enumerated\":1,\"proposer\":\"exhaustive\"},\"seconds\":0.22,\"seed\":0,\"status\":\"matches-known\",\"valid\":1},\"prev\":\"7897b67f3663b6f3e0f1ab518cc5d0c747cdae3f0fd800f053ade052d8ff8696\",\"seq\":36,\"time\":\"2026-11-01T19:32:57+00:00\",\"type\":\"run\"}","hash":"0b75a3b6bcc6473d4350e40dda3344bed4b88362e4d9a7afe252b84c0709ef20"},{"core":"{\"body\":{\"cert\":\"2b1e221e0906f11b650656d80849691c3a1ec650f27fd0fbac14f84c94ebd0b9\",\"problem_id\":\"qec.cyclic.n14.k1\",\"proposer\":\"mutation\",\"value\":5.0},\"prev\":\"0b75a3b6bcc6473d4350e40dda3344bed4b88362e4d9a7afe252b84c0709ef20\",\"seq\":37,\"time\":\"2026-11-01T19:32:57+00:00\",\"type\":\"certificate\"}","hash":"48cba523da608f884a613da88bf54c839c1c42744e12e5121e75b87651e1aba7"},{"core":"{\"body\":{\"cert\":\"5a2c6d9066b3f3774bf6ce9c29a0ca9bc1c1a8a08ea5a34401fe006711fedef8\",\"problem_id\":\"golomb.m9\",\"proposer\":\"exhaustive\",\"value\":44.0},\"prev\":\"48cba523da608f884a613da88bf54c839c1c42744e12e5121e75b87651e1aba7\",\"seq\":38,\"time\":\"2026-11-01T19:33:00+00:00\",\"type\":\"certificate\"}","hash":"7652379c912be8fe0df90f489ec383c524f3cf2246e6304bb8a67856ed6f340a"},{"core":"{\"body\":{\"best_cert\":\"5a2c6d9066b3f3774bf6ce9c29a0ca9bc1c1a8a08ea5a34401fe006711fedef8\",\"best_value\":44.0,\"candidates_checked\":1,\"cost_usd\":0.0,\"duplicates_skipped\":0,\"exhaustive_complete\":true,\"problem_hash\":\"99708e19b03f45d5591ec9fd4f6924095d6ef092168881397545e81bd3b3565e\",\"problem_id\":\"golomb.m9\",\"proposer\":\"exhaustive\",\"provenance\":{\"enumerated\":1,\"proposer\":\"exhaustive\"},\"seconds\":3.06,\"seed\":0,\"status\":\"matches-known\",\"valid\":1},\"prev\":\"7652379c912be8fe0df90f489ec383c524f3cf2246e6304bb8a67856ed6f340a\",\"seq\":39,\"time\":\"2026-11-01T19:33:00+00:00\",\"type\":\"run\"}","hash":"5ff4226fd27a4c6607dc645fceabb7e54adffe07d64e2132d1025cad93b53ad1"},{"core":"{\"body\":{\"cert\":\"4898f9ace22cfa9341b3b57faab90e288710a2124794bad1eee5679052187d8a\",\"problem_id\":\"golomb.m10\",\"proposer\":\"exhaustive\",\"value\":55.0},\"prev\":\"5ff4226fd27a4c6607dc645fceabb7e54adffe07d64e2132d1025cad93b53ad1\",\"seq\":40,\"time\":\"2026-11-01T19:33:31+00:00\",\"type\":\"certificate\"}","hash":"6ec7eb8aa34cca62703265f0ef422679fbbd9816f721350440678e156b8b0e0a"},{"core":"{\"body\":{\"best_cert\":\"4898f9ace22cfa9341b3b57faab90e288710a2124794bad1eee5679052187d8a\",\"best_value\":55.0,\"candidates_checked\":1,\"cost_usd\":0.0,\"duplicates_skipped\":0,\"exhaustive_complete\":true,\"problem_hash\":\"f3c0c5160aa9eeb56214dac357f2faca9d6c5c531e30a42e52fcab46982ce833\",\"problem_id\":\"golomb.m10\",\"proposer\":\"exhaustive\",\"provenance\":{\"enumerated\":1,\"proposer\":\"exhaustive\"},\"seconds\":30.4,\"seed\":0,\"status\":\"matches-known\",\"valid\":1},\"prev\":\"6ec7eb8aa34cca62703265f0ef422679fbbd9816f721350440678e156b8b0e0a\",\"seq\":41,\"time\":\"2026-11-01T19:33:31+00:00\",\"type\":\"run\"}","hash":"1979b26d9ff628b9a18c621120d27c532c5439a6b1467beb34fa03c2d9a93c3b"},{"core":"{\"body\":{\"best_cert\":null,\"best_value\":null,\"candidates_checked\":300000,\"cost_usd\":0.0,\"duplicates_skipped\":205260,\"exhaustive_complete\":false,\"problem_hash\":\"34627762218273c1c0456b270899173306003ed5ebeeafe972b86f6f3b2aae71\",\"problem_id\":\"golomb.m11\",\"proposer\":\"mutation\",\"provenance\":{\"proposer\":\"mutation\"},\"seconds\":4.34,\"seed\":1,\"status\":\"no-valid-result\",\"valid\":0},\"prev\":\"1979b26d9ff628b9a18c621120d27c532c5439a6b1467beb34fa03c2d9a93c3b\",\"seq\":42,\"time\":\"2026-11-01T19:33:35+00:00\",\"type\":\"run\"}","hash":"2230a6324ddb3e79623e0a001d93a2b430ae53fc1a65b5c392d1c0a7e9c0c1ff"},{"core":"{\"body\":{\"best_cert\":null,\"best_value\":null,\"candidates_checked\":300000,\"cost_usd\":0.0,\"duplicates_skipped\":180548,\"exhaustive_complete\":false,\"problem_hash\":\"cf3c497191fd314fdf71a23c7cbb456220655c20c8ccf88a7012240c0931e83f\",\"problem_id\":\"golomb.m12\",\"proposer\":\"mutation\",\"provenance\":{\"proposer\":\"mutation\"},\"seconds\":4.5,\"seed\":1,\"status\":\"no-valid-result\",\"valid\":0},\"prev\":\"2230a6324ddb3e79623e0a001d93a2b430ae53fc1a65b5c392d1c0a7e9c0c1ff\",\"seq\":43,\"time\":\"2026-11-01T19:33:40+00:00\",\"type\":\"run\"}","hash":"50ee4e37a7bddb7c2b2de94eb0e61e4f99912099c4774a386837efefd6043406"},{"core":"{\"body\":{\"best_cert\":\"2b1e221e0906f11b650656d80849691c3a1ec650f27fd0fbac14f84c94ebd0b9\",\"best_value\":5.0,\"candidates_checked\":200000,\"cost_usd\":0.0,\"duplicates_skipped\":283290,\"exhaustive_complete\":false,\"problem_hash\":\"46395269c621e5f26c54f242114440c0daa25c22d1852f63eeeadd5da6f89ac6\",\"problem_id\":\"qec.cyclic.n14.k1\",\"proposer\":\"mutation\",\"provenance\":{\"proposer\":\"mutation\"},\"seconds\":155.22,\"seed\":1,\"status\":\"no-recorded-bound\",\"valid\":974},\"prev\":\"50ee4e37a7bddb7c2b2de94eb0e61e4f99912099c4774a386837efefd6043406\",\"seq\":44,\"time\":\"2026-11-01T19:35:32+00:00\",\"type\":\"run\"}","hash":"633ee59b71ca467d5bf906465d13dfb1fe9480f277d529791d86630718bca86b"},{"core":"{\"body\":{\"cert\":\"78f547a9387c6873f7e495f53e4d4baa7f9f7e54417ff2a0c933ae20d0a3fa3b\",\"problem_id\":\"qec.cyclic.n15.k1\",\"proposer\":\"mutation\",\"value\":3.0},\"prev\":\"633ee59b71ca467d5bf906465d13dfb1fe9480f277d529791d86630718bca86b\",\"seq\":45,\"time\":\"2026-11-01T19:35:32+00:00\",\"type\":\"certificate\"}","hash":"9f082f578d8af135c0d25faee90b3b175f22b26dd5095fe3ca5eaae32f8023b5"},{"core":"{\"body\":{\"cert\":\"ab93c4a28fb10056e48d5cd29e168aaad818ba77015922415a9a5976b244190b\",\"problem_id\":\"qec.cyclic.n15.k1\",\"proposer\":\"mutation\",\"value\":5.0},\"prev\":\"9f082f578d8af135c0d25faee90b3b175f22b26dd5095fe3ca5eaae32f8023b5\",\"seq\":46,\"time\":\"2026-11-01T19:35:32+00:00\",\"type\":\"certificate\"}","hash":"2edb9c1c30e7a1616528cff81c81ea3487188a4a56bec53a2c50e384e577ac5a"},{"core":"{\"body\":{\"best_cert\":\"ab93c4a28fb10056e48d5cd29e168aaad818ba77015922415a9a5976b244190b\",\"best_value\":5.0,\"candidates_checked\":200000,\"cost_usd\":0.0,\"duplicates_skipped\":225675,\"exhaustive_complete\":false,\"problem_hash\":\"a279ac5c0f3f1f9f622301471b397eab063027139a140f66b59e271dd444816f\",\"problem_id\":\"qec.cyclic.n15.k1\",\"proposer\":\"mutation\",\"provenance\":{\"proposer\":\"mutation\"},\"seconds\":113.29,\"seed\":1,\"status\":\"no-recorded-bound\",\"valid\":801},\"prev\":\"2edb9c1c30e7a1616528cff81c81ea3487188a4a56bec53a2c50e384e577ac5a\",\"seq\":47,\"time\":\"2026-11-01T19:37:25+00:00\",\"type\":\"run\"}","hash":"09c084c0fae4814d9ddb0ad6dc298fc920f056f255fd570a44a0289d0e325691"},{"core":"{\"body\":{\"cert\":\"bddef698682756cc30973e467038eb77ac98fe98264edc7cd78369e554ee4036\",\"problem_id\":\"golomb.m11\",\"proposer\":\"exhaustive\",\"value\":72.0},\"prev\":\"09c084c0fae4814d9ddb0ad6dc298fc920f056f255fd570a44a0289d0e325691\",\"seq\":48,\"time\":\"2026-11-01T19:52:20+00:00\",\"type\":\"certificate\"}","hash":"4c28f9a939224260c994a674a43098dbb9594439ecf2530a121649e0aa2b5ac1"},{"core":"{\"body\":{\"best_cert\":\"bddef698682756cc30973e467038eb77ac98fe98264edc7cd78369e554ee4036\",\"best_value\":72.0,\"candidates_checked\":1,\"cost_usd\":0.0,\"duplicates_skipped\":0,\"exhaustive_complete\":true,\"problem_hash\":\"34627762218273c1c0456b270899173306003ed5ebeeafe972b86f6f3b2aae71\",\"problem_id\":\"golomb.m11\",\"proposer\":\"exhaustive\",\"provenance\":{\"enumerated\":1,\"proposer\":\"exhaustive\"},\"seconds\":876.57,\"seed\":0,\"status\":\"matches-known\",\"valid\":1},\"prev\":\"4c28f9a939224260c994a674a43098dbb9594439ecf2530a121649e0aa2b5ac1\",\"seq\":49,\"time\":\"2026-11-01T19:52:20+00:00\",\"type\":\"run\"}","hash":"efbe234ac0da98af38a6c9dc07759fc4d67f4aa7474b053384390006024c1f1a"}],"generated":"2026-11-01T19:52:20+00:00","total_certs":31};
+const V = ProbatioVerify;
+const $ = (s, el = document) => el.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmt = (n) => Number(n).toLocaleString("en-US");
+const byId = Object.fromEntries(DATA.results.map(r => [r.id, r]));
+const slug = (id) => "r-" + id.replace(/[^a-z0-9]+/gi, "-");
+const fromSlug = Object.fromEntries(DATA.results.map(r => [slug(r.id), r.id]));
+const verified = {};   // id -> true/false after in-browser check
+
+function title(r) {
+  if (r.checker === "stabilizer_code") return `Cyclic quantum code on ${r.params.n} qubits`;
+  if (r.checker === "golomb_ruler") return `Golomb ruler with ${r.params.marks} marks`;
+  return r.id;
+}
+function short(r) {
+  if (r.checker === "stabilizer_code") return `n = ${r.params.n}, k = ${r.params.k}`;
+  if (r.checker === "golomb_ruler") return `${r.params.marks} marks`;
+  return r.id;
+}
+function metric(r) { return r.objective.field === "d" ? "d" : r.objective.field; }
+function valueText(r) { return r.best_value == null ? "—" : `${metric(r)} = ${fmt(r.best_value)}`; }
+function statusText(r) {
+  return { "matches-known": "matches known best", "below-known": "below known best", "CANDIDATE-NEW": "CANDIDATE-NEW",
+           "no-recorded-bound": "no recorded best", "no-valid-result": "no result yet" }[r.status] || r.status;
+}
+function cert(r) { return r.best_cert ? JSON.parse(DATA.certs[r.best_cert]) : null; }
+
+/* ---------- stats & footer ---------- */
+function renderStats() {
+  const certified = DATA.results.filter(r => r.best_cert).length;
+  const attempts = DATA.results.reduce((a, r) => a + r.attempts, 0);
+  const optimal = DATA.results.filter(r => r.exhaustive).length;
+  $("#stats").innerHTML = [
+    [certified, "certified results"], [optimal, "proved optimal in family"],
+    [fmt(attempts), "candidates checked"], [DATA.ledger.length, "ledger entries"], ["$0.00", "model spend"]
+  ].map(([b, s]) => `<div class="stat"><b>${b}</b><span>${s}</span></div>`).join("");
+  $("#foot").innerHTML = `PROBATIO v0.1 · experimental, unaudited · data as of ${esc((DATA.generated || "").replace("T", " ").replace("+00:00", " UTC"))} · verification proves correctness, not novelty`;
+}
+
+/* ---------- register ---------- */
+function renderRegister(current) {
+  const groups = [["quantum-codes", "Quantum error correction"], ["combinatorics", "Combinatorics"], ["formal-proof", "Formal proof"]];
+  $("#register").innerHTML = groups.map(([d, name]) => {
+    const items = DATA.results.filter(r => r.domain === d);
+    if (!items.length) return "";
+    return `<div class="reg-group"><span class="label">${name}</span>${items.map(r => {
+      const dot = verified[r.id] === true ? "ok" : verified[r.id] === false ? "bad" : "";
+      const sub = r.best_cert ? (r.exhaustive ? "optimal in family" : statusText(r)) : "open target";
+      return `<button type="button" class="reg-item" data-id="${esc(r.id)}" aria-current="${r.id === current}">
+        <span class="t">${esc(short(r))}</span><span class="v">${esc(valueText(r))}</span>
+        <span class="s"><i class="dot ${dot}"></i>${esc(sub)}</span></button>`;
+    }).join("")}</div>`;
+  }).join("");
+  $("#register").querySelectorAll(".reg-item").forEach(b => b.addEventListener("click", () => {
+    location.hash = slug(b.dataset.id);
+    if (window.matchMedia("(max-width:860px)").matches) $("#sheet").scrollIntoView({ behavior: "smooth", block: "start" });
+  }));
+}
+
+/* ---------- diagrams ---------- */
+function ringSVG(seed, support) {
+  const n = seed.length, R = 120, cx = 170, cy = 160, sel = new Set(support || []);
+  let s = `<svg class="diagram" viewBox="0 0 340 330" role="img" aria-label="Seed ${esc(seed)} placed on a ring of ${n} qubits">`;
+  s += `<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="var(--rule)" stroke-width="1"/>`;
+  for (let i = 0; i < n; i++) {
+    const a = -Math.PI / 2 + (2 * Math.PI * i) / n, x = cx + R * Math.cos(a), y = cy + R * Math.sin(a);
+    const p = seed[i], hit = sel.has(i);
+    const fill = p === "I" ? "var(--sheet)" : `var(--p${p.toLowerCase()})`;
+    s += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="15" fill="${fill}" stroke="${hit ? "var(--gold)" : p === "I" ? "var(--rule)" : fill}" stroke-width="${hit ? 3 : 1}"/>`;
+    s += `<text x="${x.toFixed(1)}" y="${(y + 4.5).toFixed(1)}" text-anchor="middle" fill="${p === "I" ? "var(--mute)" : "var(--sheet)"}">${p}</text>`;
+    const lx = cx + (R + 30) * Math.cos(a), ly = cy + (R + 30) * Math.sin(a);
+    s += `<text x="${lx.toFixed(1)}" y="${(ly + 4).toFixed(1)}" text-anchor="middle" fill="var(--mute)" style="font-size:10px">${i}</text>`;
+  }
+  s += `<text x="${cx}" y="${cy - 4}" text-anchor="middle" fill="var(--ink)" style="font-size:12px">seed</text>`;
+  s += `<text x="${cx}" y="${cy + 14}" text-anchor="middle" fill="var(--mute)" style="font-size:11px">rotated ${n} times</text>`;
+  return s + "</svg>";
+}
+function rulerSVG(marks) {
+  const L = marks[marks.length - 1], W = 320, x0 = 10, sc = (W - 2 * x0) / L;
+  let s = `<svg class="diagram" viewBox="0 0 ${W} 90" role="img" aria-label="Ruler with marks ${marks.join(", ")}">`;
+  s += `<line x1="${x0}" y1="40" x2="${W - x0}" y2="40" stroke="var(--ink)" stroke-width="1"/>`;
+  for (let i = 0; i <= L; i++) {
+    const x = x0 + i * sc;
+    s += `<line x1="${x.toFixed(1)}" y1="40" x2="${x.toFixed(1)}" y2="${i % 5 ? 44 : 47}" stroke="var(--rule)" stroke-width="1"/>`;
+  }
+  marks.forEach((m, i) => {
+    const x = x0 + m * sc;
+    s += `<line x1="${x.toFixed(1)}" y1="22" x2="${x.toFixed(1)}" y2="40" stroke="var(--gold)" stroke-width="2"/>`;
+    s += `<text x="${x.toFixed(1)}" y="${i % 2 ? 66 : 16}" text-anchor="middle" fill="var(--ink)" style="font-size:10px">${m}</text>`;
+  });
+  return s + "</svg>";
+}
+function matrixHTML(gens) {
+  return `<div class="matrix"><table aria-label="Stabilizer generators">${gens.map((g, i) =>
+    `<tr><td class="rowlab">g${i}</td>${[...g].map(c => `<td class="p${c}">${c === "I" ? "·" : c}</td>`).join("")}</tr>`).join("")}</table></div>`;
+}
+
+/* ---------- certificate sheet ---------- */
+function renderSheet(id) {
+  const r = byId[id], c = cert(r), isCode = r.checker === "stabilizer_code";
+  const ub = r.upper_bound && r.upper_bound.value, kb = r.known_best && r.known_best.value;
+  const chips = [];
+  if (r.exhaustive) chips.push(`<span class="chip gold">optimal in family (exhaustive)</span>`);
+  if (r.best_cert) chips.push(`<span class="chip">${esc(statusText(r))}</span>`);
+  if (verified[r.id] === true) chips.push(`<span class="chip pass">verified in this browser</span>`);
+
+  let html = `<section>
+    <div class="eyebrow"><span class="label">${esc(r.domain.replace("-", " "))}</span><span class="label">${esc(c ? c.checker : r.checker)}</span><span class="label">${c ? (c.trust === "T1" ? "T1 kernel" : "T2 exact") : "no certificate"}</span></div>
+    <h2>${esc(title(r))}</h2>
+    <p class="statement">${esc(r.statement)}</p>
+    <div class="figures">
+      <div class="fig"><span class="label">Certified</span><div class="n">${r.best_value == null ? "—" : `${isCode ? "d = " : ""}${fmt(r.best_value)}`}</div><small>${isCode ? "code distance: corrects any error on up to " + (r.best_value ? Math.floor((r.best_value - 1) / 2) : 0) + " qubit(s)" : "ruler length"}</small></div>
+      <div class="fig"><span class="label">${isCode ? "Upper bound" : "Proven optimum"}</span><div class="n dim">${isCode ? (ub ?? "—") : (kb ?? "—")}</div><small>${esc(isCode ? (r.upper_bound ? "quantum Singleton bound, all stabilizer codes" : "") : (r.known_best ? "OEIS A003022" : ""))}</small></div>
+      <div class="fig"><span class="label">Search</span><div class="n dim">${fmt(r.attempts)}</div><small>candidates checked in ${r.seconds}s across ${r.runs.length} run${r.runs.length === 1 ? "" : "s"}, $${r.cost_usd.toFixed(2)} model spend</small></div>
+    </div>
+    <div class="chips">${chips.join("")}</div>
+  </section>`;
+
+  if (!c) {
+    html += `<section><span class="label">Open target</span><p class="statement">No certified result yet. The annealing baseline found no valid ruler. Exhaustive search at this size is the next calibration step, and it is a natural first target for the AI proposers.</p>
+      ${tryHTML(r)}</section>`;
+    $("#sheet").innerHTML = html;
+    wireTry(r);
+    return;
+  }
+
+  const cand = c.candidate;
+  html += `<section><div class="two">
+    <div><span class="label">${isCode ? "The code" : "The ruler"}</span>
+      <div id="viz">${isCode ? ringSVG(cand.seed) : rulerSVG([...cand.marks].sort((a, b) => a - b))}</div>
+      ${isCode ? `<div class="legend"><span><i class="sw bX"></i>X</span><span><i class="sw bZ"></i>Z</span><span><i class="sw bY"></i>Y</span><span>· identity</span><span id="viz-note"></span></div>` : `<div class="legend" id="viz-note">marks: ${esc(cand.marks.join(", "))}</div>`}
+    </div>
+    <div><span class="label">${isCode ? `Stabilizer generators (${cand.generators.length})` : "Pairwise differences"}</span>
+      ${isCode ? matrixHTML(cand.generators) : `<p class="mono" style="font-size:13px;line-height:1.9;margin:10px 0 0;word-spacing:4px">${esc(V.checkGolomb({ params: r.params }, cand).differences.join(" "))}</p>`}
+    </div>
+  </div></section>`;
+
+  html += `<section><span class="label">Checker transcript, from the certificate</span>
+    <ol class="steps">${c.verdict.transcript.map(t => `<li><span>${esc(t)}</span></li>`).join("")}</ol></section>`;
+
+  html += `<section><span class="label">Verify independently</span>
+    <p class="statement">Recompute the certificate's content hash, then re-run the check with this page's own JavaScript implementation. Nothing is sent anywhere.</p>
+    <div class="try"><button class="btn" type="button" id="verify-one">Verify in this browser</button></div>
+    <div class="verify-out" id="verify-out"></div>
+    ${tryHTML(r, cand)}
+  </section>`;
+
+  html += `<section><span class="label">Provenance</span>
+    <div class="scroll"><table class="data" style="margin-top:10px"><thead><tr><th>Proposer</th><th>Checked</th><th>Best</th><th>Exhaustive</th><th>Seconds</th></tr></thead>
+    <tbody>${r.runs.map(u => `<tr><td>${esc(u.proposer)}</td><td class="num">${fmt(u.candidates_checked)}</td><td class="num">${u.best_value == null ? "—" : fmt(u.best_value)}</td><td>${u.exhaustive_complete ? "complete" : "—"}</td><td class="num">${u.seconds}</td></tr>`).join("")}</tbody></table></div>
+    <details><summary>Full certificate (content address ${esc(r.best_cert.slice(0, 16))}…)</summary>
+      <div class="try"><button class="btn small ghost" type="button" id="copy-cert">Copy JSON</button><span id="copy-out" style="align-self:center;color:var(--mute);font-size:12.5px"></span></div>
+      <pre class="json" id="cert-json">${esc(JSON.stringify(c, null, 2))}</pre></details>
+    ${r.references.length ? `<p class="label" style="margin-top:18px">References</p><ul class="refs">${r.references.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}
+  </section>`;
+
+  $("#sheet").innerHTML = html;
+  $("#verify-one").addEventListener("click", () => verifyOne(r));
+  $("#copy-cert").addEventListener("click", async () => {
+    const text = DATA.certs[r.best_cert];
+    try { await navigator.clipboard.writeText(text); $("#copy-out").textContent = "Copied"; }
+    catch (_) { const sel = getSelection(), rg = document.createRange(); rg.selectNodeContents($("#cert-json")); sel.removeAllRanges(); sel.addRange(rg); $("#copy-out").textContent = "Selected; press Copy"; }
+  });
+  wireTry(r);
+}
+
+function tryHTML(r, cand) {
+  const isCode = r.checker === "stabilizer_code";
+  const val = cand ? (isCode ? cand.seed : cand.marks.join(", ")) : "";
+  return `<p class="label" style="margin-top:22px">Try your own candidate</p>
+    <p class="statement" style="margin-top:6px">${isCode ? `Edit the seed (letters I, X, Y, Z, length ${r.params.n}) and run the checker. Change one letter and the claim usually fails.` : `Enter ${r.params.marks} comma-separated marks starting at 0.`}</p>
+    <form class="try" id="try-form"><label class="label" for="try-input" style="position:absolute;left:-9999px">Candidate</label>
+      <input id="try-input" value="${esc(val)}" autocomplete="off" spellcheck="false">
+      <button class="btn ghost" type="submit">Check</button></form>
+    <div class="verify-out" id="try-out"></div>`;
+}
+function wireTry(r) {
+  const f = $("#try-form"); if (!f) return;
+  f.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const raw = $("#try-input").value.trim();
+    let cand;
+    if (r.checker === "stabilizer_code") { const seed = raw.toUpperCase().replace(/\s+/g, ""); cand = { seed, generators: V.cyclicShifts(seed) }; }
+    else cand = { marks: raw.split(/[\s,]+/).filter(Boolean).map(Number) };
+    const t0 = performance.now(), res = V.check(r, cand), ms = (performance.now() - t0).toFixed(0);
+    const out = $("#try-out");
+    if (!res.valid) { out.innerHTML = `<div class="verdict fail"><b>REJECTED</b><span>${esc(res.reason)}</span></div>`; return; }
+    const v = r.objective.field === "d" ? res.score.d : res.score.length;
+    const cmp = r.best_value == null ? "" : (v === r.best_value ? "equals the certified result" : ((r.objective.sense === "maximize" ? v > r.best_value : v < r.best_value) ? "beats the certified result: re-check it with the Python checker before believing it" : "is worse than the certified result"));
+    out.innerHTML = `<div class="verdict pass"><b>VALID</b><span>${esc(metric(r))} = ${v}, ${esc(cmp)} · ${ms} ms</span></div><ol class="steps">${res.steps.map(s => `<li><span>${esc(s)}</span></li>`).join("")}</ol>`;
+  });
+}
+
+async function verifyCert(r) {
+  const text = DATA.certs[r.best_cert], c = JSON.parse(text);
+  const h = await V.sha256Hex(text);
+  const hashOk = h === r.best_cert;
+  const t0 = performance.now();
+  const res = V.check(r, c.candidate);
+  const ms = performance.now() - t0;
+  const keys = r.checker === "golomb_ruler" ? ["marks", "length"] : ["n", "k", "d", "d_lower"];
+  const claimOk = res.valid && keys.every(k => res.score[k] === c.verdict.score[k]);
+  return { ok: hashOk && claimOk, hashOk, claimOk, h, res, ms, c };
+}
+
+async function verifyOne(r) {
+  const btn = $("#verify-one"); btn.disabled = true; btn.textContent = "Verifying…";
+  const v = await verifyCert(r);
+  verified[r.id] = v.ok;
+  const isCode = r.checker === "stabilizer_code";
+  $("#verify-out").innerHTML = `
+    <div class="verdict ${v.ok ? "pass" : "fail"}"><b>${v.ok ? "PASS" : "FAIL"}</b>
+      <span>${v.ok ? `The certificate is intact and its claim holds: ${esc(metric(r))} = ${r.best_value}.` : esc(!v.hashOk ? "The certificate does not match its content address." : (v.res.reason || "The recomputed result differs from the certified claim."))}</span></div>
+    <div class="hashrow"><span class="label">Address</span><code>${esc(r.best_cert)}</code><span class="label">Recomputed</span><code>${esc(v.h)}</code></div>
+    <ol class="steps">${(v.res.steps || []).map(s => `<li><span>${esc(s)}</span></li>`).join("")}<li><span>Checked ${fmt(v.res.score ? v.res.score.operators_examined ?? 0 : 0)} operators in ${v.ms.toFixed(0)} ms</span></li></ol>`;
+  if (isCode && v.res.score && v.res.score.min_weight_witness) {
+    const w = v.res.score.min_weight_witness, sup = [...w].map((ch, i) => ch !== "I" ? i : -1).filter(i => i >= 0);
+    $("#viz").innerHTML = ringSVG(v.c.candidate.seed, sup);
+    $("#viz-note").textContent = `gold rings: a weight-${sup.length} logical operator`;
+  }
+  btn.disabled = false; btn.textContent = "Verify again";
+  renderRegister(r.id);
+}
+
+/* ---------- verify all ---------- */
+$("#verify-all").addEventListener("click", async (e) => {
+  const b = e.currentTarget; b.disabled = true;
+  const list = DATA.results.filter(r => r.best_cert);
+  let pass = 0;
+  for (const [i, r] of list.entries()) {
+    b.textContent = `Verifying ${i + 1}/${list.length}…`;
+    await new Promise(res => setTimeout(res, 0));
+    const v = await verifyCert(r); verified[r.id] = v.ok; pass += v.ok;
+  }
+  b.textContent = `${pass}/${list.length} verified`; b.disabled = false;
+  const cur = fromSlug[location.hash.slice(1)] || defaultId();
+  renderRegister(cur); renderSheet(cur);
+});
+
+/* ---------- ledger ---------- */
+function renderLedger() {
+  const rows = DATA.ledger.map(e => {
+    const c = JSON.parse(e.core), b = c.body;
+    const what = c.type === "certificate" ? `certificate for ${b.problem_id}: ${b.value}` :
+      `run on ${b.problem_id}: ${b.proposer}, ${fmt(b.candidates_checked)} checked${b.exhaustive_complete ? ", exhaustive" : ""}`;
+    return `<tr><td class="num">${c.seq}</td><td>${esc(c.type)}</td><td>${esc(what)}</td><td class="mono" style="font-size:12px">${esc(e.hash.slice(0, 12))}</td><td class="mono" style="font-size:12px;color:var(--mute)">${esc(c.prev.slice(0, 12))}</td></tr>`;
+  }).join("");
+  $("#ledger-table").innerHTML = `<thead><tr><th>#</th><th>Type</th><th>Entry</th><th>Hash</th><th>Previous</th></tr></thead><tbody>${rows}</tbody>`;
+}
+$("#audit").addEventListener("click", async () => {
+  $("#audit-out").textContent = "Recomputing…";
+  const problems = await V.auditChain(DATA.ledger);
+  $("#audit-out").innerHTML = problems.length ? `<span class="chain-bad">${esc(problems.join("; "))}</span>`
+    : `<span class="chain-ok">Intact: all ${DATA.ledger.length} hashes recomputed and linked.</span>`;
+});
+
+/* ---------- routing ---------- */
+function defaultId() { return byId["qec.cyclic.n13.k1"] ? "qec.cyclic.n13.k1" : DATA.results[0].id; }
+function route() {
+  const h = location.hash.slice(1);
+  const view = h === "ledger" || h === "method" ? h : "results";
+  for (const v of ["results", "ledger", "method"]) $("#view-" + v).hidden = v !== view;
+  document.querySelectorAll("nav.tabs a").forEach(a => a.setAttribute("aria-current", a.dataset.view === view ? "page" : "false"));
+  if (view === "results") { const id = fromSlug[h] || defaultId(); renderRegister(id); renderSheet(id); }
+}
+renderStats(); renderLedger();
+window.addEventListener("hashchange", route);
+route();
+})();
+</script>
+
+</body></html>
