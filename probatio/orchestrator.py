@@ -39,12 +39,15 @@ def run(problem_id: str, proposer: str = "mutation", *, budget: int = 10_000,
         **opts: Any) -> dict[str, Any]:
     problem = registry.get(problem_id)
     checker = get_checker(problem["checker"])
-    space = space_for(problem)
+    space_name = opts.pop("search_space", None) or problem["space"]
+    space = space_for(problem, space_name)
     rng = random.Random(seed)
     kwargs = dict(opts)
+    kwargs.setdefault("seed", seed)
     if client is not None:
         kwargs["client"] = client
     prop = PROPOSERS[proposer](problem, space, rng, **kwargs)
+    prop.meta["search_space"] = space_name
     ledger = Ledger(results_dir or DEFAULT_RESULTS)
     p_hash = registry.problem_hash(problem)
 

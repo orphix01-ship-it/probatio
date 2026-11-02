@@ -58,17 +58,47 @@ def planned_runs(proto: dict[str, Any], arms: list[str] | None = None) -> list[d
             continue
         if not arms and arm["status"] != "active":
             continue
-        for pid in proto["problems"]:
+        for pid in arm.get("problems", proto["problems"]):
             for seed in arm["seeds"]:
                 runs.append({"problem": pid, "arm": arm["name"], "proposer": arm["proposer"], "seed": seed,
-                             "seconds": arm["seconds"], "budget": arm["budget"], "batch": arm["batch"],
-                             "max_usd": arm.get("max_usd", 0.0)})
+                             "seconds": arm["seconds"], "budget": _budget(arm["budget"], pid), "batch": arm["batch"],
+                             "max_usd": arm.get("max_usd", 0.0),
+                             "opts": {k: arm[k] for k in ("backend", "model", "max_calls", "temperature", "search_space")
+                                      if k in arm}})
     ex = proto.get("exhaustive")
     if ex and (not arms or ex["name"] in arms) and (arms or ex["status"] == "active"):
         for pid in ex["problems"]:
             runs.append({"problem": pid, "arm": ex["name"], "proposer": "exhaustive", "seed": 0,
-                         "seconds": ex["seconds"], "budget": 10 ** 9, "batch": ex["batch"], "max_usd": 0.0})
+                         "seconds": ex["seconds"], "budget": 10 ** 9, "batch": ex["batch"], "max_usd": 0.0,
+                         "opts": {}})
     return runs
+
+
+def _budget(b: int | dict[str, int], pid: str) -> int:
+    """A budget is a number of checker calls, either one number or one per family prefix."""
+    if isinstance(b, dict):
+        return int(b[pid.split(".")[0]])
+    return int(b)
+
+
+def protocol_for(results: Path, required: bool = False) -> dict[str, Any]:
+    """The protocol registered in a study ledger, found by its hash (so it cannot be swapped).
+
+    Returns {} when no file in experiments/ matches (e.g. a scratch study); the
+    analysis then uses the problem specifications alone and says so.
+    """
+    ents = Ledger(results).entries()
+    if not ents or ents[0]["type"] != "protocol":
+        if required:
+            raise SystemExit("study ledger does not start with a protocol registration")
+        return {}
+    want = ents[0]["body"]["sha256"]
+    for f in sorted((registry.ROOT / "experiments").glob("protocol-*.json")):
+        if protocol_hash(f) == want:
+            return json.loads(f.read_text())
+    if required:
+        raise SystemExit(f"no protocol file in experiments/ matches the registered hash {want[:16]}")
+    return {}
 
 
 def _done_keys(results: Path) -> set[tuple]:
@@ -84,7 +114,8 @@ def _execute(job: dict[str, Any], results: str, protocol_id: str) -> dict[str, A
     try:
         return orchestrator.run(job["problem"], job["proposer"], budget=job["budget"], seconds=job["seconds"],
                                 max_usd=job["max_usd"], seed=job["seed"], batch=job["batch"],
-                                results_dir=Path(results), quiet=True, arm=job["arm"], protocol=protocol_id)
+                                results_dir=Path(results), quiet=True, arm=job["arm"], protocol=protocol_id,
+                                **job.get("opts", {}))
     except Exception as exc:  # recorded, never silently dropped
         Ledger(Path(results)).append("run-error", {"problem_id": job["problem"], "arm": job["arm"],
                                                     "seed": job["seed"], "error": repr(exc)[:500],
@@ -97,9 +128,19 @@ def run_study(protocol_path: Path, results: Path, jobs: int = 2, arms: list[str]
     register(protocol_path, results)
     if arms:
         for a in proto["arms"]:
-            if a["name"] in arms and a["status"] == "pending" and a["proposer"] in ("llm", "program_evolution"):
+            if a["name"] in arms and a["status"] == "pending" and a["proposer"] in ("llm", "program_evolution") \
+                    and a.get("backend", "anthropic") == "anthropic":
                 if not os.environ.get("ANTHROPIC_API_KEY"):
                     raise SystemExit(f"arm {a['name']} needs ANTHROPIC_API_KEY")
+    local = [a for a in proto["arms"] if arms and a["name"] in arms and a.get("backend") == "local"]
+    for a in local:  # fail fast, once, if the local model is not available
+        from .proposers.llm import LocalClient
+        try:
+            LocalClient(model=a.get("model"))
+        except RuntimeError as exc:
+            raise SystemExit(f"arm {a['name']}: {exc}")
+    if local:
+        jobs = 1  # one local model serves one request at a time; parallel runs only queue
     todo = [j for j in planned_runs(proto, arms) if (j["problem"], j["arm"], j["seed"]) not in _done_keys(results)]
     # longest first, so exhaustive runs do not straggle at the end
     todo.sort(key=lambda j: -j["seconds"])
@@ -133,31 +174,50 @@ def family_of(pid: str) -> str:
             "lincode": "Binary linear codes", "spread": "Point spreading"}[pid.split(".")[0]]
 
 
-def collect(results: Path) -> list[dict[str, Any]]:
+def _best_within(traj: list, k: int, sense: str) -> float | None:
+    """Best value among the first k checks, from the best-so-far trajectory."""
+    vals = [t[2] for t in traj if t[0] <= k]
+    if not vals:
+        return None
+    return min(vals) if sense == "minimize" else max(vals)
+
+
+def collect(results: Path, protocol: dict[str, Any] | None = None) -> list[dict[str, Any]]:
     probs = registry.load_all()
+    proto = protocol if protocol is not None else protocol_for(results)
+    refs = proto.get("references", {})
+    fair = int(proto.get("fair_checks", 0))
     rows = []
     for e in Ledger(results).entries():
         if e["type"] not in ("run", "run-error") or not e["body"].get("protocol"):
             continue
         b = e["body"]
         p = probs[b["problem_id"]]
+        if b["problem_id"] in refs:  # reference fixed in the protocol before the runs
+            p = {**p, "known_best": refs[b["problem_id"]]}
         ref = _ref(p)
         best = b.get("best_value")
         gap = None
         if ref and best is not None:
             gap = abs(best - ref) / ref
+        status = orchestrator.status_vs_known(p, best) if e["type"] == "run" else "error"
+        traj = b.get("trajectory", [])
+        bf = _best_within(traj, fair, p["objective"]["sense"]) if fair else None
         rows.append({
             "problem": b["problem_id"], "family": family_of(b["problem_id"]), "role": p.get("role", "calibration"),
             # The primary outcome is defined against a recorded reference value; calibration
             # problems with no reference cannot succeed or fail, so they are not scored.
             "scored": p.get("role", "calibration") == "calibration" and ref is not None,
             "arm": b.get("arm"), "seed": b.get("seed"), "best": best, "reference": ref,
-            "status": b.get("status", "error"), "success": int(b.get("status") == "matches-known"),
-            "new": int(b.get("status") == "CANDIDATE-NEW"), "gap": gap,
+            "status": status, "success": int(status == "matches-known"),
+            "new": int(status == "CANDIDATE-NEW"), "gap": gap,
+            "best_fair": bf,
+            "success_fair": int(fair > 0 and orchestrator.status_vs_known(p, bf) == "matches-known"),
             "checked": b.get("candidates_checked"), "valid_rate": b.get("valid_rate"),
             "checks_to_best": b.get("checks_to_best"), "seconds_to_best": b.get("seconds_to_best"),
             "seconds": b.get("seconds"), "cost_usd": b.get("cost_usd", 0.0), "exhaustive": b.get("exhaustive_complete"),
-            "cert": b.get("best_cert"), "error": b.get("error"), "trajectory": b.get("trajectory", []),
+            "model": (b.get("provenance") or {}).get("model"),
+            "cert": b.get("best_cert"), "error": b.get("error"), "trajectory": traj,
         })
     return rows
 
@@ -183,8 +243,48 @@ def summarise(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
                     "ci_low": lo, "ci_high": hi, "median_gap": _median([r["gap"] for r in rs]),
                     "median_valid_rate": _median([r["valid_rate"] for r in rs]),
                     "median_checks_to_best": _median([r["checks_to_best"] for r in rs]),
+                    "successes_fair": sum(r["success_fair"] for r in rs),
                     "cost_usd": sum(r["cost_usd"] or 0 for r in rs)})
     return out
+
+
+# Pre-declared comparisons (treatment, control). Only pairs with runs on both sides are tested.
+COMPARISONS = [("anneal", "random"), ("anneal-qc", "anneal"), ("anneal-constructive", "anneal"),
+               ("local-llm-direct", "random"), ("local-llm-program", "random"),
+               ("local-llm-direct", "anneal"), ("local-llm-program", "anneal"),
+               ("claude-direct", "random"), ("claude-program", "random")]
+
+
+def holm(tests: list[dict[str, Any]]) -> None:
+    m = len(tests)
+    prev = 0.0
+    for rank, t in enumerate(sorted(tests, key=lambda t: t["p"])):
+        t["p_holm"] = max(prev, min(1.0, t["p"] * (m - rank)))
+        prev = t["p_holm"]
+
+
+def paired_bootstrap(rows, a: str, b: str, fam: str, n_boot: int = 10_000, seed: int = 0):
+    """Mean over problems of (gap_a - gap_b), with a 95% percentile bootstrap interval.
+
+    Gaps are first averaged over seeds within each problem, so problems are the
+    resampling unit. Negative values mean arm a ends closer to the reference.
+    """
+    import random as _r
+    diffs = []
+    for pid in sorted({r["problem"] for r in rows if r["family"] == fam and r["scored"]}):
+        ga = [r["gap"] for r in rows if r["problem"] == pid and r["arm"] == a and r["scored"]]
+        gb = [r["gap"] for r in rows if r["problem"] == pid and r["arm"] == b and r["scored"]]
+        # a run with no valid result has no gap; count it as the worst case, gap 1
+        ga = [1.0 if g is None else min(g, 1.0) for g in ga]
+        gb = [1.0 if g is None else min(g, 1.0) for g in gb]
+        if ga and gb:
+            diffs.append(sum(ga) / len(ga) - sum(gb) / len(gb))
+    if not diffs:
+        return None
+    rng = _r.Random(seed)
+    means = sorted(sum(rng.choice(diffs) for _ in diffs) / len(diffs) for _ in range(n_boot))
+    return {"family": fam, "a": a, "b": b, "problems": len(diffs), "mean_diff": sum(diffs) / len(diffs),
+            "ci_low": means[int(0.025 * n_boot)], "ci_high": means[int(0.975 * n_boot) - 1]}
 
 
 def fisher_exact(a: int, b: int, c: int, d: int) -> float:
@@ -221,22 +321,23 @@ def analyze(results: Path) -> Path:
             w.writeheader()
             w.writerows(summ)
 
-    # Fisher tests: anneal vs random per family, Holm-adjusted
-    tests = []
-    for fam in sorted({r["family"] for r in rows}):
-        a = [r for r in rows if r["family"] == fam and r["arm"] == "anneal" and r["scored"]]
-        b = [r for r in rows if r["family"] == fam and r["arm"] == "random" and r["scored"]]
-        if a and b:
-            sa, sb = sum(r["success"] for r in a), sum(r["success"] for r in b)
-            tests.append({"family": fam, "anneal": f"{sa}/{len(a)}", "random": f"{sb}/{len(b)}",
-                          "p": fisher_exact(sa, len(a) - sa, sb, len(b) - sb)})
-    m = len(tests)
-    for rank, t in enumerate(sorted(tests, key=lambda t: t["p"])):
-        t["p_holm"] = min(1.0, t["p"] * (m - rank))
-    prev = 0.0
-    for t in sorted(tests, key=lambda t: t["p"]):
-        t["p_holm"] = max(t["p_holm"], prev)
-        prev = t["p_holm"]
+    # Fisher exact tests on success rates for each pre-declared comparison, Holm-adjusted
+    tests, boots = [], []
+    present = {r["arm"] for r in rows}
+    for a_arm, b_arm in COMPARISONS:
+        if a_arm not in present or b_arm not in present:
+            continue
+        for fam in sorted({r["family"] for r in rows}):
+            a = [r for r in rows if r["family"] == fam and r["arm"] == a_arm and r["scored"]]
+            b = [r for r in rows if r["family"] == fam and r["arm"] == b_arm and r["scored"]]
+            if a and b:
+                sa, sb = sum(r["success"] for r in a), sum(r["success"] for r in b)
+                tests.append({"family": fam, "a": a_arm, "b": b_arm, "a_succ": f"{sa}/{len(a)}",
+                              "b_succ": f"{sb}/{len(b)}", "p": fisher_exact(sa, len(a) - sa, sb, len(b) - sb)})
+                bt = paired_bootstrap(rows, a_arm, b_arm, fam)
+                if bt:
+                    boots.append(bt)
+    holm(tests)
 
     # per-problem best across all arms (incl. open targets)
     probs = registry.load_all()
@@ -248,18 +349,21 @@ def analyze(results: Path) -> Path:
         for r in rs:
             if best is None or registry.better(p, r["best"], best["best"]):
                 best = r
+        ref_rows = [r["reference"] for r in rows if r["problem"] == pid]
         per_problem.append({"problem": pid, "family": family_of(pid), "role": p.get("role", "calibration"),
-                            "reference": _ref(p), "upper": (p.get("upper_bound") or {}).get("value"),
+                            "reference": ref_rows[0] if ref_rows else _ref(p), "upper": (p.get("upper_bound") or {}).get("value"),
                             "best": best["best"] if best else None, "arm": best["arm"] if best else None,
                             "status": best["status"] if best else "no result",
                             "exhaustive": any(r["exhaustive"] in (True, "True") for r in rs),
                             "post_hoc": (p.get("post_hoc_reference") or {}).get("value"),
                             "post_hoc_source": (p.get("post_hoc_reference") or {}).get("source")})
 
-    _write_tables(out, summ, tests, per_problem)
+    _write_tables(out, summ, tests, per_problem, boots)
     _figures(out, rows, per_problem, plt)
     _numbers(out, rows, summ, per_problem)
-    (out / "analysis.json").write_text(json.dumps({"summary": summ, "tests": tests, "per_problem": per_problem,
+    (out / "analysis.json").write_text(json.dumps({"summary": summ, "tests": tests, "bootstrap": boots,
+                                                    "per_problem": per_problem,
+                                                    "protocol_id": (protocol_for(results) or {}).get("id"),
                                                     "runs": len(rows), "generated": now_iso()}, indent=2))
     return out
 
@@ -278,30 +382,57 @@ def _fmt(x, nd=3):
     return str(x)
 
 
-def _write_tables(out: Path, summ, tests, per_problem) -> None:
-    md = ["| Family | Arm | Runs | Success | 95% CI | Median gap | Median valid rate | Median checks to best |",
-          "|---|---|---|---|---|---|---|---|"]
-    tex = [r"\begin{tabular}{llrrcrrr}", r"\toprule",
-           r"Family & Arm & Runs & Success & 95\% CI & Med.\ gap & Valid & Checks to best\\", r"\midrule"]
+def _tex_num(x: float) -> str:
+    """3 significant figures; scientific notation as LaTeX, not 2.01e-05."""
+    t = f"{x:.3g}"
+    if "e" in t:
+        m, e = t.split("e")
+        return f"${m}\\times 10^{{{int(e)}}}$"
+    return t
+
+
+def _write_tables(out: Path, summ, tests, per_problem, boots=()) -> None:
+    fair = any(s.get("successes_fair") for s in summ)
+    md = ["| Family | Arm | Runs | Success | 95% CI | Median gap | Median valid rate | Median checks to best |"
+          + (" Success in fair budget |" if fair else ""), "|---|---|---|---|---|---|---|---|" + ("---|" if fair else "")]
+    tex = [r"\begin{tabular}{llrrcrrr" + ("r" if fair else "") + "}", r"\toprule",
+           r"Family & Arm & Runs & Success & 95\% CI & Med.\ gap & Valid & Checks to best"
+           + (r" & Fair" if fair else "") + r"\\", r"\midrule"]
     for s in summ:
+        fc = f" {s['successes_fair']}/{s['runs']} |" if fair else ""
         md.append(f"| {s['family']} | {s['arm']} | {s['runs']} | {s['successes']}/{s['runs']} | "
                   f"{_fmt(s['ci_low'], 2)}–{_fmt(s['ci_high'], 2)} | {_fmt(s['median_gap'])} | "
-                  f"{_fmt(s['median_valid_rate'], 2)} | {_fmt(s['median_checks_to_best'], 0)} |")
+                  f"{_fmt(s['median_valid_rate'], 2)} | {_fmt(s['median_checks_to_best'], 0)} |" + fc)
         tex.append(f"{s['family']} & {s['arm']} & {s['runs']} & {s['successes']}/{s['runs']} & "
                    f"[{_fmt(s['ci_low'], 2)}, {_fmt(s['ci_high'], 2)}] & {_fmt(s['median_gap'])} & "
-                   f"{_fmt(s['median_valid_rate'], 2)} & {_fmt(s['median_checks_to_best'], 0)}\\\\")
+                   f"{_fmt(s['median_valid_rate'], 2)} & {_fmt(s['median_checks_to_best'], 0)}"
+                   + (f" & {s['successes_fair']}/{s['runs']}" if fair else "") + "\\\\")
     tex += [r"\bottomrule", r"\end{tabular}"]
     (out / "tables" / "summary.md").write_text("\n".join(md) + "\n")
     (out / "tables" / "summary.tex").write_text("\n".join(tex) + "\n")
 
-    md = ["| Family | Anneal | Random | Fisher p | Holm p |", "|---|---|---|---|---|"]
-    tex = [r"\begin{tabular}{lrrrr}", r"\toprule", r"Family & Anneal & Random & Fisher $p$ & Holm $p$\\", r"\midrule"]
+    md = ["| Family | A | B | A successes | B successes | Fisher p | Holm p |", "|---|---|---|---|---|---|---|"]
+    tex = [r"\begin{tabular}{lllrrrr}", r"\toprule",
+           r"Family & A & B & A succ. & B succ. & Fisher $p$ & Holm $p$\\", r"\midrule"]
     for t in tests:
-        md.append(f"| {t['family']} | {t['anneal']} | {t['random']} | {t['p']:.3g} | {t['p_holm']:.3g} |")
-        tex.append(f"{t['family']} & {t['anneal']} & {t['random']} & {t['p']:.3g} & {t['p_holm']:.3g}\\\\")
+        md.append(f"| {t['family']} | {t['a']} | {t['b']} | {t['a_succ']} | {t['b_succ']} | {t['p']:.3g} | {t['p_holm']:.3g} |")
+        tex.append(f"{t['family']} & {t['a']} & {t['b']} & {t['a_succ']} & {t['b_succ']} & "
+                   f"{_tex_num(t['p'])} & {_tex_num(t['p_holm'])}\\\\")
     tex += [r"\bottomrule", r"\end{tabular}"]
     (out / "tables" / "tests.md").write_text("\n".join(md) + "\n")
     (out / "tables" / "tests.tex").write_text("\n".join(tex) + "\n")
+
+    md = ["| Family | A | B | Problems | Mean gap difference (A − B) | 95% bootstrap CI |", "|---|---|---|---|---|---|"]
+    tex = [r"\begin{tabular}{lllrrc}", r"\toprule",
+           r"Family & A & B & Problems & Mean $\Delta$gap & 95\% CI\\", r"\midrule"]
+    for b in boots:
+        md.append(f"| {b['family']} | {b['a']} | {b['b']} | {b['problems']} | {b['mean_diff']:+.3f} | "
+                  f"[{b['ci_low']:+.3f}, {b['ci_high']:+.3f}] |")
+        tex.append(f"{b['family']} & {b['a']} & {b['b']} & {b['problems']} & ${b['mean_diff']:+.3f}$ & "
+                   f"$[{b['ci_low']:+.3f}, {b['ci_high']:+.3f}]$\\\\")
+    tex += [r"\bottomrule", r"\end{tabular}"]
+    (out / "tables" / "bootstrap.md").write_text("\n".join(md) + "\n")
+    (out / "tables" / "bootstrap.tex").write_text("\n".join(tex) + "\n")
 
     md = ["| Problem | Role | Reference | Upper bound | Best certified | Arm | Status |", "|---|---|---|---|---|---|---|"]
     tex = [r"\begin{longtable}{llrrrll}", r"\toprule", r"Problem & Role & Ref. & Upper & Best & Arm & Status\\",
@@ -333,11 +464,17 @@ def _write_tables(out: Path, summ, tests, per_problem) -> None:
     (out / "tables" / "posthoc.tex").write_text("\n".join(tex) + "\n")
 
 
+ARM_ORDER = ["random", "anneal", "anneal-qc", "anneal-constructive", "exhaustive",
+             "local-llm-direct", "local-llm-program", "claude-direct", "claude-program", "llm-direct", "llm-program"]
+ARM_COLOR = {"random": "#9aa0a6", "anneal": "#8a6a1c", "anneal-qc": "#c99a2e", "anneal-constructive": "#c99a2e",
+             "exhaustive": "#15171b", "local-llm-direct": "#2a5a96", "local-llm-program": "#5b8fd1",
+             "claude-direct": "#94304f", "claude-program": "#c45c7a", "llm-direct": "#2a5a96", "llm-program": "#94304f"}
+
+
 def _figures(out: Path, rows, per_problem, plt) -> None:
     plt.rcParams.update({"font.size": 9, "font.family": "serif", "axes.spines.top": False,
                          "axes.spines.right": False})
-    arms = [a for a in ("random", "anneal", "exhaustive", "llm-direct", "llm-program")
-            if any(r["arm"] == a for r in rows)]
+    arms = [a for a in ARM_ORDER if any(r["arm"] == a for r in rows)]
     fams = sorted({r["family"] for r in rows})
     # Figure 1: success rate by family and arm
     fig, ax = plt.subplots(figsize=(6.4, 2.8))
@@ -355,16 +492,18 @@ def _figures(out: Path, rows, per_problem, plt) -> None:
                 ys.append(0); lo.append(0); hi.append(0)
         xs = [j + (i - (len(arms) - 1) / 2) * width for j in range(len(fams))]
         ax.bar(xs, ys, width * 0.92, yerr=[lo, hi], capsize=2, label=arm,
-               color=["#9aa0a6", "#8a6a1c", "#15171b", "#2a5a96", "#94304f"][i % 5], error_kw={"lw": 0.7})
+               color=ARM_COLOR.get(arm, "#777777"), error_kw={"lw": 0.7})
     ax.set_xticks(range(len(fams)), [f.replace(" ", "\n") for f in fams])
     ax.set_ylabel("success rate"); ax.set_ylim(0, 1.08)
-    ax.legend(frameon=False, ncol=len(arms), loc="upper center", bbox_to_anchor=(0.5, 1.18))
+    ax.legend(frameon=False, ncol=min(len(arms), 4), loc="upper center", bbox_to_anchor=(0.5, 1.25), fontsize=7)
     fig.tight_layout(); fig.savefig(out / "figures" / "success_by_family.pdf"); fig.savefig(out / "figures" / "success_by_family.svg"); plt.close(fig)
 
     # Figure 2: normalised gap per problem (anneal vs random, median over seeds)
     probs_list = [p["problem"] for p in per_problem if p["reference"]]
     fig, ax = plt.subplots(figsize=(6.4, 3.2))
-    for arm, mk, col in (("random", "o", "#9aa0a6"), ("anneal", "s", "#8a6a1c")):
+    marks = "osD^v<>p"
+    for i, arm in enumerate(a for a in arms if a != "exhaustive"):
+        mk, col = marks[i % len(marks)], ARM_COLOR.get(arm, "#777777")
         ys = [_median([r["gap"] for r in rows if r["problem"] == pid and r["arm"] == arm]) for pid in probs_list]
         ax.scatter(range(len(probs_list)), [y if y is not None else float("nan") for y in ys], marker=mk, s=14, label=arm, color=col)
     ax.set_xticks(range(len(probs_list)), probs_list, rotation=90, fontsize=5.5)
@@ -379,11 +518,11 @@ def _figures(out: Path, rows, per_problem, plt) -> None:
         axes = axes if len(sel) > 1 else [axes]
         for ax, pid in zip(axes, sel):
             for r in rows:
-                if r["problem"] != pid or r["arm"] not in ("random", "anneal") or not r["trajectory"]:
+                if r["problem"] != pid or r["arm"] == "exhaustive" or not r["trajectory"]:
                     continue
                 xs = [max(1, t[0]) for t in r["trajectory"]] + [max(1, r["checked"] or 1)]
                 ys = [t[2] for t in r["trajectory"]] + [r["trajectory"][-1][2]]
-                ax.step(xs, ys, where="post", lw=0.8, color="#8a6a1c" if r["arm"] == "anneal" else "#9aa0a6")
+                ax.step(xs, ys, where="post", lw=0.8, color=ARM_COLOR.get(r["arm"], "#777777"))
             ref = next(p["reference"] for p in per_problem if p["problem"] == pid)
             if ref:
                 ax.axhline(ref, ls="--", lw=0.7, color="#15171b")

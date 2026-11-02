@@ -11,9 +11,11 @@ passed to the sandbox.
 """
 from __future__ import annotations
 
+import ipaddress
 import json
 import os
 import re
+import urllib.parse
 import urllib.request
 from typing import Any
 
@@ -48,6 +50,75 @@ class AnthropicClient:
         cost = (usage.get("input_tokens", 0) * self.price_in +
                 usage.get("output_tokens", 0) * self.price_out) / 1e6
         return text, {"model": data.get("model", self.model), "usage": usage, "cost_usd": cost}
+
+
+class LocalClient:
+    """Open-weight model served on this machine by Ollama: no key, no network, $0.
+
+    Only loopback hosts are accepted, so prompts and outputs never leave the
+    machine. The model's content digest is recorded with every run so the
+    exact weights are identifiable later; a fixed seed makes sampling repeatable
+    for a given model, prompt and Ollama version.
+    """
+
+    def __init__(self, model: str | None = None, host: str | None = None, seed: int = 0,
+                 temperature: float = 0.8, timeout: float = 600):
+        self.host = (host or os.environ.get("PROBATIO_LOCAL_HOST", "http://127.0.0.1:11434")).rstrip("/")
+        hostname = urllib.parse.urlparse(self.host).hostname or ""
+        if not _is_loopback(hostname):
+            raise RuntimeError(f"local model host must be loopback, got {hostname!r}")
+        self.model = model or os.environ.get("PROBATIO_LOCAL_MODEL", "qwen2.5-coder:14b")
+        self.seed, self.temperature, self.timeout = seed, temperature, timeout
+        self.digest = self._digest()
+
+    def _post(self, path: str, payload: dict[str, Any]) -> dict[str, Any]:
+        req = urllib.request.Request(self.host + path, data=json.dumps(payload).encode(), method="POST",
+                                     headers={"content-type": "application/json"})
+        # Explicit no-proxy opener: a loopback request must never be routed through a proxy.
+        opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+        with opener.open(req, timeout=self.timeout) as resp:
+            return json.loads(resp.read())
+
+    def _digest(self) -> str | None:
+        try:
+            req = urllib.request.Request(self.host + "/api/tags")
+            opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+            with opener.open(req, timeout=10) as resp:
+                tags = json.loads(resp.read())
+        except Exception as exc:
+            raise RuntimeError(f"no local model server at {self.host} ({exc}); start it with `ollama serve`") from exc
+        for m in tags.get("models", []):
+            if m.get("name") == self.model or m.get("model") == self.model:
+                return m.get("digest")
+        raise RuntimeError(f"model {self.model!r} is not pulled; run `ollama pull {self.model}`")
+
+    def complete(self, system: str, user: str, max_tokens: int = 4000) -> tuple[str, dict[str, Any]]:
+        data = self._post("/api/chat", {
+            "model": self.model, "stream": False,
+            "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
+            "options": {"seed": self.seed, "temperature": self.temperature, "num_predict": max_tokens}})
+        self.seed += 1  # next call samples differently but the sequence stays repeatable
+        text = (data.get("message") or {}).get("content", "")
+        usage = {"input_tokens": data.get("prompt_eval_count", 0), "output_tokens": data.get("eval_count", 0)}
+        return text, {"model": f"{self.model}@{(self.digest or '')[:12]}", "usage": usage, "cost_usd": 0.0}
+
+
+def _is_loopback(hostname: str) -> bool:
+    if hostname == "localhost":
+        return True
+    try:
+        return ipaddress.ip_address(hostname).is_loopback
+    except ValueError:
+        return False
+
+
+def make_client(backend: str = "anthropic", model: str | None = None, seed: int = 0,
+                temperature: float = 0.8):
+    if backend == "local":
+        return LocalClient(model=model, seed=seed, temperature=temperature)
+    if backend == "anthropic":
+        return AnthropicClient(model=model)
+    raise ValueError(f"unknown model backend {backend!r}")
 
 
 SYSTEM = ("You are a research mathematician proposing candidates for a machine checker. "
@@ -91,9 +162,23 @@ class LLMProposer(Proposer):
 
     def __init__(self, *a, client=None, **kw):
         super().__init__(*a, **kw)
-        self.client = client or AnthropicClient()
+        self.client = client or make_client(self.opts.get("backend", "anthropic"), self.opts.get("model"),
+                                            seed=int(self.opts.get("seed", 0)),
+                                            temperature=float(self.opts.get("temperature", 0.8)))
         self.meta["model"] = getattr(self.client, "model", "unknown")
+        self.meta["backend"] = self.opts.get("backend", "anthropic")
+        if getattr(self.client, "digest", None):
+            self.meta["model_digest"] = self.client.digest
         self.calls = 0
+        self.max_calls = int(self.opts.get("max_calls", 0))
+
+    @property
+    def done(self) -> bool:  # call budget reached
+        return bool(self.max_calls) and self.calls >= self.max_calls
+
+    @done.setter
+    def done(self, value):  # base class assigns done; the call budget decides instead
+        pass
 
     def propose(self, ctx: Context, batch: int):
         user = (_describe(self.problem, ctx) +

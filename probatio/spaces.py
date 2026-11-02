@@ -216,8 +216,12 @@ class LeanSpace(Space):
 SPACES = {"cyclic_stabilizer": CyclicCodeSpace, "golomb": GolombSpace, "lean": LeanSpace}
 
 
-def space_for(problem: dict[str, Any]) -> Space:
-    return SPACES[problem["space"]](problem)
+def space_for(problem: dict[str, Any], override: str | None = None) -> Space:
+    """The problem's own search space, or a compatible alternative named by an arm."""
+    name = override or problem["space"]
+    if override and not name.startswith(problem["space"]):
+        raise ValueError(f"space {override!r} is not compatible with problem space {problem['space']!r}")
+    return SPACES[name](problem)
 
 
 class CapSetSpace(Space):
@@ -328,3 +332,111 @@ class PointSpreadSpace(Space):
 
 
 SPACES.update({"cap_set": CapSetSpace, "linear_code": LinearCodeSpace, "point_spread": PointSpreadSpace})
+
+
+class GolombConstructiveSpace(GolombSpace):
+    """Golomb rulers built mark by mark so every candidate is valid by construction.
+
+    A stronger baseline than placing marks at random: each new mark is drawn only
+    from positions whose differences to all existing marks are still unused.
+    Mutation removes one or two marks and rebuilds. The bound on length is the
+    smaller of the problem's search bound and a slack above the best seen.
+    """
+
+    def _extend(self, marks: list[int], rng, L: int) -> list[int] | None:
+        marks = sorted(marks)
+        used = {b - a for i, a in enumerate(marks) for b in marks[i + 1:]}
+        while len(marks) < self.m:
+            opts = []
+            for p in range(1, L + 1):
+                if p in marks:
+                    continue
+                ds = [abs(p - x) for x in marks]
+                if len(set(ds)) == len(ds) and not used.intersection(ds):
+                    opts.append(p)
+            if not opts:
+                return None
+            # bias towards short rulers: pick among the smallest feasible positions
+            p = opts[min(len(opts) - 1, int(rng.expovariate(1 / 3)))]
+            used.update(abs(p - x) for x in marks)
+            marks = sorted(marks + [p])
+        shift = marks[0]
+        return [x - shift for x in marks]
+
+    def random(self, rng):
+        for _ in range(50):
+            r = self._extend([0], rng, self.max_len)
+            if r:
+                return {"marks": r}
+        return super().random(rng)
+
+    def mutate(self, c, rng):
+        marks = sorted(c["marks"])
+        L = marks[-1]
+        for _ in range(20):
+            keep = list(marks)
+            for _ in range(rng.choice((1, 1, 2))):
+                if len(keep) > 2:
+                    keep.pop(rng.randrange(1, len(keep)))
+            # try to rebuild no longer than the current ruler (or slightly longer)
+            r = self._extend(keep, rng, min(self.max_len, L + rng.choice((-2, -1, 0, 0, 1))))
+            if r:
+                return {"marks": r}
+        return self.random(rng)
+
+
+class QuasiCyclicCodeSpace(LinearCodeSpace):
+    """Quasi-cyclic binary codes: generator [I | C_1 | ... | C_{m-1}] of circulants.
+
+    Rows are the p = k cyclic shifts of one generating row; each block C_j is the
+    circulant of a polynomial of degree < p. The [mp, k] code is punctured to
+    length n by deleting trailing coordinates. Quasi-cyclic codes hold many
+    records in the codetables.de tables (e.g. Chen's constructions), so this is a
+    far stronger search space than unstructured generator matrices: k(n-k) free
+    bits shrink to about n - k.
+    """
+
+    def __init__(self, problem):
+        super().__init__(problem)
+        self.p = self.k
+        self.blocks = -(-self.n // self.p)  # ceil(n / p) circulant blocks, first is identity
+
+    def _from_polys(self, polys: list[list[int]]) -> dict[str, Any]:
+        p, rows = self.p, []
+        for s in range(p):
+            row = [1 if j == s else 0 for j in range(p)]
+            for poly in polys:
+                row += [poly[(j - s) % p] for j in range(p)]
+            rows.append("".join(map(str, row[: self.n])))
+        return {"generator": rows, "polynomials": ["".join(map(str, q)) for q in polys]}
+
+    def _polys(self, c) -> list[list[int]]:
+        if "polynomials" in c:
+            return [[int(b) for b in q] for q in c["polynomials"]]
+        first = c["generator"][0]
+        return [[int(first[(j + 1) * self.p + i]) if (j + 1) * self.p + i < self.n else 0
+                 for i in range(self.p)] for j in range(self.blocks - 1)]
+
+    def random(self, rng):
+        return self._from_polys([[rng.randint(0, 1) for _ in range(self.p)] for _ in range(self.blocks - 1)])
+
+    def mutate(self, c, rng):
+        polys = self._polys(c)
+        for _ in range(rng.choice((1, 1, 2, 3))):
+            j, i = rng.randrange(len(polys)), rng.randrange(self.p)
+            polys[j][i] ^= 1
+        return self._from_polys(polys)
+
+    def normalize(self, c):
+        return self._from_polys(self._polys(c)) if "polynomials" in c else c
+
+    def canonical(self, c):
+        # A common cyclic shift of all polynomials gives an equivalent code (same weight
+        # distribution) only when no coordinates are punctured.
+        polys = ["".join(map(str, q)) for q in self._polys(c)]
+        if self.n % self.p:
+            return "|".join(polys)
+        return min("|".join(q[s:] + q[:s] for q in polys) for s in range(self.p))
+
+
+SPACES.update({"golomb_constructive": GolombConstructiveSpace, "linear_code_qc": QuasiCyclicCodeSpace})

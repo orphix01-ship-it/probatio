@@ -358,5 +358,185 @@
       "restart_after": 4000
     },
     "role": "open-target"
+  },
+  {
+    "id": "lincode.n45.k15",
+    "domain": "coding-theory",
+    "space": "linear_code",
+    "statement": "Find a binary linear [45,15] code with minimum distance above the best known value 14. The proven upper bound is 15; a [45,15,15] code would be a new record.",
+    "candidate_format": {
+      "generator": "15 binary strings of length 45"
+    },
+    "checker": "linear_code",
+    "params": {
+      "n": 45,
+      "k": 15
+    },
+    "objective": {
+      "sense": "maximize",
+      "field": "d"
+    },
+    "known_best": {
+      "value": 14,
+      "kind": "best known lower bound",
+      "source": "M. Grassl, codetables.de, entry [45,15] (subcode of Kohnert's [45,16,14] code), retrieved 2026-11-02"
+    },
+    "upper_bound": {
+      "value": 15,
+      "source": "codetables.de entry [45,15], retrieved 2026-11-02"
+    },
+    "references": [
+      "M. Grassl, codetables.de"
+    ],
+    "search_hints": {
+      "temp": 0.3,
+      "cool": 0.9995,
+      "restart_after": 4000
+    },
+    "role": "open-target"
+  },
+  {
+    "id": "lincode.n51.k17",
+    "domain": "coding-theory",
+    "space": "linear_code",
+    "statement": "Find a binary linear [51,17] code with minimum distance above the best known value 16. The proven upper bound is 17; a [51,17,17] code would be a new record.",
+    "candidate_format": {
+      "generator": "17 binary strings of length 51"
+    },
+    "checker": "linear_code",
+    "params": {
+      "n": 51,
+      "k": 17
+    },
+    "objective": {
+      "sense": "maximize",
+      "field": "d"
+    },
+    "known_best": {
+      "value": 16,
+      "kind": "best known lower bound",
+      "source": "M. Grassl, codetables.de, entry [51,17] (cyclic code of length 51), retrieved 2026-11-02"
+    },
+    "upper_bound": {
+      "value": 17,
+      "source": "codetables.de entry [51,17], retrieved 2026-11-02"
+    },
+    "references": [
+      "M. Grassl, codetables.de"
+    ],
+    "search_hints": {
+      "temp": 0.3,
+      "cool": 0.9995,
+      "restart_after": 4000
+    },
+    "role": "open-target"
+  },
+  {
+    "id": "lincode.n56.k14",
+    "domain": "coding-theory",
+    "space": "linear_code",
+    "statement": "Find a binary linear [56,14] code with minimum distance above the best known value 20. The proven upper bound is 21; a [56,14,21] code would be a new record.",
+    "candidate_format": {
+      "generator": "14 binary strings of length 56"
+    },
+    "checker": "linear_code",
+    "params": {
+      "n": 56,
+      "k": 14
+    },
+    "objective": {
+      "sense": "maximize",
+      "field": "d"
+    },
+    "known_best": {
+      "value": 20,
+      "kind": "best known lower bound",
+      "source": "M. Grassl, codetables.de, entry [56,14] (subcode of an extended [56,16,20] Goppa code), retrieved 2026-11-02"
+    },
+    "upper_bound": {
+      "value": 21,
+      "source": "codetables.de entry [56,14], retrieved 2026-11-02"
+    },
+    "references": [
+      "M. Grassl, codetables.de"
+    ],
+    "search_hints": {
+      "temp": 0.3,
+      "cool": 0.9995,
+      "restart_after": 4000
+    },
+    "role": "open-target"
+  },
+  {
+    "id": "lincode.n72.k18",
+    "domain": "coding-theory",
+    "space": "linear_code",
+    "statement": "Find a binary linear [72,18] code with minimum distance above the best known value 24. The proven upper bound is 26; a [72,18,25] code would be a new record.",
+    "candidate_format": {
+      "generator": "18 binary strings of length 72"
+    },
+    "checker": "linear_code",
+    "params": {
+      "n": 72,
+      "k": 18
+    },
+    "objective": {
+      "sense": "maximize",
+      "field": "d"
+    },
+    "known_best": {
+      "value": 24,
+      "kind": "best known lower bound",
+      "source": "M. Grassl, codetables.de, entry [72,18] (Chen quasi-cyclic code of degree 3), retrieved 2026-11-02"
+    },
+    "upper_bound": {
+      "value": 26,
+      "source": "codetables.de entry [72,18], retrieved 2026-11-02"
+    },
+    "references": [
+      "M. Grassl, codetables.de"
+    ],
+    "search_hints": {
+      "temp": 0.3,
+      "cool": 0.9995,
+      "restart_after": 4000
+    },
+    "role": "open-target"
+  },
+  {
+    "id": "lincode.n80.k20",
+    "domain": "coding-theory",
+    "space": "linear_code",
+    "statement": "Find a binary linear [80,20] code with minimum distance above the best known value 25. The proven upper bound is 30; a [80,20,26] code would be a new record.",
+    "candidate_format": {
+      "generator": "20 binary strings of length 80"
+    },
+    "checker": "linear_code",
+    "params": {
+      "n": 80,
+      "k": 20
+    },
+    "objective": {
+      "sense": "maximize",
+      "field": "d"
+    },
+    "known_best": {
+      "value": 25,
+      "kind": "best known lower bound",
+      "source": "M. Grassl, codetables.de, entry [80,20] (punctured quasi-cyclic [81,20,26] code), retrieved 2026-11-02"
+    },
+    "upper_bound": {
+      "value": 30,
+      "source": "codetables.de entry [80,20], retrieved 2026-11-02"
+    },
+    "references": [
+      "M. Grassl, codetables.de"
+    ],
+    "search_hints": {
+      "temp": 0.3,
+      "cool": 0.9995,
+      "restart_after": 4000
+    },
+    "role": "open-target"
   }
 ]

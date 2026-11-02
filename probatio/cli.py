@@ -6,7 +6,7 @@ import json
 import sys
 from pathlib import Path
 
-from . import orchestrator, registry, report, site, study
+from . import hunt, orchestrator, registry, report, site, study
 from .ledger import Ledger
 
 
@@ -25,6 +25,18 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--max-usd", type=float, default=0.0, help="spend cap for paid models")
     r.add_argument("--seed", type=int, default=0)
     r.add_argument("--batch", type=int, default=64)
+    r.add_argument("--space", help="alternative search space, e.g. linear_code_qc, golomb_constructive")
+    r.add_argument("--backend", choices=["local", "anthropic"], help="model backend for llm proposers")
+    r.add_argument("--model")
+    r.add_argument("--max-calls", type=int, default=0)
+
+    h = sub.add_parser("hunt", help="resumable exploratory record hunt on open targets")
+    h.add_argument("problems", nargs="+")
+    h.add_argument("--hours", type=float, default=8)
+    h.add_argument("--jobs", type=int, default=2)
+    h.add_argument("--space")
+    h.add_argument("--proposer", default="mutation")
+    h.add_argument("--run-seconds", type=float, default=900)
 
     v = sub.add_parser("verify", help="re-verify certificates from scratch")
     v.add_argument("cert", nargs="?")
@@ -51,8 +63,10 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if a.cmd == "run":
+        extra = {k: v for k, v in (("search_space", a.space), ("backend", a.backend), ("model", a.model),
+                                   ("max_calls", a.max_calls)) if v}
         s = orchestrator.run(a.problem, a.proposer, budget=a.budget, seconds=a.seconds,
-                             max_usd=a.max_usd, seed=a.seed, batch=a.batch, results_dir=a.results)
+                             max_usd=a.max_usd, seed=a.seed, batch=a.batch, results_dir=a.results, **extra)
         print(json.dumps(s, indent=2))
         return 0
 
@@ -91,6 +105,11 @@ def main(argv: list[str] | None = None) -> int:
             proto = json.loads(a.protocol.read_text())
             runs = study.planned_runs(proto, a.arms)
             print(f"{len(runs)} runs, ~{sum(r['seconds'] for r in runs) / 3600:.1f} h of wall clock before parallelism")
+        return 0
+    if a.cmd == "hunt":
+        opts = {"search_space": a.space} if a.space else {}
+        found = hunt.hunt(a.problems, a.results, a.hours, a.jobs, a.proposer, a.run_seconds, opts)
+        print(f"hunt finished: {len(found)} candidate record(s)")
         return 0
     if a.cmd == "note":
         e = study.add_note(a.results, a.text, a.author)

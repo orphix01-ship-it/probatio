@@ -1,0 +1,332 @@
+{
+  "id": "probatio-study-v2",
+  "frozen": "2026-11-02",
+  "supersedes": "probatio-study-v1",
+  "amendments": [
+    "Budgets are counted in checker calls (hardware-independent) per family, with a 900 s safety cap, instead of 30 s wall clock.",
+    "Five seeds instead of three.",
+    "Structured search arms: quasi-cyclic codes for linear codes, constructive search for Golomb rulers.",
+    "Free AI arms with a local open-weight model (Ollama, loopback only, seeded, digest recorded).",
+    "References for cyclic-code problems n = 6-15 are the general stabilizer-code optima, fixed here before any v2 run.",
+    "Five additional open linear-code cells from codetables.de.",
+    "Secondary outcome: best value within the first 200 checks, comparable across classical and AI arms.",
+    "Paired bootstrap of normalised gaps, which the v1 plan specified but the v1 analysis omitted."
+  ],
+  "problems": [
+    "capset.n3",
+    "capset.n4",
+    "capset.n5",
+    "capset.n6",
+    "capset.n7",
+    "capset.n8",
+    "golomb.m10",
+    "golomb.m11",
+    "golomb.m12",
+    "golomb.m6",
+    "golomb.m7",
+    "golomb.m8",
+    "golomb.m9",
+    "lincode.n12.k4",
+    "lincode.n15.k7",
+    "lincode.n16.k5",
+    "lincode.n23.k12",
+    "lincode.n24.k12",
+    "lincode.n32.k10",
+    "lincode.n45.k15",
+    "lincode.n48.k14",
+    "lincode.n51.k17",
+    "lincode.n56.k14",
+    "lincode.n60.k16",
+    "lincode.n7.k4",
+    "lincode.n70.k18",
+    "lincode.n72.k18",
+    "lincode.n80.k20",
+    "qec.cyclic.n10.k1",
+    "qec.cyclic.n11.k1",
+    "qec.cyclic.n12.k1",
+    "qec.cyclic.n13.k1",
+    "qec.cyclic.n14.k1",
+    "qec.cyclic.n15.k1",
+    "qec.cyclic.n5.k1",
+    "qec.cyclic.n6.k1",
+    "qec.cyclic.n7.k1",
+    "qec.cyclic.n8.k1",
+    "qec.cyclic.n9.k1",
+    "spread.n10",
+    "spread.n2",
+    "spread.n3",
+    "spread.n4",
+    "spread.n5",
+    "spread.n6",
+    "spread.n7",
+    "spread.n8",
+    "spread.n9"
+  ],
+  "references": {
+    "qec.cyclic.n6.k1": {
+      "value": 3,
+      "kind": "optimum over all stabilizer codes (lower = upper bound)",
+      "source": "codetables.de [[6,1]] qubit table, retrieved 2026-11-01"
+    },
+    "qec.cyclic.n7.k1": {
+      "value": 3,
+      "kind": "optimum over all stabilizer codes (lower = upper bound)",
+      "source": "codetables.de [[7,1]] qubit table, retrieved 2026-11-01"
+    },
+    "qec.cyclic.n8.k1": {
+      "value": 3,
+      "kind": "optimum over all stabilizer codes (lower = upper bound)",
+      "source": "codetables.de [[8,1]] qubit table, retrieved 2026-11-01"
+    },
+    "qec.cyclic.n9.k1": {
+      "value": 3,
+      "kind": "optimum over all stabilizer codes (lower = upper bound)",
+      "source": "codetables.de [[9,1]] qubit table, retrieved 2026-11-01"
+    },
+    "qec.cyclic.n10.k1": {
+      "value": 4,
+      "kind": "optimum over all stabilizer codes (lower = upper bound)",
+      "source": "codetables.de [[10,1]] qubit table, retrieved 2026-11-01"
+    },
+    "qec.cyclic.n11.k1": {
+      "value": 5,
+      "kind": "optimum over all stabilizer codes (lower = upper bound)",
+      "source": "codetables.de [[11,1]] qubit table, retrieved 2026-11-01"
+    },
+    "qec.cyclic.n12.k1": {
+      "value": 5,
+      "kind": "optimum over all stabilizer codes (lower = upper bound)",
+      "source": "codetables.de [[12,1]] qubit table, retrieved 2026-11-01"
+    },
+    "qec.cyclic.n13.k1": {
+      "value": 5,
+      "kind": "optimum over all stabilizer codes (lower = upper bound)",
+      "source": "codetables.de [[13,1]] qubit table, retrieved 2026-11-01"
+    },
+    "qec.cyclic.n14.k1": {
+      "value": 5,
+      "kind": "optimum over all stabilizer codes (lower = upper bound)",
+      "source": "codetables.de [[14,1]] qubit table, retrieved 2026-11-01"
+    },
+    "qec.cyclic.n15.k1": {
+      "value": 5,
+      "kind": "optimum over all stabilizer codes (lower = upper bound)",
+      "source": "codetables.de [[15,1]] qubit table, retrieved 2026-11-01"
+    }
+  },
+  "fair_checks": 200,
+  "arms": [
+    {
+      "name": "random",
+      "proposer": "random",
+      "seeds": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "seconds": 900,
+      "budget": {
+        "capset": 2000,
+        "golomb": 5000,
+        "lincode": 10000,
+        "qec": 5000,
+        "spread": 50000
+      },
+      "batch": 64,
+      "status": "active"
+    },
+    {
+      "name": "anneal",
+      "proposer": "mutation",
+      "seeds": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "seconds": 900,
+      "budget": {
+        "capset": 2000,
+        "golomb": 5000,
+        "lincode": 10000,
+        "qec": 5000,
+        "spread": 50000
+      },
+      "batch": 64,
+      "status": "active"
+    },
+    {
+      "name": "anneal-qc",
+      "proposer": "mutation",
+      "search_space": "linear_code_qc",
+      "problems": [
+        "lincode.n12.k4",
+        "lincode.n15.k7",
+        "lincode.n16.k5",
+        "lincode.n23.k12",
+        "lincode.n24.k12",
+        "lincode.n32.k10",
+        "lincode.n45.k15",
+        "lincode.n48.k14",
+        "lincode.n51.k17",
+        "lincode.n56.k14",
+        "lincode.n60.k16",
+        "lincode.n7.k4",
+        "lincode.n70.k18",
+        "lincode.n72.k18",
+        "lincode.n80.k20"
+      ],
+      "seeds": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "seconds": 900,
+      "budget": {
+        "capset": 2000,
+        "golomb": 5000,
+        "lincode": 10000,
+        "qec": 5000,
+        "spread": 50000
+      },
+      "batch": 64,
+      "status": "active"
+    },
+    {
+      "name": "anneal-constructive",
+      "proposer": "mutation",
+      "search_space": "golomb_constructive",
+      "problems": [
+        "golomb.m10",
+        "golomb.m11",
+        "golomb.m12",
+        "golomb.m6",
+        "golomb.m7",
+        "golomb.m8",
+        "golomb.m9"
+      ],
+      "seeds": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "seconds": 900,
+      "budget": {
+        "capset": 2000,
+        "golomb": 5000,
+        "lincode": 10000,
+        "qec": 5000,
+        "spread": 50000
+      },
+      "batch": 64,
+      "status": "active"
+    },
+    {
+      "name": "local-llm-direct",
+      "proposer": "llm",
+      "backend": "local",
+      "model": "qwen2.5-coder:7b",
+      "temperature": 0.8,
+      "seeds": [
+        1,
+        2,
+        3
+      ],
+      "seconds": 7200,
+      "budget": 200,
+      "batch": 10,
+      "max_calls": 20,
+      "status": "pending"
+    },
+    {
+      "name": "local-llm-program",
+      "proposer": "program_evolution",
+      "backend": "local",
+      "model": "qwen2.5-coder:7b",
+      "temperature": 0.8,
+      "seeds": [
+        1,
+        2,
+        3
+      ],
+      "seconds": 7200,
+      "budget": 2000,
+      "batch": 100,
+      "max_calls": 20,
+      "status": "pending"
+    },
+    {
+      "name": "claude-direct",
+      "proposer": "llm",
+      "backend": "anthropic",
+      "seeds": [
+        1,
+        2,
+        3
+      ],
+      "seconds": 1800,
+      "budget": 200,
+      "batch": 10,
+      "max_calls": 20,
+      "max_usd": 1.0,
+      "status": "optional"
+    },
+    {
+      "name": "claude-program",
+      "proposer": "program_evolution",
+      "backend": "anthropic",
+      "seeds": [
+        1,
+        2,
+        3
+      ],
+      "seconds": 1800,
+      "budget": 2000,
+      "batch": 100,
+      "max_calls": 20,
+      "max_usd": 1.0,
+      "status": "optional"
+    }
+  ],
+  "exhaustive": {
+    "name": "exhaustive",
+    "seconds": 1800,
+    "batch": 4096,
+    "problems": [
+      "qec.cyclic.n5.k1",
+      "qec.cyclic.n6.k1",
+      "qec.cyclic.n7.k1",
+      "qec.cyclic.n8.k1",
+      "qec.cyclic.n9.k1",
+      "qec.cyclic.n10.k1",
+      "qec.cyclic.n11.k1",
+      "qec.cyclic.n12.k1",
+      "qec.cyclic.n13.k1",
+      "golomb.m6",
+      "golomb.m7",
+      "golomb.m8",
+      "golomb.m9",
+      "golomb.m10",
+      "golomb.m11"
+    ],
+    "status": "active"
+  },
+  "outcomes": {
+    "primary": "success_rate",
+    "secondary": [
+      "best_within_fair_checks",
+      "normalised_gap",
+      "valid_rate",
+      "checks_to_best",
+      "seconds",
+      "cost_usd"
+    ]
+  }
+}

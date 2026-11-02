@@ -11,6 +11,7 @@
       "median_gap": 0.0,
       "median_valid_rate": 1.0,
       "median_checks_to_best": 2831,
+      "successes_fair": 0,
       "cost_usd": 0
     },
     {
@@ -24,6 +25,7 @@
       "median_gap": 0.125,
       "median_valid_rate": 1.0,
       "median_checks_to_best": 1558,
+      "successes_fair": 0,
       "cost_usd": 0
     },
     {
@@ -37,6 +39,7 @@
       "median_gap": 0.044444444444444446,
       "median_valid_rate": 1.0,
       "median_checks_to_best": 350.0,
+      "successes_fair": 0,
       "cost_usd": 0
     },
     {
@@ -50,6 +53,7 @@
       "median_gap": 0.05555555555555555,
       "median_valid_rate": 1.0,
       "median_checks_to_best": 541.0,
+      "successes_fair": 0,
       "cost_usd": 0
     },
     {
@@ -63,6 +67,7 @@
       "median_gap": 0.0,
       "median_valid_rate": 0.125,
       "median_checks_to_best": 29,
+      "successes_fair": 0,
       "cost_usd": 0
     },
     {
@@ -76,6 +81,7 @@
       "median_gap": 0.0,
       "median_valid_rate": 0.285714,
       "median_checks_to_best": 8,
+      "successes_fair": 0,
       "cost_usd": 0
     },
     {
@@ -89,6 +95,7 @@
       "median_gap": 0.0,
       "median_valid_rate": 0.125,
       "median_checks_to_best": 21,
+      "successes_fair": 0,
       "cost_usd": 0
     },
     {
@@ -102,6 +109,7 @@
       "median_gap": 0.014705882352941176,
       "median_valid_rate": 4e-05,
       "median_checks_to_best": 149964.5,
+      "successes_fair": 0,
       "cost_usd": 0
     },
     {
@@ -115,6 +123,7 @@
       "median_gap": 0.0,
       "median_valid_rate": 1.0,
       "median_checks_to_best": 1.0,
+      "successes_fair": 0,
       "cost_usd": 0
     },
     {
@@ -128,6 +137,7 @@
       "median_gap": 0.029411764705882353,
       "median_valid_rate": 1e-05,
       "median_checks_to_best": 357507,
+      "successes_fair": 0,
       "cost_usd": 0
     },
     {
@@ -141,6 +151,7 @@
       "median_gap": 5.328854466502312e-05,
       "median_valid_rate": 1.0,
       "median_checks_to_best": 88437,
+      "successes_fair": 0,
       "cost_usd": 0
     },
     {
@@ -154,44 +165,102 @@
       "median_gap": 0.21664011470991684,
       "median_valid_rate": 1.0,
       "median_checks_to_best": 83831,
+      "successes_fair": 0,
       "cost_usd": 0
     }
   ],
   "tests": [
     {
       "family": "Binary linear codes",
-      "anneal": "12/21",
-      "random": "9/21",
+      "a": "anneal",
+      "b": "random",
+      "a_succ": "12/21",
+      "b_succ": "9/21",
       "p": 0.5377361574675191,
       "p_holm": 1.0
     },
     {
       "family": "Cap sets",
-      "anneal": "6/12",
-      "random": "6/12",
+      "a": "anneal",
+      "b": "random",
+      "a_succ": "6/12",
+      "b_succ": "6/12",
       "p": 1.0,
       "p_holm": 1.0
     },
     {
       "family": "Cyclic quantum codes",
-      "anneal": "3/3",
-      "random": "3/3",
+      "a": "anneal",
+      "b": "random",
+      "a_succ": "3/3",
+      "b_succ": "3/3",
       "p": 1.0,
       "p_holm": 1.0
     },
     {
       "family": "Golomb rulers",
-      "anneal": "6/21",
-      "random": "6/21",
+      "a": "anneal",
+      "b": "random",
+      "a_succ": "6/21",
+      "b_succ": "6/21",
       "p": 1.0,
       "p_holm": 1.0
     },
     {
       "family": "Point spreading",
-      "anneal": "15/27",
-      "random": "0/27",
+      "a": "anneal",
+      "b": "random",
+      "a_succ": "15/27",
+      "b_succ": "0/27",
       "p": 4.0173796724036695e-06,
       "p_holm": 2.0086898362018348e-05
+    }
+  ],
+  "bootstrap": [
+    {
+      "family": "Binary linear codes",
+      "a": "anneal",
+      "b": "random",
+      "problems": 7,
+      "mean_diff": -0.03571428571428571,
+      "ci_low": -0.08333333333333333,
+      "ci_high": 0.0
+    },
+    {
+      "family": "Cap sets",
+      "a": "anneal",
+      "b": "random",
+      "problems": 4,
+      "mean_diff": -0.011507936507936498,
+      "ci_low": -0.023015873015872997,
+      "ci_high": 0.0
+    },
+    {
+      "family": "Cyclic quantum codes",
+      "a": "anneal",
+      "b": "random",
+      "problems": 1,
+      "mean_diff": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.0
+    },
+    {
+      "family": "Golomb rulers",
+      "a": "anneal",
+      "b": "random",
+      "problems": 7,
+      "mean_diff": 0.032696715049656225,
+      "ci_low": -0.01553348612172142,
+      "ci_high": 0.11667939903234022
+    },
+    {
+      "family": "Point spreading",
+      "a": "anneal",
+      "b": "random",
+      "problems": 9,
+      "mean_diff": -0.19651861553398203,
+      "ci_low": -0.25254659038543,
+      "ci_high": -0.13141571678934277
     }
   ],
   "per_problem": [
@@ -755,6 +824,7 @@
       "post_hoc_source": null
     }
   ],
+  "protocol_id": "probatio-study-v1",
   "runs": 273,
-  "generated": "2026-11-02T02:52:12+00:00"
+  "generated": "2026-11-02T13:34:32+00:00"
 }
